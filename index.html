@@ -9,8 +9,6 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
-
-/* TOPBAR */
 .topbar{background:linear-gradient(135deg,#0f2640,#1a3a5c);color:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,0.2)}
 .topbar-left{display:flex;align-items:center;gap:12px}
 .topbar-icon{width:38px;height:38px;background:rgba(255,255,255,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
@@ -22,40 +20,33 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
 .countdown-pill{font-size:11px;background:rgba(255,255,255,0.08);padding:5px 12px;border-radius:20px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:5px}
 
-/* SETUP MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px}
-.modal{background:white;border-radius:16px;padding:28px;max-width:540px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
-.modal h2{font-size:17px;color:#1a3a5c;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.modal p{font-size:13px;color:#666;margin-bottom:16px;line-height:1.6}
-.modal-step{background:#f0f4f8;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#333;border-left:3px solid #1a3a5c}
-.modal-step strong{display:block;margin-bottom:4px;color:#1a3a5c}
-.modal-step code{background:#dde6ef;padding:2px 7px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all}
-.modal input{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #c0cdd8;font-size:13px;font-family:monospace;margin-top:4px;outline:none;transition:border 0.2s}
+/* ADMIN MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:white;border-radius:16px;padding:28px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal h2{font-size:16px;color:#1a3a5c;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.modal p{font-size:12px;color:#999;margin-bottom:16px}
+.modal label{font-size:12px;font-weight:600;color:#555;display:block;margin-top:10px;margin-bottom:4px}
+.modal input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #c0cdd8;font-size:13px;font-family:monospace;outline:none;transition:border 0.2s}
 .modal input:focus{border-color:#1a3a5c}
-.modal-btn{width:100%;margin-top:14px;padding:11px;background:#1a3a5c;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.2s}
+.modal-btn{width:100%;margin-top:14px;padding:11px;background:#1a3a5c;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .modal-btn:hover{background:#0f2640}
-.modal-err{font-size:12px;color:#c0392b;margin-top:8px;display:none}
+.modal-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;margin-top:-4px}
+.modal-err{font-size:12px;color:#c0392b;margin-top:8px;display:none;padding:6px 10px;background:#fff0f0;border-radius:6px}
 
-/* CONTAINER */
 .container{max-width:1120px;margin:0 auto;padding:22px 16px}
-
-/* STATUS BAR */
 .status-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
 .status-left{display:flex;align-items:center;gap:8px;font-size:12px;color:#888}
-.status-left i{color:#1a3a5c}
 .btn-group{display:flex;gap:8px}
 .icon-btn{font-size:12px;padding:7px 14px;border-radius:8px;border:1px solid #c0cdd8;background:white;color:#333;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.2s;font-weight:500}
 .icon-btn:hover{background:#f0f4f8;border-color:#1a3a5c;color:#1a3a5c}
 .icon-btn.spinning i{animation:spin 0.8s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-/* FILTER */
 .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:white;padding:12px 16px;border-radius:10px;border:1px solid #e0e6ed}
 .filter-row label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
 .filter-row select{font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer;font-weight:500}
-.filter-row select:focus{outline:none;border-color:#1a3a5c}
 
-/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:22px}
 .card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;transition:all 0.2s;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#e0e6ed}
@@ -65,98 +56,68 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .card.solar-c::before{background:#e8a020}
 .card.total{background:linear-gradient(135deg,#0f2640,#1a3a5c);border-color:#1a3a5c}
 .card.total::before{display:none}
-.card-icon{font-size:20px;margin-bottom:8px;opacity:0.6}
+.card-icon{font-size:20px;margin-bottom:8px;opacity:0.5}
 .card-label{font-size:10px;color:#999;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600}
 .card-value{font-size:19px;font-weight:700;color:#1a1a2e}
 .card-unit{font-size:10px;color:#bbb;margin-top:3px}
 .card.total .card-label{color:rgba(255,255,255,0.6)}
 .card.total .card-value{color:white}
 .card.total .card-unit{color:rgba(255,255,255,0.4)}
-.card.total .card-icon{color:rgba(255,255,255,0.4)}
+.card.total .card-icon{color:rgba(255,255,255,0.3)}
 .card.solar-c .card-value{color:#c47800}
-.card.solar-c .card-label{color:#e8a020}
 .card.kampus .card-value{color:#1a5fa8}
 .card.hospital .card-value{color:#1e7e34}
 
-/* CHARTS */
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
 .chart-box{background:white;border-radius:12px;padding:18px;border:1px solid #e0e6ed}
-.chart-title{font-size:13px;font-weight:700;color:#333;margin-bottom:4px}
+.chart-title{font-size:13px;font-weight:700;color:#333;margin-bottom:3px}
 .chart-sub{font-size:11px;color:#aaa;margin-bottom:12px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 .legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:#666;font-weight:500}
 .leg-dot{width:9px;height:9px;border-radius:2px}
+.trend-box{background:white;border-radius:12px;padding:18px;border:1px solid #e0e6ed;margin-bottom:22px}
 
-/* HEALTH */
 .sec-title{font-size:14px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 .health-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
 .hcard{flex:1;min-width:200px;background:white;border:1px solid #e0e6ed;border-radius:12px;padding:16px}
 .hhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
 .hname{font-size:13px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:6px}
-.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:0.3px}
+.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700}
 .b-ok{background:#e6f4ea;color:#1e7e34}
 .b-warn{background:#fff3cd;color:#856404}
-.b-crit{background:#fdecea;color:#c0392b}
-.hstat{font-size:12px;color:#999;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.hstat{font-size:12px;color:#999;margin:6px 0;display:flex;justify-content:space-between}
 .hstat span{color:#1a1a2e;font-weight:600;font-size:13px}
 .bar-bg{background:#eef0f3;border-radius:6px;height:8px;margin-top:14px}
 .bar-fill{height:8px;border-radius:6px;transition:width 0.6s ease}
 
-/* TREND CHART */
-.trend-box{background:white;border-radius:12px;padding:18px;border:1px solid #e0e6ed;margin-bottom:22px}
-
-/* STATES */
 .loading-state{text-align:center;padding:70px 20px;color:#bbb}
 .loading-state i{font-size:40px;display:block;margin-bottom:14px;animation:spin 1s linear infinite;color:#1a3a5c}
-.empty-state{text-align:center;padding:50px 20px;color:#bbb;background:white;border-radius:12px;border:1px dashed #d0d8e0}
-.empty-state i{font-size:36px;display:block;margin-bottom:12px;color:#d0d8e0}
-.error-state{background:#fff5f5;border:1px solid #fca5a5;border-radius:12px;padding:20px;color:#c0392b;font-size:13px;line-height:1.7}
+.empty-state{text-align:center;padding:50px;color:#bbb;background:white;border-radius:12px;border:1px dashed #d0d8e0}
+.error-state{background:#fff5f5;border:1px solid #fca5a5;border-radius:12px;padding:20px;color:#c0392b;font-size:13px;line-height:1.8}
 .error-state strong{display:block;margin-bottom:8px;font-size:14px}
 
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
-
-@media(max-width:640px){
-  .charts{grid-template-columns:1fr}
-  .metrics{grid-template-columns:repeat(2,1fr)}
-  .topbar{padding:12px 16px}
-}
+@media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}}
 </style>
 </head>
 <body>
 
-<!-- ── SETUP MODAL ── -->
-<div class="modal-bg" id="setup-modal">
+<!-- ADMIN MODAL — hanya untuk admin tukar Sheet ID -->
+<div class="modal-bg" id="admin-modal">
   <div class="modal">
-    <h2><i class="ti ti-settings" style="color:#1a3a5c"></i> Persediaan Awal — Google Sheets</h2>
-    <p>Dashboard ini membaca data terus dari Google Sheets anda dan kemaskini secara automatik. Ikuti langkah berikut:</p>
-
-    <div class="modal-step">
-      <strong>① Buka Google Sheet anda</strong>
-      Pastikan sheet dikongsi: <code>Share → Anyone with the link → Viewer</code>
-    </div>
-    <div class="modal-step">
-      <strong>② Salin ID dari URL</strong>
-      <code>docs.google.com/spreadsheets/d/<u>ID-DI-SINI</u>/edit</code>
-    </div>
-    <div class="modal-step">
-      <strong>③ Tampal ID di bawah</strong>
-      Nama tab sheet (bawah): pastikan sama dengan nama sebenar
-    </div>
-
-    <label style="font-size:12px;font-weight:600;color:#555">Google Sheets ID:</label>
-    <input type="text" id="input-sheet-id" placeholder="Contoh: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-
-    <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-top:10px">Nama Tab Sheet:</label>
-    <input type="text" id="input-sheet-name" placeholder="Contoh: Sheet1 atau 2024" value="Sheet1">
-
-    <div class="modal-err" id="modal-err">⚠ Sila isi kedua-dua ruangan di atas</div>
-    <button class="modal-btn" onclick="saveConfig()">
-      <i class="ti ti-plug"></i> Sambung & Muat Data
-    </button>
+    <button class="modal-close" onclick="closeAdmin()">✕</button>
+    <h2><i class="ti ti-shield-lock" style="color:#1a3a5c"></i> Tetapan Admin</h2>
+    <p>Hanya admin yang perlu mengubah tetapan ini. Pengguna biasa tidak perlu masuk ke sini.</p>
+    <label>Google Sheets ID:</label>
+    <input type="text" id="input-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    <label>Nama Tab Sheet:</label>
+    <input type="text" id="input-sheet-name" placeholder="Sheet1">
+    <div class="modal-err" id="modal-err">⚠ Sila isi kedua-dua ruangan</div>
+    <button class="modal-btn" onclick="saveAdmin()"><i class="ti ti-device-floppy"></i> Simpan & Muat Semula</button>
   </div>
 </div>
 
-<!-- ── TOPBAR ── -->
+<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
@@ -167,21 +128,16 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
   <div class="topbar-right">
     <div class="live-pill"><span class="live-dot"></span> LIVE</div>
-    <div class="countdown-pill"><i class="ti ti-refresh"></i> Refresh dalam: <strong id="countdown-label">—</strong></div>
+    <div class="countdown-pill"><i class="ti ti-refresh"></i> Refresh: <strong id="countdown-label">—</strong></div>
   </div>
 </div>
 
-<!-- ── MAIN ── -->
 <div class="container">
-
   <div class="status-bar">
-    <div class="status-left">
-      <i class="ti ti-database"></i>
-      <span id="status-label">Menunggu sambungan...</span>
-    </div>
+    <div class="status-left"><i class="ti ti-database"></i><span id="status-label">Memuat data...</span></div>
     <div class="btn-group">
       <button class="icon-btn" id="refresh-btn" onclick="manualRefresh()"><i class="ti ti-refresh"></i> Refresh</button>
-      <button class="icon-btn" onclick="showSetup()"><i class="ti ti-settings"></i> Tetapan</button>
+      <button class="icon-btn" onclick="openAdmin()" title="Admin sahaja"><i class="ti ti-settings"></i></button>
     </div>
   </div>
 
@@ -192,240 +148,186 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
 
   <div id="main-content">
-    <div class="loading-state"><i class="ti ti-loader"></i>Menunggu konfigurasi...</div>
+    <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
   </div>
-
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Data dikemas kini automatik setiap <span id="footer-interval"></span> saat dari Google Sheets</footer>
+<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
-// ════════════════════════════════════════════
-// KONFIGURASI AUTO-REFRESH (saat)
-// ════════════════════════════════════════════
-const REFRESH_SECONDS = 30; // tukar mengikut keperluan
-// ════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  KONFIGURASI — ADMIN SAHAJA UBAH BAHAGIAN INI
+// ════════════════════════════════════════════════════════
+const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
+const DEFAULT_SHEET_NAME = 'JPPF';
+const REFRESH_SECONDS    = 30;
+// ════════════════════════════════════════════════════════
+
+document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
+
+// Gunakan config yang disimpan admin, atau gunakan default di atas
+function getConfig() {
+  try {
+    const s = localStorage.getItem('usm_admin_config');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return { sheetId: DEFAULT_SHEET_ID, sheetName: DEFAULT_SHEET_NAME };
+}
+
+let CONFIG = getConfig();
+let allRows = [], chartKwh, chartBil, chartTrend;
+let countdownTimer, secondsLeft = REFRESH_SECONDS;
 
 const BULAN_MAP = {jan:'Januari',feb:'Februari',mar:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};
 const BULAN_ORDER = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
 
-let allRows = [], chartKwh, chartBil, chartTrend;
-let refreshTimer, countdownTimer, secondsLeft = REFRESH_SECONDS;
-let CONFIG = { sheetId:'', sheetName:'Sheet1' };
+function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);return BULAN_MAP[s]||String(v).trim()}
+function fmt(n){return(!n||isNaN(n))?'—':Math.round(n).toLocaleString('ms-MY')}
+function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString('ms-MY')}
 
-document.getElementById('footer-interval').textContent = REFRESH_SECONDS;
-
-// Load saved config
-function loadConfig() {
-  const saved = localStorage.getItem('usm_config');
-  if (saved) {
-    try { CONFIG = JSON.parse(saved); return true; }
-    catch(e) { return false; }
-  }
-  return false;
+// ── ADMIN ──
+function openAdmin(){
+  document.getElementById('input-sheet-id').value = CONFIG.sheetId;
+  document.getElementById('input-sheet-name').value = CONFIG.sheetName;
+  document.getElementById('admin-modal').classList.add('show');
 }
-
-function saveConfig() {
+function closeAdmin(){ document.getElementById('admin-modal').classList.remove('show'); }
+function saveAdmin(){
   const id = document.getElementById('input-sheet-id').value.trim();
   const name = document.getElementById('input-sheet-name').value.trim();
-  if (!id || !name) { document.getElementById('modal-err').style.display='block'; return; }
-  CONFIG = { sheetId: id, sheetName: name };
-  localStorage.setItem('usm_config', JSON.stringify(CONFIG));
-  document.getElementById('setup-modal').style.display = 'none';
-  startAutoRefresh();
+  if(!id||!name){ document.getElementById('modal-err').style.display='block'; return; }
+  CONFIG = {sheetId:id, sheetName:name};
+  localStorage.setItem('usm_admin_config', JSON.stringify(CONFIG));
+  closeAdmin();
+  allRows = [];
+  loadData();
 }
 
-function showSetup() {
-  document.getElementById('input-sheet-id').value = CONFIG.sheetId || '';
-  document.getElementById('input-sheet-name').value = CONFIG.sheetName || 'Sheet1';
-  document.getElementById('setup-modal').style.display = 'flex';
-}
-
-function normBulan(v) {
-  const s = String(v).trim().toLowerCase().substring(0,3);
-  return BULAN_MAP[s] || String(v).trim();
-}
-function fmt(n) { return (!n||isNaN(n)) ? '—' : Math.round(n).toLocaleString('ms-MY'); }
-function fmtRM(n) { return (!n||isNaN(n)) ? '—' : 'RM ' + Math.round(n).toLocaleString('ms-MY'); }
-
-// ── FETCH DATA ──
-async function fetchData() {
-  if (!CONFIG.sheetId) return;
-  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.sheetName)}&t=${Date.now()}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status + ' — Pastikan sheet dikongsi (Anyone with link → Viewer)');
+// ── FETCH ──
+async function fetchData(){
+  const url=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.sheetName)}&t=${Date.now()}`;
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok) throw new Error('HTTP '+res.status+' — Pastikan sheet dikongsi (Share → Anyone with link → Viewer)');
   return await res.text();
 }
 
-function parseCSV(csv) {
-  return csv.split('\n').map(line => {
-    const cols = []; let cur = '', inQ = false;
-    for (const c of line) {
-      if (c==='"') inQ=!inQ;
-      else if (c===',' && !inQ) { cols.push(cur.trim()); cur=''; }
-      else cur+=c;
-    }
-    cols.push(cur.trim());
-    return cols;
+function parseCSV(csv){
+  return csv.split('\n').map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(const c of line){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}
+    cols.push(cur.trim());return cols;
   });
 }
 
-function detectColumns(lines) {
-  for (let i = 0; i < Math.min(lines.length, 15); i++) {
-    const row = lines[i].map(c => c.toLowerCase().replace(/"/g,'').trim());
-    if (!row.some(c => c.includes('bulan'))) continue;
-    const m = {};
-    row.forEach((h, idx) => {
-      if (h.includes('bulan')) m.bulan=idx;
-      else if (h.includes('tahun')||h.includes('year')) m.tahun=idx;
-      else if ((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh')) m.ssaKwh=idx;
-      else if ((h.includes('ss-d')||h.includes('ssd'))&&h.includes('kwh')) m.ssdKwh=idx;
-      else if (h.includes('total')&&h.includes('kwh')) m.totalKwh=idx;
-      else if ((h.includes('ss-a')||h.includes('ssa'))&&h.includes('rm')) m.ssaRm=idx;
-      else if ((h.includes('ss-d')||h.includes('ssd'))&&h.includes('rm')) m.ssdRm=idx;
-      else if (h.includes('total')&&h.includes('rm')) m.totalRm=idx;
-      else if (h.includes('solar')&&h.includes('kwh')) m.solarKwh=idx;
-      else if (h.includes('eksport')||h.includes('export')) m.eksportKwh=idx;
+function detectColumns(lines){
+  for(let i=0;i<Math.min(lines.length,15);i++){
+    const row=lines[i].map(c=>c.toLowerCase().replace(/"/g,'').trim());
+    if(!row.some(c=>c.includes('bulan'))) continue;
+    const m={};
+    row.forEach((h,idx)=>{
+      if(h.includes('bulan'))m.bulan=idx;
+      else if(h.includes('tahun')||h.includes('year'))m.tahun=idx;
+      else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh'))m.ssaKwh=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('kwh'))m.ssdKwh=idx;
+      else if(h.includes('total')&&h.includes('kwh'))m.totalKwh=idx;
+      else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('rm'))m.ssaRm=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('rm'))m.ssdRm=idx;
+      else if(h.includes('total')&&h.includes('rm'))m.totalRm=idx;
+      else if(h.includes('solar')&&h.includes('kwh'))m.solarKwh=idx;
+      else if(h.includes('eksport')||h.includes('export'))m.eksportKwh=idx;
     });
-    return { headerIdx: i, colMap: m };
+    return{headerIdx:i,colMap:m};
   }
   return null;
 }
 
-function buildRows(lines, headerIdx, colMap) {
-  const rows = [];
-  for (let i = headerIdx+1; i < lines.length; i++) {
-    const row = lines[i].map(c=>c.replace(/"/g,'').trim());
-    const bRaw = row[colMap.bulan];
-    if (!bRaw||bRaw==='') continue;
-    const n = k => { const v=parseFloat((row[colMap[k]]||'').replace(/,/g,'')); return isNaN(v)?0:v; };
-    rows.push({
-      bulan: normBulan(bRaw),
-      tahun: String(colMap.tahun!==undefined ? row[colMap.tahun] : '').trim(),
-      ssaKwh:n('ssaKwh'), ssdKwh:n('ssdKwh'), totalKwh:n('totalKwh'),
-      ssaRm:n('ssaRm'), ssdRm:n('ssdRm'), totalRm:n('totalRm'),
-      solarKwh:n('solarKwh'), eksportKwh:n('eksportKwh')
-    });
+function buildRows(lines,headerIdx,colMap){
+  const rows=[];
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const row=lines[i].map(c=>c.replace(/"/g,'').trim());
+    const bRaw=row[colMap.bulan];
+    if(!bRaw||bRaw==='') continue;
+    const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    rows.push({bulan:normBulan(bRaw),tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh')});
   }
   return rows;
 }
 
-// ── LOAD + REFRESH ──
-async function loadData(isManual=false) {
-  const btn = document.getElementById('refresh-btn');
-  if (isManual) btn.classList.add('spinning');
-  document.getElementById('status-label').textContent = 'Memuat data...';
-
-  try {
-    const csv = await fetchData();
-    if (!csv) return;
-    const lines = parseCSV(csv);
-    const detected = detectColumns(lines);
-    if (!detected) throw new Error('Lajur "Bulan" tidak ditemui dalam sheet.');
-    const rows = buildRows(lines, detected.headerIdx, detected.colMap);
-    if (!rows.length) throw new Error('Tiada baris data yang sah dalam sheet.');
-
-    const isFirstLoad = allRows.length === 0;
-    allRows = rows;
-
-    document.getElementById('status-label').textContent =
-      `✓ ${rows.length} rekod | Dikemas kini: ${new Date().toLocaleTimeString('ms-MY')} | Sheet: ${CONFIG.sheetName}`;
-
-    if (isFirstLoad) { buildDropdowns(); renderShell(); }
-    else { buildDropdowns(); updateDisplay(); }
-
-  } catch(err) {
-    document.getElementById('status-label').textContent = '⚠ Gagal memuat: ' + err.message;
-    if (allRows.length === 0) {
-      document.getElementById('main-content').innerHTML = `
-        <div class="error-state">
-          <strong><i class="ti ti-wifi-off"></i> Gagal sambung ke Google Sheets</strong>
-          ${err.message}<br><br>
-          <strong>Semak:</strong><br>
-          1. Sheet ID betul<br>
-          2. Sheet dikongsi: <em>Share → Anyone with the link → Viewer</em><br>
-          3. Nama tab sheet betul (sensitif huruf besar/kecil)
-        </div>`;
+async function loadData(isManual=false){
+  const btn=document.getElementById('refresh-btn');
+  if(isManual)btn.classList.add('spinning');
+  document.getElementById('status-label').textContent='Memuat data...';
+  try{
+    const csv=await fetchData();
+    const lines=parseCSV(csv);
+    const detected=detectColumns(lines);
+    if(!detected) throw new Error('Lajur "Bulan" tidak ditemui. Semak nama tab sheet.');
+    const rows=buildRows(lines,detected.headerIdx,detected.colMap);
+    if(!rows.length) throw new Error('Tiada baris data yang sah.');
+    const isFirst=allRows.length===0;
+    allRows=rows;
+    document.getElementById('status-label').textContent=`✓ ${rows.length} rekod | Dikemas kini: ${new Date().toLocaleTimeString('ms-MY')} | Sheet: ${CONFIG.sheetName}`;
+    if(isFirst){buildDropdowns();renderShell();}else{buildDropdowns();updateDisplay();}
+  }catch(err){
+    document.getElementById('status-label').textContent='⚠ '+err.message;
+    if(allRows.length===0){
+      document.getElementById('main-content').innerHTML=`<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal sambung ke Google Sheets</strong>${err.message}<br><br><strong>Semak:</strong><br>1. Google Sheet dikongsi: Share → Anyone with the link → Viewer<br>2. Klik ikon ⚙ (Tetapan) untuk semak Sheet ID dan nama tab</div>`;
     }
-  } finally {
+  }finally{
     btn.classList.remove('spinning');
     resetCountdown();
   }
 }
 
-function manualRefresh() { clearInterval(countdownTimer); loadData(true); }
+function manualRefresh(){clearInterval(countdownTimer);loadData(true);}
 
-function startAutoRefresh() {
+function resetCountdown(){
+  secondsLeft=REFRESH_SECONDS;
   clearInterval(countdownTimer);
-  clearTimeout(refreshTimer);
-  loadData();
-}
-
-function resetCountdown() {
-  secondsLeft = REFRESH_SECONDS;
-  clearInterval(countdownTimer);
-  countdownTimer = setInterval(() => {
+  countdownTimer=setInterval(()=>{
     secondsLeft--;
-    const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
-    document.getElementById('countdown-label').textContent =
-      m > 0 ? `${m}m ${s}s` : `${s}s`;
-    if (secondsLeft <= 0) { clearInterval(countdownTimer); loadData(); }
-  }, 1000);
+    const m=Math.floor(secondsLeft/60),s=secondsLeft%60;
+    document.getElementById('countdown-label').textContent=m>0?`${m}m ${s}s`:`${s}s`;
+    if(secondsLeft<=0){clearInterval(countdownTimer);loadData();}
+  },1000);
 }
 
-// ── DROPDOWNS ──
-function buildDropdowns() {
-  const years = [...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort();
-  const selT = document.getElementById('sel-tahun');
-  const prevT = selT.value;
-  selT.innerHTML = '<option>-- Semua Tahun --</option>';
-  years.forEach(y => { const o=document.createElement('option'); o.textContent=y; if(y===prevT)o.selected=true; selT.appendChild(o); });
-
-  const selB = document.getElementById('sel-bulan');
-  const prevB = selB.value;
-  selB.innerHTML = '<option>-- Semua Bulan --</option>';
-  BULAN_ORDER.forEach(b => { const o=document.createElement('option'); o.textContent=b; if(b===prevB)o.selected=true; selB.appendChild(o); });
+function buildDropdowns(){
+  const years=[...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort();
+  const selT=document.getElementById('sel-tahun');const prevT=selT.value;
+  selT.innerHTML='<option>-- Semua Tahun --</option>';
+  years.forEach(y=>{const o=document.createElement('option');o.textContent=y;if(y===prevT)o.selected=true;selT.appendChild(o);});
+  const selB=document.getElementById('sel-bulan');const prevB=selB.value;
+  selB.innerHTML='<option>-- Semua Bulan --</option>';
+  BULAN_ORDER.forEach(b=>{const o=document.createElement('option');o.textContent=b;if(b===prevB)o.selected=true;selB.appendChild(o);});
 }
 
-function getFiltered() {
-  const t=document.getElementById('sel-tahun').value;
-  const b=document.getElementById('sel-bulan').value;
+function getFiltered(){
+  const t=document.getElementById('sel-tahun').value,b=document.getElementById('sel-bulan').value;
   let rows=allRows;
-  if(!t.includes('Semua')) rows=rows.filter(r=>r.tahun===t);
-  if(!b.includes('Semua')) rows=rows.filter(r=>r.bulan===b);
+  if(!t.includes('Semua'))rows=rows.filter(r=>r.tahun===t);
+  if(!b.includes('Semua'))rows=rows.filter(r=>r.bulan===b);
   return rows;
 }
 
-function sumRows(rows) {
-  return rows.reduce((a,r)=>({
-    ssaKwh:a.ssaKwh+r.ssaKwh, ssdKwh:a.ssdKwh+r.ssdKwh, totalKwh:a.totalKwh+r.totalKwh,
-    solarKwh:a.solarKwh+r.solarKwh, eksportKwh:a.eksportKwh+r.eksportKwh,
-    ssaRm:a.ssaRm+r.ssaRm, ssdRm:a.ssdRm+r.ssdRm, totalRm:a.totalRm+r.totalRm
-  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,ssaRm:0,ssdRm:0,totalRm:0});
+function sumRows(rows){
+  return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,ssaRm:0,ssdRm:0,totalRm:0});
 }
 
-// ── RENDER SHELL (first load) ──
-function renderShell() {
-  document.getElementById('main-content').innerHTML = `
+function renderShell(){
+  document.getElementById('main-content').innerHTML=`
     <div class="metrics" id="metrics-grid"></div>
-    <div class="charts" id="charts-kwh-bil">
+    <div class="charts">
       <div class="chart-box">
         <div class="chart-title">Penggunaan Tenaga (kWh)</div>
         <div class="chart-sub">SS-A Kampus vs SS-D HPUSM vs Solar</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span>
-          <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
-          <span><span class="leg-dot" style="background:#e8a020"></span>Solar</span>
-        </div>
+        <div class="legend"><span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span><span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span><span><span class="leg-dot" style="background:#e8a020"></span>Solar</span></div>
         <div style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
       </div>
       <div class="chart-box">
         <div class="chart-title">Bil Tenaga (RM)</div>
         <div class="chart-sub">SS-A Kampus vs SS-D HPUSM</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span>
-          <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
-        </div>
+        <div class="legend"><span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span><span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span></div>
         <div style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
       </div>
     </div>
@@ -439,167 +341,59 @@ function renderShell() {
   updateDisplay();
 }
 
-// ── UPDATE DISPLAY ──
-function updateDisplay() {
-  if (!document.getElementById('metrics-grid')) return;
-  const filtered = getFiltered();
-
-  if (!filtered.length) {
-    document.getElementById('metrics-grid').innerHTML =
-      '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-filter-off"></i>Tiada data untuk pilihan ini</div>';
-    return;
-  }
-
-  const d = sumRows(filtered);
-  const solarPct = d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
-  const label = filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
-
-  document.getElementById('metrics-grid').innerHTML = `
-    <div class="card kampus">
-      <div class="card-icon"><i class="ti ti-building"></i></div>
-      <div class="card-label">SS-A kWh (Kampus)</div>
-      <div class="card-value">${fmt(d.ssaKwh)}</div>
-      <div class="card-unit">kWh</div>
-    </div>
-    <div class="card hospital">
-      <div class="card-icon"><i class="ti ti-building-hospital"></i></div>
-      <div class="card-label">SS-D kWh (HPUSM)</div>
-      <div class="card-value">${fmt(d.ssdKwh)}</div>
-      <div class="card-unit">kWh</div>
-    </div>
-    <div class="card solar-c">
-      <div class="card-icon"><i class="ti ti-solar-panel"></i></div>
-      <div class="card-label">Janaan Solar</div>
-      <div class="card-value">${fmt(d.solarKwh)}</div>
-      <div class="card-unit">kWh · ${solarPct}% drpd total</div>
-    </div>
-    <div class="card total">
-      <div class="card-icon"><i class="ti ti-plug"></i></div>
-      <div class="card-label">Jumlah kWh</div>
-      <div class="card-value">${fmt(d.totalKwh)}</div>
-      <div class="card-unit">${label}</div>
-    </div>
-    <div class="card kampus">
-      <div class="card-icon"><i class="ti ti-receipt"></i></div>
-      <div class="card-label">Bil SS-A (Kampus)</div>
-      <div class="card-value">${fmtRM(d.ssaRm)}</div>
-      <div class="card-unit">Ringgit Malaysia</div>
-    </div>
-    <div class="card hospital">
-      <div class="card-icon"><i class="ti ti-receipt"></i></div>
-      <div class="card-label">Bil SS-D (HPUSM)</div>
-      <div class="card-value">${fmtRM(d.ssdRm)}</div>
-      <div class="card-unit">Ringgit Malaysia</div>
-    </div>
-    <div class="card solar-c">
-      <div class="card-icon"><i class="ti ti-arrow-up-right"></i></div>
-      <div class="card-label">Tenaga Eksport</div>
-      <div class="card-value">${fmt(d.eksportKwh)}</div>
-      <div class="card-unit">kWh dieksport</div>
-    </div>
-    <div class="card total">
-      <div class="card-icon"><i class="ti ti-cash"></i></div>
-      <div class="card-label">Jumlah Bil</div>
-      <div class="card-value">${fmtRM(d.totalRm)}</div>
-      <div class="card-unit">${label}</div>
-    </div>`;
-
-  renderCharts(filtered, d);
+function updateDisplay(){
+  if(!document.getElementById('metrics-grid'))return;
+  const filtered=getFiltered();
+  if(!filtered.length){document.getElementById('metrics-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-filter-off" style="font-size:30px;display:block;margin-bottom:10px"></i>Tiada data untuk pilihan ini</div>';return;}
+  const d=sumRows(filtered);
+  const solarPct=d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
+  const label=filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
+  document.getElementById('metrics-grid').innerHTML=`
+    <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
+    <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
+    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}% drpd total</div></div>
+    <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(d.totalKwh)}</div><div class="card-unit">${label}</div></div>
+    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM(d.ssaRm)}</div><div class="card-unit">Ringgit Malaysia</div></div>
+    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM(d.ssdRm)}</div><div class="card-unit">Ringgit Malaysia</div></div>
+    <div class="card solar-c"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Tenaga Eksport</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
+    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
+  renderCharts(filtered,d);
   renderHealth(d);
 }
 
-function renderCharts(filtered, d) {
-  const sorted = [...filtered].sort((a,b)=>{
-    const yi=r=>parseInt(r.tahun)||0, bi=r=>BULAN_ORDER.indexOf(r.bulan);
-    return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);
-  });
-  const multi = sorted.length > 1;
-  const lbl = multi ? sorted.map(r=>{
-    const dup = sorted.filter(x=>x.bulan===r.bulan).length>1;
-    return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');
-  }) : null;
-
-  if (chartKwh) chartKwh.destroy();
-  if (chartBil) chartBil.destroy();
-  if (chartTrend) chartTrend.destroy();
-
+function renderCharts(filtered,d){
+  const sorted=[...filtered].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const multi=sorted.length>1;
+  const lbl=multi?sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');}):null;
+  if(chartKwh)chartKwh.destroy();if(chartBil)chartBil.destroy();if(chartTrend)chartTrend.destroy();
   const tck={color:'#999',font:{size:10}};
   const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
-
-  if (multi) {
-    chartKwh = new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:[
-      {label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},
-      {label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},
-      {label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,0.85)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
-    chartBil = new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:[
-      {label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},
-      {label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
-
-    // Trend line chart
-    document.getElementById('trend-sub').textContent = sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
-    chartTrend = new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[
-      {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',yAxisID:'y'},
-      {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#e8a020',yAxisID:'y2',borderDash:[4,3]}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
-  } else {
-    chartKwh = new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)','Solar'],datasets:[{data:[d.ssaKwh,d.ssdKwh,d.solarKwh],backgroundColor:['#1a5fa8','#1e7e34','#e8a020'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
-    chartBil = new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)'],datasets:[{data:[d.ssaRm,d.ssdRm],backgroundColor:['#1a5fa8','#1e7e34'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
-    if(chartTrend) chartTrend.destroy();
+  if(multi){
+    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:[{label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},{label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},{label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,0.85)',borderRadius:3,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:[{label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},{label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
+    document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[{label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',yAxisID:'y'},{label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#e8a020',yAxisID:'y2',borderDash:[4,3]}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
+  }else{
+    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)','Solar'],datasets:[{data:[d.ssaKwh,d.ssdKwh,d.solarKwh],backgroundColor:['#1a5fa8','#1e7e34','#e8a020'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)'],datasets:[{data:[d.ssaRm,d.ssdRm],backgroundColor:['#1a5fa8','#1e7e34'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
+    if(chartTrend)chartTrend.destroy();
     document.getElementById('trend-sub').textContent='Pilih lebih daripada 1 bulan untuk paparan trend';
-    chartTrend = new Chart(document.getElementById('chartTrend'),{type:'bar',data:{labels:['Total kWh','Total RM'],datasets:[{data:[d.totalKwh,d.totalRm],backgroundColor:['#1a5fa8','#e8a020'],borderRadius:6}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',data:{labels:['Total kWh','Total RM'],datasets:[{data:[d.totalKwh,d.totalRm],backgroundColor:['#1a5fa8','#e8a020'],borderRadius:6}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
   }
 }
 
-function renderHealth(d) {
-  const lSSA=Math.min(Math.round((d.ssaKwh/(d.ssaKwh+d.ssdKwh||1))*100),100);
-  const lSSD=100-lSSA;
-  const sSSA=lSSA>70?'warn':'ok', sSSD=lSSD>70?'warn':'ok';
+function renderHealth(d){
+  const lSSA=Math.min(Math.round((d.ssaKwh/(d.ssaKwh+d.ssdKwh||1))*100),100),lSSD=100-lSSA;
+  const sSSA=lSSA>70?'warn':'ok',sSSD=lSSD>70?'warn':'ok';
   const solarOk=d.solarKwh>0;
-
   document.getElementById('health-row').innerHTML=`
-    <div class="hcard">
-      <div class="hhead">
-        <div class="hname"><i class="ti ti-building" style="color:#1a5fa8"></i> SS-A (Kampus)</div>
-        <span class="badge b-${sSSA}">${sSSA==='ok'?'NORMAL':'PERHATIAN'}</span>
-      </div>
-      <div class="hstat">Nisbah beban<span>${lSSA}%</span></div>
-      <div class="hstat">Jumlah kWh<span>${fmt(d.ssaKwh)}</span></div>
-      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssaRm)}</span></div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${lSSA}%;background:${sSSA==='ok'?'#1e7e34':'#e8a020'}"></div></div>
-    </div>
-    <div class="hcard">
-      <div class="hhead">
-        <div class="hname"><i class="ti ti-building-hospital" style="color:#1e7e34"></i> SS-D (HPUSM)</div>
-        <span class="badge b-${sSSD}">${sSSD==='ok'?'NORMAL':'PERHATIAN'}</span>
-      </div>
-      <div class="hstat">Nisbah beban<span>${lSSD}%</span></div>
-      <div class="hstat">Jumlah kWh<span>${fmt(d.ssdKwh)}</span></div>
-      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssdRm)}</span></div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${lSSD}%;background:${sSSD==='ok'?'#1e7e34':'#e8a020'}"></div></div>
-    </div>
-    <div class="hcard">
-      <div class="hhead">
-        <div class="hname"><i class="ti ti-solar-panel" style="color:#e8a020"></i> Tenaga Solar</div>
-        <span class="badge ${solarOk?'b-ok':'b-warn'}">${solarOk?'AKTIF':'TIADA DATA'}</span>
-      </div>
-      <div class="hstat">Janaan<span>${fmt(d.solarKwh)} kWh</span></div>
-      <div class="hstat">Eksport<span>${fmt(d.eksportKwh)} kWh</span></div>
-      <div class="hstat">% drpd total<span>${d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):0}%</span></div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*100*5:0,100)}%;background:#e8a020"></div></div>
-    </div>`;
+    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-building" style="color:#1a5fa8"></i> SS-A (Kampus)</div><span class="badge b-${sSSA}">${sSSA==='ok'?'NORMAL':'PERHATIAN'}</span></div><div class="hstat">Nisbah beban<span>${lSSA}%</span></div><div class="hstat">Jumlah kWh<span>${fmt(d.ssaKwh)}</span></div><div class="hstat">Jumlah Bil<span>${fmtRM(d.ssaRm)}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${lSSA}%;background:${sSSA==='ok'?'#1e7e34':'#e8a020'}"></div></div></div>
+    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-building-hospital" style="color:#1e7e34"></i> SS-D (HPUSM)</div><span class="badge b-${sSSD}">${sSSD==='ok'?'NORMAL':'PERHATIAN'}</span></div><div class="hstat">Nisbah beban<span>${lSSD}%</span></div><div class="hstat">Jumlah kWh<span>${fmt(d.ssdKwh)}</span></div><div class="hstat">Jumlah Bil<span>${fmtRM(d.ssdRm)}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${lSSD}%;background:${sSSD==='ok'?'#1e7e34':'#e8a020'}"></div></div></div>
+    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-solar-panel" style="color:#e8a020"></i> Tenaga Solar</div><span class="badge ${solarOk?'b-ok':'b-warn'}">${solarOk?'AKTIF':'TIADA DATA'}</span></div><div class="hstat">Janaan<span>${fmt(d.solarKwh)} kWh</span></div><div class="hstat">Eksport<span>${fmt(d.eksportKwh)} kWh</span></div><div class="hstat">% drpd total<span>${d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):0}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div></div>`;
 }
 
-// ── INIT ──
-if (loadConfig() && CONFIG.sheetId) {
-  document.getElementById('setup-modal').style.display='none';
-  document.getElementById('input-sheet-id').value = CONFIG.sheetId;
-  document.getElementById('input-sheet-name').value = CONFIG.sheetName;
-  startAutoRefresh();
-} else {
-  document.getElementById('setup-modal').style.display='flex';
-}
+// Mulakan
+loadData();
 </script>
 </body>
 </html>
