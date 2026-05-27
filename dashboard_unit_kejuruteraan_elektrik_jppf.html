@@ -1,0 +1,590 @@
+
+<h2 class="sr-only">Dashboard Unit Kejuruteraan Elektrik JPPF — paparan data kontraktor, DV3, dan PPM dengan penapis bulan, tahun, penyenggara, dan kontraktor.</h2>
+
+<style>
+:root {
+  --c-navy: #0d2b5e;
+  --c-gold: #c8972b;
+  --c-gold-light: #f5e6c8;
+  --c-teal-1: #1D9E75;
+  --c-teal-light: #E1F5EE;
+  --c-blue-1: #185FA5;
+  --c-blue-light: #E6F1FB;
+  --c-amber-1: #BA7517;
+  --c-amber-light: #FAEEDA;
+  --c-red-1: #A32D2D;
+  --c-red-light: #FCEBEB;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, system-ui); }
+
+#dash { padding: 1rem; max-width: 900px; }
+
+.header { 
+  display: flex; align-items: center; gap: 12px; 
+  margin-bottom: 1.5rem; padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+.header-logo {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--c-blue-1); display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 18px;
+}
+.header-title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.header-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.badge-sync { 
+  margin-left: auto; font-size: 11px; padding: 4px 10px;
+  border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary);
+  color: var(--color-text-secondary); display: flex; align-items: center; gap: 5px;
+  cursor: pointer; background: var(--color-background-secondary);
+}
+.badge-sync.loading { color: var(--c-amber-1); }
+.badge-sync.ok { color: var(--c-teal-1); }
+.badge-sync.error { color: var(--c-red-1); }
+
+.section-label { 
+  font-size: 11px; font-weight: 500; text-transform: uppercase; 
+  letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 8px;
+}
+
+.filter-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+  margin-bottom: 1.5rem; padding: 1rem;
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--color-text-secondary); }
+.filter-group select { font-size: 13px; width: 100%; }
+
+.btn-reset {
+  align-self: flex-end; font-size: 12px; padding: 6px 14px;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+}
+
+.tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); padding-bottom: -1px; }
+.tab {
+  padding: 7px 18px; font-size: 13px; border: 0.5px solid transparent;
+  border-bottom: none; cursor: pointer; border-radius: 6px 6px 0 0;
+  color: var(--color-text-secondary); background: transparent;
+}
+.tab.active {
+  color: var(--c-blue-1); border-color: var(--color-border-tertiary);
+  background: var(--color-background-primary); font-weight: 500;
+  border-bottom: 1px solid var(--color-background-primary);
+}
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.kpi-card {
+  background: var(--color-background-secondary); border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+}
+.kpi-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.kpi-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.kpi-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.kpi-pct { 
+  display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 20px; margin-top: 4px;
+}
+.pct-green { background: var(--c-teal-light); color: var(--c-teal-1); }
+.pct-amber { background: var(--c-amber-light); color: var(--c-amber-1); }
+.pct-red { background: var(--c-red-light); color: var(--c-red-1); }
+
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+.chart-card {
+  background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg); padding: 1rem;
+}
+.chart-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; }
+
+.table-card {
+  background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg); padding: 1rem; margin-bottom: 1rem; overflow-x: auto;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; }
+.data-table th { 
+  font-size: 11px; font-weight: 500; color: var(--color-text-secondary); 
+  padding: 6px 10px; border-bottom: 0.5px solid var(--color-border-tertiary);
+  text-align: left; white-space: nowrap;
+}
+.data-table td { padding: 7px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--color-background-secondary); }
+.pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+
+.empty-state { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 13px; }
+
+.gs-setup {
+  background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1.5rem;
+}
+.gs-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.gs-row { display: flex; gap: 8px; align-items: flex-end; }
+.gs-input { font-size: 12px; flex: 1; }
+.gs-btn { font-size: 12px; padding: 6px 16px; cursor: pointer; white-space: nowrap; }
+.gs-hint { font-size: 11px; color: var(--color-text-secondary); margin-top: 6px; }
+
+.progress-bar { height: 6px; background: var(--color-border-tertiary); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.fill-green { background: var(--c-teal-1); }
+.fill-amber { background: var(--c-amber-1); }
+.fill-red { background: var(--c-red-1); }
+
+@media (max-width: 600px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+
+<div id="dash">
+  <div class="header">
+    <div class="header-logo"><i class="ti ti-bolt" aria-hidden="true"></i></div>
+    <div>
+      <div class="header-title">Unit Kejuruteraan Elektrik JPPF</div>
+      <div class="header-sub">Papan Pemuka Pengurusan Kerja</div>
+    </div>
+    <div class="badge-sync" id="syncBadge" onclick="syncData()">
+      <i class="ti ti-refresh" aria-hidden="true"></i>
+      <span id="syncLabel">Sambung Google Sheet</span>
+    </div>
+  </div>
+
+  <div class="gs-setup" id="gsSetup">
+    <div class="gs-title"><i class="ti ti-table" aria-hidden="true"></i> Sambungkan Google Sheet</div>
+    <div class="gs-row">
+      <input class="gs-input" id="sheetId" type="text" placeholder="Masukkan ID Google Sheet (dari URL)..." />
+      <button class="gs-btn" onclick="connectSheet()"><i class="ti ti-plug" aria-hidden="true"></i> Sambung</button>
+    </div>
+    <div class="gs-hint">
+      URL: docs.google.com/spreadsheets/d/<strong>[ID DI SINI]</strong>/edit — Pastikan sheet dikongsi sebagai "Sesiapa dengan pautan boleh lihat". Sheet perlu ada tab: <code>Kontraktor</code>, <code>DV3</code>, <code>PPM</code>.
+    </div>
+    <div style="margin-top: 10px;">
+      <button style="font-size:11px; padding:4px 10px; cursor:pointer;" onclick="loadDemo()"><i class="ti ti-test-pipe" aria-hidden="true"></i> Muat Data Demo</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Bulan</label>
+      <select id="fBulan" onchange="applyFilters()"><option value="">Semua</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Tahun</label>
+      <select id="fTahun" onchange="applyFilters()"><option value="">Semua</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Penyenggara</label>
+      <select id="fPenyenggara" onchange="applyFilters()"><option value="">Semua</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Kontraktor</label>
+      <select id="fKontraktor" onchange="applyFilters()"><option value="">Semua</option></select>
+    </div>
+    <div class="filter-group" style="justify-content: flex-end;">
+      <button class="btn-reset" onclick="resetFilters()"><i class="ti ti-x" aria-hidden="true"></i> Reset</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('ringkasan')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Ringkasan</button>
+    <button class="tab" onclick="switchTab('kontraktor')"><i class="ti ti-building" aria-hidden="true"></i> Kontraktor</button>
+    <button class="tab" onclick="switchTab('dv3')"><i class="ti ti-tools" aria-hidden="true"></i> DV3</button>
+    <button class="tab" onclick="switchTab('ppm')"><i class="ti ti-calendar-event" aria-hidden="true"></i> PPM</button>
+  </div>
+
+  <div id="tabRingkasan">
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card"><div class="kpi-label">Jumlah Doket Kontraktor</div><div class="kpi-val" id="kKontraktorDoket">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Jumlah RM Kontraktor</div><div class="kpi-val" id="kKontraktorRM">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Jumlah Doket DV3</div><div class="kpi-val" id="kDV3Doket">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Jumlah PPM</div><div class="kpi-val" id="kPPMJumlah">—</div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-title">% Siap — Kontraktor</div>
+        <div style="position:relative; height:200px;"><canvas id="chartK" role="img" aria-label="Bar chart peratusan siap kontraktor">Tiada data.</canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">% Siap — DV3 vs PPM</div>
+        <div style="position:relative; height:200px;"><canvas id="chartDP" role="img" aria-label="Bar chart perbandingan DV3 dan PPM">Tiada data.</canvas></div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:1rem;">
+      <div class="chart-title">Trend Bulanan — Jumlah Doket (Kontraktor)</div>
+      <div style="position:relative; height:180px;"><canvas id="chartTrend" role="img" aria-label="Carta trend bulanan doket kontraktor">Tiada data.</canvas></div>
+    </div>
+  </div>
+
+  <div id="tabKontraktor" style="display:none;">
+    <div class="kpi-grid" id="kpiKontraktor"></div>
+    <div class="table-card">
+      <div class="chart-title">Data Kontraktor</div>
+      <table class="data-table" id="tableKontraktor">
+        <thead><tr><th>Bulan</th><th>Tahun</th><th>Kontraktor</th><th>Zon</th><th>Tak Siap</th><th>Siap</th><th>Jumlah</th><th>% Siap</th><th>Jumlah RM</th></tr></thead>
+        <tbody><tr><td colspan="9" class="empty-state">Tiada data. Sila sambung Google Sheet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tabDV3" style="display:none;">
+    <div class="kpi-grid" id="kpiDV3"></div>
+    <div class="table-card">
+      <div class="chart-title">Data DV3</div>
+      <table class="data-table" id="tableDV3">
+        <thead><tr><th>Bulan</th><th>Tahun</th><th>Penyenggara</th><th>Tak Siap</th><th>Siap</th><th>Jumlah</th><th>% Siap</th></tr></thead>
+        <tbody><tr><td colspan="7" class="empty-state">Tiada data. Sila sambung Google Sheet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tabPPM" style="display:none;">
+    <div class="kpi-grid" id="kpiPPM"></div>
+    <div class="table-card">
+      <div class="chart-title">Data PPM</div>
+      <table class="data-table" id="tablePPM">
+        <thead><tr><th>Bulan</th><th>Tahun</th><th>Penyenggara</th><th>Tak Siap</th><th>Siap</th><th>Jumlah PPM</th><th>% Siap</th></tr></thead>
+        <tbody><tr><td colspan="7" class="empty-state">Tiada data. Sila sambung Google Sheet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let rawData = { kontraktor: [], dv3: [], ppm: [] };
+let filtered = { kontraktor: [], dv3: [], ppm: [] };
+let charts = {};
+let currentTab = 'ringkasan';
+let sheetId = '';
+
+const BULAN_MAP = { '1':'Jan','2':'Feb','3':'Mac','4':'Apr','5':'Mei','6':'Jun','7':'Jul','8':'Ogos','9':'Sep','10':'Okt','11':'Nov','12':'Dis',
+  'Jan':'Jan','Feb':'Feb','Mac':'Mac','Apr':'Apr','Mei':'Mei','Jun':'Jun','Jul':'Jul','Ogos':'Ogos','Sep':'Sep','Okt':'Okt','Nov':'Nov','Dis':'Dis',
+  'JANUARI':'Jan','FEBRUARI':'Feb','MAC':'Mac','APRIL':'Apr','MEI':'Mei','JUN':'Jun','JULAI':'Jul','OGOS':'Ogos','SEPTEMBER':'Sep','OKTOBER':'Okt','NOVEMBER':'Nov','DISEMBER':'Dis'
+};
+
+function bulanLabel(b) { return BULAN_MAP[String(b).toUpperCase()] || BULAN_MAP[b] || b; }
+function num(v) { return parseFloat(String(v).replace(/,/g,'')) || 0; }
+function pct(v) { let p = num(v); return isNaN(p) ? 0 : p; }
+function pctClass(p) { return p >= 80 ? 'pct-green' : p >= 50 ? 'pct-amber' : 'pct-red'; }
+function fillClass(p) { return p >= 80 ? 'fill-green' : p >= 50 ? 'fill-amber' : 'fill-red'; }
+function unique(arr) { return [...new Set(arr.filter(Boolean))].sort(); }
+
+async function fetchSheet(id, sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  const cols = json.table.cols.map(c => c.label);
+  return json.table.rows.map(r => {
+    let obj = {};
+    r.c.forEach((cell, i) => { obj[cols[i]] = cell ? cell.v : ''; });
+    return obj;
+  });
+}
+
+async function connectSheet() {
+  const input = document.getElementById('sheetId').value.trim();
+  if (!input) { alert('Sila masukkan ID Google Sheet.'); return; }
+  let id = input;
+  const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) id = m[1];
+  sheetId = id;
+  await syncData();
+}
+
+async function syncData() {
+  if (!sheetId) return;
+  setSyncState('loading', 'Memuat...');
+  try {
+    const [k, d, p] = await Promise.all([
+      fetchSheet(sheetId, 'Kontraktor'),
+      fetchSheet(sheetId, 'DV3'),
+      fetchSheet(sheetId, 'PPM')
+    ]);
+    rawData.kontraktor = k;
+    rawData.dv3 = d;
+    rawData.ppm = p;
+    document.getElementById('gsSetup').style.display = 'none';
+    buildDropdowns();
+    applyFilters();
+    setSyncState('ok', 'Dikemaskini');
+    setTimeout(() => setSyncState('ok', '✓ Bersambung'), 100);
+  } catch(e) {
+    setSyncState('error', 'Gagal — semak ID & perkongsian');
+  }
+}
+
+function setSyncState(state, label) {
+  const b = document.getElementById('syncBadge');
+  b.className = 'badge-sync ' + state;
+  document.getElementById('syncLabel').textContent = label;
+}
+
+function buildDropdowns() {
+  const allBulan = unique([
+    ...rawData.kontraktor.map(r => r['Bulan']),
+    ...rawData.dv3.map(r => r['Bulan']),
+    ...rawData.ppm.map(r => r['Bulan'])
+  ]);
+  const allTahun = unique([
+    ...rawData.kontraktor.map(r => r['Tahun']),
+    ...rawData.dv3.map(r => r['Tahun']),
+    ...rawData.ppm.map(r => r['Tahun'])
+  ]);
+  const allPenyenggara = unique([
+    ...rawData.dv3.map(r => r['Penyenggara']),
+    ...rawData.ppm.map(r => r['Penyenggara'])
+  ]);
+  const allKontraktor = unique(rawData.kontraktor.map(r => r['Kontraktor']));
+
+  fillSelect('fBulan', allBulan);
+  fillSelect('fTahun', allTahun);
+  fillSelect('fPenyenggara', allPenyenggara);
+  fillSelect('fKontraktor', allKontraktor);
+}
+
+function fillSelect(id, options) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Semua</option>' + options.map(o => `<option value="${o}">${bulanLabel ? (id==='fBulan'?bulanLabel(o):o) : o}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function applyFilters() {
+  const b = document.getElementById('fBulan').value;
+  const t = document.getElementById('fTahun').value;
+  const p = document.getElementById('fPenyenggara').value;
+  const k = document.getElementById('fKontraktor').value;
+
+  filtered.kontraktor = rawData.kontraktor.filter(r =>
+    (!b || String(r['Bulan']) === b) &&
+    (!t || String(r['Tahun']) === t) &&
+    (!k || r['Kontraktor'] === k)
+  );
+  filtered.dv3 = rawData.dv3.filter(r =>
+    (!b || String(r['Bulan']) === b) &&
+    (!t || String(r['Tahun']) === t) &&
+    (!p || r['Penyenggara'] === p)
+  );
+  filtered.ppm = rawData.ppm.filter(r =>
+    (!b || String(r['Bulan']) === b) &&
+    (!t || String(r['Tahun']) === t) &&
+    (!p || r['Penyenggara'] === p)
+  );
+
+  renderAll();
+}
+
+function resetFilters() {
+  ['fBulan','fTahun','fPenyenggara','fKontraktor'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+function renderAll() {
+  renderKPI();
+  renderCharts();
+  renderTables();
+}
+
+function renderKPI() {
+  const kTotal = filtered.kontraktor.reduce((s,r)=>s+num(r['Jumlah Doket']),0);
+  const kRM = filtered.kontraktor.reduce((s,r)=>s+num(r['Jumlah RM']),0);
+  const dTotal = filtered.dv3.reduce((s,r)=>s+num(r['Jumlah Doket']),0);
+  const pTotal = filtered.ppm.reduce((s,r)=>s+num(r['Jumlah PPM']),0);
+
+  document.getElementById('kKontraktorDoket').textContent = kTotal.toLocaleString();
+  document.getElementById('kKontraktorRM').textContent = 'RM ' + kRM.toLocaleString('ms-MY', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('kDV3Doket').textContent = dTotal.toLocaleString();
+  document.getElementById('kPPMJumlah').textContent = pTotal.toLocaleString();
+}
+
+function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderCharts() {
+  const blue = '#185FA5', teal = '#1D9E75', amber = '#BA7517', red = '#A32D2D', gray = '#888780';
+
+  destroyChart('chartK'); destroyChart('chartDP'); destroyChart('chartTrend');
+
+  const kByKon = {};
+  filtered.kontraktor.forEach(r => {
+    const key = r['Kontraktor'] || 'Tiada';
+    if (!kByKon[key]) kByKon[key] = { siap:0, jumlah:0 };
+    kByKon[key].siap += num(r['Siap']);
+    kByKon[key].jumlah += num(r['Jumlah Doket']);
+  });
+  const kLabels = Object.keys(kByKon);
+  const kPcts = kLabels.map(k => kByKon[k].jumlah ? Math.round(kByKon[k].siap / kByKon[k].jumlah * 100) : 0);
+
+  if (kLabels.length) {
+    charts['chartK'] = new Chart(document.getElementById('chartK'), {
+      type: 'bar',
+      data: { labels: kLabels, datasets: [{ label:'% Siap', data: kPcts, backgroundColor: blue, borderRadius: 4 }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ y:{min:0,max:100, ticks:{callback:v=>v+'%'}}, x:{ticks:{maxRotation:30}} }
+      }
+    });
+  }
+
+  const dv3Siap = filtered.dv3.reduce((s,r)=>s+num(r['Siap']),0);
+  const dv3Jumlah = filtered.dv3.reduce((s,r)=>s+num(r['Jumlah Doket']),0);
+  const ppmSiap = filtered.ppm.reduce((s,r)=>s+num(r['Siap']),0);
+  const ppmJumlah = filtered.ppm.reduce((s,r)=>s+num(r['Jumlah PPM']),0);
+  const dv3Pct = dv3Jumlah ? Math.round(dv3Siap/dv3Jumlah*100) : 0;
+  const ppmPct = ppmJumlah ? Math.round(ppmSiap/ppmJumlah*100) : 0;
+
+  charts['chartDP'] = new Chart(document.getElementById('chartDP'), {
+    type: 'bar',
+    data: { labels: ['DV3','PPM'], datasets: [
+      { label:'% Siap', data:[dv3Pct, ppmPct], backgroundColor:[teal, amber], borderRadius:4 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+'%'}} }
+    }
+  });
+
+  const trendMap = {};
+  filtered.kontraktor.forEach(r => {
+    const key = (r['Tahun']||'') + '-' + (r['Bulan']||'');
+    if (!trendMap[key]) trendMap[key] = { bulan: r['Bulan'], tahun: r['Tahun'], jumlah: 0 };
+    trendMap[key].jumlah += num(r['Jumlah Doket']);
+  });
+  const trendKeys = Object.keys(trendMap).sort();
+  const trendLabels = trendKeys.map(k => bulanLabel(trendMap[k].bulan) + ' ' + (trendMap[k].tahun||''));
+  const trendVals = trendKeys.map(k => trendMap[k].jumlah);
+
+  if (trendKeys.length) {
+    charts['chartTrend'] = new Chart(document.getElementById('chartTrend'), {
+      type: 'line',
+      data: { labels: trendLabels, datasets: [{ label:'Jumlah Doket', data:trendVals,
+        borderColor:blue, backgroundColor:'rgba(24,95,165,0.08)', tension:0.4, fill:true, pointRadius:4
+      }]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ x:{ticks:{maxRotation:30}}, y:{beginAtZero:true} }
+      }
+    });
+  }
+
+  renderTabKPIs();
+}
+
+function renderTabKPIs() {
+  const kKPIs = document.getElementById('kpiKontraktor');
+  const dKPIs = document.getElementById('kpiDV3');
+  const pKPIs = document.getElementById('kpiPPM');
+
+  const kSiap = filtered.kontraktor.reduce((s,r)=>s+num(r['Siap']),0);
+  const kJumlah = filtered.kontraktor.reduce((s,r)=>s+num(r['Jumlah Doket']),0);
+  const kTakSiap = filtered.kontraktor.reduce((s,r)=>s+num(r['Tak Siap']),0);
+  const kPct = kJumlah ? Math.round(kSiap/kJumlah*100) : 0;
+  const kRM = filtered.kontraktor.reduce((s,r)=>s+num(r['Jumlah RM']),0);
+
+  kKPIs.innerHTML = kpiCard('Jumlah Doket',kJumlah) + kpiCard('Siap',kSiap) + kpiCard('Tak Siap',kTakSiap) + kpiCard('% Siap',kPct,'%') + kpiCard('Jumlah RM','RM '+kRM.toLocaleString('ms-MY',{maximumFractionDigits:2}));
+
+  const dSiap = filtered.dv3.reduce((s,r)=>s+num(r['Siap']),0);
+  const dJumlah = filtered.dv3.reduce((s,r)=>s+num(r['Jumlah Doket']),0);
+  const dTakSiap = filtered.dv3.reduce((s,r)=>s+num(r['Tak Siap']),0);
+  const dPct = dJumlah ? Math.round(dSiap/dJumlah*100) : 0;
+  dKPIs.innerHTML = kpiCard('Jumlah Doket',dJumlah) + kpiCard('Siap',dSiap) + kpiCard('Tak Siap',dTakSiap) + kpiCard('% Siap',dPct,'%');
+
+  const pSiap = filtered.ppm.reduce((s,r)=>s+num(r['Siap']),0);
+  const pJumlah = filtered.ppm.reduce((s,r)=>s+num(r['Jumlah PPM']),0);
+  const pTakSiap = filtered.ppm.reduce((s,r)=>s+num(r['Tak Siap']),0);
+  const pPct = pJumlah ? Math.round(pSiap/pJumlah*100) : 0;
+  pKPIs.innerHTML = kpiCard('Jumlah PPM',pJumlah) + kpiCard('Siap',pSiap) + kpiCard('Tak Siap',pTakSiap) + kpiCard('% Siap',pPct,'%');
+}
+
+function kpiCard(label, val, suffix='') {
+  return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-val">${val}${suffix}</div></div>`;
+}
+
+function renderTables() {
+  renderTableKontraktor();
+  renderTableDV3();
+  renderTablePPM();
+}
+
+function renderTableKontraktor() {
+  const tbody = document.querySelector('#tableKontraktor tbody');
+  if (!filtered.kontraktor.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Tiada data untuk penapis ini.</td></tr>'; return; }
+  tbody.innerHTML = filtered.kontraktor.map(r => {
+    const p = pct(r['% Siap']);
+    return `<tr>
+      <td>${bulanLabel(r['Bulan'])}</td><td>${r['Tahun']}</td><td>${r['Kontraktor']}</td><td>${r['Zon']}</td>
+      <td>${num(r['Tak Siap']).toLocaleString()}</td><td>${num(r['Siap']).toLocaleString()}</td>
+      <td>${num(r['Jumlah Doket']).toLocaleString()}</td>
+      <td><span class="pill ${pctClass(p)}">${Math.round(p)}%</span></td>
+      <td>RM ${num(r['Jumlah RM']).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTableDV3() {
+  const tbody = document.querySelector('#tableDV3 tbody');
+  if (!filtered.dv3.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Tiada data untuk penapis ini.</td></tr>'; return; }
+  tbody.innerHTML = filtered.dv3.map(r => {
+    const p = pct(r['% Siap']);
+    return `<tr>
+      <td>${bulanLabel(r['Bulan'])}</td><td>${r['Tahun']}</td><td>${r['Penyenggara']}</td>
+      <td>${num(r['Tak Siap']).toLocaleString()}</td><td>${num(r['Siap']).toLocaleString()}</td>
+      <td>${num(r['Jumlah Doket']).toLocaleString()}</td>
+      <td><span class="pill ${pctClass(p)}">${Math.round(p)}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTablePPM() {
+  const tbody = document.querySelector('#tablePPM tbody');
+  if (!filtered.ppm.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Tiada data untuk penapis ini.</td></tr>'; return; }
+  tbody.innerHTML = filtered.ppm.map(r => {
+    const p = pct(r['% Siap']);
+    return `<tr>
+      <td>${bulanLabel(r['Bulan'])}</td><td>${r['Tahun']}</td><td>${r['Penyenggara']}</td>
+      <td>${num(r['Tak Siap']).toLocaleString()}</td><td>${num(r['Siap']).toLocaleString()}</td>
+      <td>${num(r['Jumlah PPM']).toLocaleString()}</td>
+      <td><span class="pill ${pctClass(p)}">${Math.round(p)}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.closest('.tab').classList.add('active');
+  document.getElementById('tabRingkasan').style.display = name==='ringkasan'?'':'none';
+  document.getElementById('tabKontraktor').style.display = name==='kontraktor'?'':'none';
+  document.getElementById('tabDV3').style.display = name==='dv3'?'':'none';
+  document.getElementById('tabPPM').style.display = name==='ppm'?'':'none';
+}
+
+function loadDemo() {
+  rawData.kontraktor = [
+    {Bulan:'1',Tahun:'2024',Kontraktor:'Syarikat ABC',Zon:'Utara','Tak Siap':5,Siap:45,'Jumlah Doket':50,'% Siap':90,'Jumlah RM':85000},
+    {Bulan:'2',Tahun:'2024',Kontraktor:'Syarikat ABC',Zon:'Utara','Tak Siap':8,Siap:42,'Jumlah Doket':50,'% Siap':84,'Jumlah RM':76000},
+    {Bulan:'3',Tahun:'2024',Kontraktor:'Syarikat ABC',Zon:'Utara','Tak Siap':3,Siap:47,'Jumlah Doket':50,'% Siap':94,'Jumlah RM':91000},
+    {Bulan:'1',Tahun:'2024',Kontraktor:'Firma XYZ',Zon:'Selatan','Tak Siap':10,Siap:30,'Jumlah Doket':40,'% Siap':75,'Jumlah RM':62000},
+    {Bulan:'2',Tahun:'2024',Kontraktor:'Firma XYZ',Zon:'Selatan','Tak Siap':12,Siap:28,'Jumlah Doket':40,'% Siap':70,'Jumlah RM':55000},
+    {Bulan:'3',Tahun:'2024',Kontraktor:'Firma XYZ',Zon:'Selatan','Tak Siap':7,Siap:33,'Jumlah Doket':40,'% Siap':82,'Jumlah RM':68000},
+    {Bulan:'1',Tahun:'2024',Kontraktor:'Jurutera MNO',Zon:'Timur','Tak Siap':2,Siap:28,'Jumlah Doket':30,'% Siap':93,'Jumlah RM':45000},
+    {Bulan:'2',Tahun:'2024',Kontraktor:'Jurutera MNO',Zon:'Timur','Tak Siap':4,Siap:26,'Jumlah Doket':30,'% Siap':87,'Jumlah RM':42000},
+    {Bulan:'3',Tahun:'2024',Kontraktor:'Jurutera MNO',Zon:'Timur','Tak Siap':1,Siap:29,'Jumlah Doket':30,'% Siap':97,'Jumlah RM':48000},
+  ];
+  rawData.dv3 = [
+    {Bulan:'1',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':3,Siap:27,'Jumlah Doket':30,'% Siap':90},
+    {Bulan:'2',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':5,Siap:25,'Jumlah Doket':30,'% Siap':83},
+    {Bulan:'3',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':2,Siap:28,'Jumlah Doket':30,'% Siap':93},
+    {Bulan:'1',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':8,Siap:12,'Jumlah Doket':20,'% Siap':60},
+    {Bulan:'2',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':6,Siap:14,'Jumlah Doket':20,'% Siap':70},
+    {Bulan:'3',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':4,Siap:16,'Jumlah Doket':20,'% Siap':80},
+  ];
+  rawData.ppm = [
+    {Bulan:'1',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':2,Siap:18,'Jumlah PPM':20,'% Siap':90},
+    {Bulan:'2',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':3,Siap:17,'Jumlah PPM':20,'% Siap':85},
+    {Bulan:'3',Tahun:'2024',Penyenggara:'Penyenggara A','Tak Siap':1,Siap:19,'Jumlah PPM':20,'% Siap':95},
+    {Bulan:'1',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':5,Siap:10,'Jumlah PPM':15,'% Siap':67},
+    {Bulan:'2',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':4,Siap:11,'Jumlah PPM':15,'% Siap':73},
+    {Bulan:'3',Tahun:'2024',Penyenggara:'Penyenggara B','Tak Siap':3,Siap:12,'Jumlah PPM':15,'% Siap':80},
+  ];
+  document.getElementById('gsSetup').style.display = 'none';
+  setSyncState('ok', '✓ Data Demo');
+  buildDropdowns();
+  applyFilters();
+}
+</script>
