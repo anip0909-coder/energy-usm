@@ -6,6 +6,8 @@
 <title>Pemantauan Tenaga USM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
@@ -156,6 +158,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .error-state{background:#fff5f5;border:1px solid #fca5a5;border-radius:12px;padding:20px;color:#c0392b;font-size:13px;line-height:1.8}
 .error-state strong{display:block;margin-bottom:8px;font-size:14px}
 
+.filter-divider{width:1px;height:24px;background:#e0e6ed;margin:0 4px}
+.toggle-group{display:flex;gap:6px}
+.toggle-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid #c0cdd8;background:white;color:#888;cursor:pointer;font-weight:600;transition:all .2s}
+.toggle-btn.active.ssa{background:#1a5fa8;border-color:#1a5fa8;color:white}
+.toggle-btn.active.ssd{background:#1e7e34;border-color:#1e7e34;color:white}
+.toggle-btn.active:not(.ssa):not(.ssd){background:#1a3a5c;border-color:#1a3a5c;color:white}
+.toggle-btn:hover:not(.active){border-color:#1a3a5c;color:#1a3a5c}
+
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
@@ -229,6 +239,12 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
     <label><i class="ti ti-filter"></i> Tapis:</label>
     <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
     <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
+    <div class="filter-divider"></div>
+    <label><i class="ti ti-building"></i> Paparan:</label>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
+      <button class="toggle-btn active" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
+    </div>
   </div>
 
   <div id="main-content">
@@ -244,7 +260,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -480,34 +496,143 @@ function updateDisplay(){
   if(window._refreshYoYDropdowns) window._refreshYoYDropdowns();
 }
 
+// ── SS FILTER STATE ──
+let showSSA=true, showSSD=true;
+function toggleSS(which){
+  if(which==='ssa'){
+    showSSA=!showSSA;
+    const b=document.getElementById('tog-ssa');
+    b.classList.toggle('active',showSSA);
+    b.classList.toggle('ssa',showSSA);
+  } else {
+    showSSD=!showSSD;
+    const b=document.getElementById('tog-ssd');
+    b.classList.toggle('active',showSSD);
+    b.classList.toggle('ssd',showSSD);
+  }
+  // must keep at least one
+  if(!showSSA&&!showSSD){showSSA=true;const b=document.getElementById('tog-ssa');b.classList.add('active','ssa');}
+  updateDisplay();
+}
+// init toggle colours on load
+document.getElementById('tog-ssa').classList.add('ssa');
+document.getElementById('tog-ssd').classList.add('ssd');
+
+// ── DATALABEL HELPERS ──
+Chart.register(ChartDataLabels);
+function fmtDL(v,isRM){
+  if(!v||v===0) return '';
+  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString();
+}
+// bar chart data labels — shown above each bar, hide when multi & crowded
+function dlBar(isRM){
+  return {
+    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+    formatter: (v) => fmtDL(v, isRM),
+    color:'#444', font:{size:9,weight:'600'},
+    anchor:'end', align:'end', offset:2,
+    rotation:0,
+    clip:false
+  };
+}
+// line chart data labels — show on every point
+function dlLine(isRM){
+  return {
+    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+    formatter: (v) => fmtDL(v, isRM),
+    color: ctx => ctx.dataset.borderColor,
+    font:{size:9,weight:'700'},
+    anchor:'top', align:'top', offset:4,
+    clip:false
+  };
+}
+
 function renderCharts(filtered,d){
   const sorted=[...filtered].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
   const multi=sorted.length>1;
   const lbl=multi?sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');}):null;
   if(chartKwh)chartKwh.destroy();if(chartBil)chartBil.destroy();if(chartTrend)chartTrend.destroy();
+
   const tck={color:'#999',font:{size:10}};
-  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
+  // hide datalabels when many bars (>12) to avoid clutter
+  const hideDL = multi && sorted.length > 12;
+
+  const baseOpts=(isRM)=>({
+    responsive:true, maintainAspectRatio:false,
+    layout:{padding:{top:22}},
+    plugins:{
+      legend:{display:false},
+      datalabels: hideDL ? {display:false} : dlBar(isRM)
+    },
+    scales:{
+      x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},
+      y:{ticks:{...tck,callback:v=>isRM?('RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
+    }
+  });
+
   if(multi){
-    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:[
-      {label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-      {label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},
-      {label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
-    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:[
-      {label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-      {label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},
-      {label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
-      {label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
+    // ── kWh chart — respect SS filter ──
+    const kwhDatasets=[];
+    if(showSSA) kwhDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
+    if(showSSD) kwhDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
+    kwhDatasets.push({label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false});
+    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:kwhDatasets},options:baseOpts(false)});
+
+    // ── Bil chart — respect SS filter ──
+    const bilDatasets=[];
+    if(showSSA) bilDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
+    if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
+    bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
+    bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
+
+    // ── Trend line — Total kWh & Total RM ──
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
-    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[
-      {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y'},
-      {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2'}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}}},scales:{x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
-  }else{
-    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)','Solar'],datasets:[{data:[d.ssaKwh,d.ssdKwh,d.solarKwh],backgroundColor:['#1a5fa8','#1e7e34','#e8a020'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
-    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['Bil SS-A','Bil SS-D','Eksport (RM)','Penjimatan'],datasets:[{data:[d.ssaRm,d.ssdRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
-    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
+    const trendDLshow = !hideDL;
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
+      data:{labels:lbl,datasets:[
+        {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',
+          datalabels: trendDLshow ? {...dlLine(false),align:'top',color:'#1a5fa8'} : {display:false}},
+        {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',
+          datalabels: trendDLshow ? {...dlLine(true),align:'bottom',color:'#c47800'} : {display:false}}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        layout:{padding:{top:26,bottom:20}},
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
+          datalabels:{} // controlled per-dataset
+        },
+        scales:{
+          x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},
+          y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},
+          y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}
+        }
+      }
+    });
+  } else {
+    // ── Single month / single bar ──
+    const kwhLbls=[],kwhVals=[],kwhClr=[];
+    if(showSSA){kwhLbls.push('SS-A (Kampus)');kwhVals.push(d.ssaKwh);kwhClr.push('#1a5fa8');}
+    if(showSSD){kwhLbls.push('SS-D (HPUSM)');kwhVals.push(d.ssdKwh);kwhClr.push('#1e7e34');}
+    kwhLbls.push('Solar');kwhVals.push(d.solarKwh);kwhClr.push('#e8a020');
+
+    const bilLbls=[],bilVals=[],bilClr=[];
+    if(showSSA){bilLbls.push('Bil SS-A');bilVals.push(d.ssaRm);bilClr.push('#1a5fa8');}
+    if(showSSD){bilLbls.push('Bil SS-D');bilVals.push(d.ssdRm);bilClr.push('#1e7e34');}
+    bilLbls.push('Eksport (RM)','Penjimatan');bilVals.push(d.eksportRm,d.penjimatan);bilClr.push('#0891b2','#7c3aed');
+
+    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:kwhLbls,datasets:[{data:kwhVals,backgroundColor:kwhClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
+
+    document.getElementById('trend-sub').textContent='Pilih lebih dari 1 bulan untuk paparan trend';
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',
+      data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],
+        datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},
+      options:baseOpts(false)});
   }
 }
 
@@ -697,11 +822,11 @@ function renderYoY(){
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-kwh-chart"></canvas></div>
     </div>
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan Bil (RM) — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan & Eksport (RM) — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Total RM ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Total RM ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
@@ -755,13 +880,59 @@ function renderYoY(){
     {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'Total RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Total RM '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
     {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false}
   ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
 }
 
 // ── INIT ──
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+
+// Helper: format label value compactly
+function fmtLbl(v, isRM=false){
+  if(!v||v===0) return '';
+  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString('ms-MY');
+}
+
+// Shared datalabels config for BAR charts (show on top of bar)
+function barDL(isRM=false, color='#333'){
+  return {
+    anchor:'end', align:'end', offset:2,
+    font:{size:9, weight:'600'},
+    color: color,
+    rotation:0,
+    formatter:(v)=>fmtLbl(v, isRM),
+    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
+  };
+}
+
+// For multi-dataset bars — hide label if value is 0
+function barDLmulti(isRM=false){
+  return {
+    anchor:'end', align:'end', offset:1,
+    font:{size:8, weight:'600'},
+    color:'#444',
+    clamp:true,
+    formatter:(v)=>fmtLbl(v, isRM),
+    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
+  };
+}
+
+// For LINE chart — show label at each point
+function lineDL(isRM=false){
+  return {
+    anchor:'top', align:'top', offset:4,
+    font:{size:8, weight:'600'},
+    color: isRM ? '#c47800' : '#1a5fa8',
+    formatter:(v)=>fmtLbl(v, isRM),
+    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
+  };
+}
+
 loadData();
 </script>
 </body>
