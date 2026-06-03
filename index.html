@@ -244,7 +244,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -440,7 +440,7 @@ function renderShell(){
       </div>
     </div>
     <div class="trend-box">
-      <div class="chart-title">Trend Bulanan — Total kWh & Penjimatan (RM)</div>
+      <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
@@ -501,9 +501,9 @@ function renderCharts(filtered,d){
     ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[
-      {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',yAxisID:'y'},
-      {label:'Penjimatan RM',data:sorted.map(r=>r.penjimatan),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#7c3aed',yAxisID:'y2',borderDash:[4,3]}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
+      {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y'},
+      {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2'}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}}},scales:{x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
   }else{
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)','Solar'],datasets:[{data:[d.ssaKwh,d.ssdKwh,d.solarKwh],backgroundColor:['#1a5fa8','#1e7e34','#e8a020'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['Bil SS-A','Bil SS-D','Eksport (RM)','Penjimatan'],datasets:[{data:[d.ssaRm,d.ssdRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
