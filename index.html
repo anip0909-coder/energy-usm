@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga USM</title>
+<title>Pemantauan Tenaga USMKK</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -149,7 +149,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .td-down{color:#1e7e34!important;font-weight:700}
 .td-num{text-align:right;font-weight:600}
 .td-total td{background:#f0f4f8!important;font-weight:700}
-.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
+.yoy-no-data{text-align:above;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
 
 /* ── STATES ── */
 .loading-state{text-align:center;padding:70px 20px;color:#bbb}
@@ -209,7 +209,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
+      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -222,7 +222,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 <div class="container">
   <!-- print header (hidden on screen) -->
   <div class="print-header">
-    <h1>Laporan Pemantauan Tenaga USM</h1>
+    <h1>Laporan Pemantauan Tenaga Elektrik USMKK</h1>
     <p id="print-date"></p>
   </div>
 
@@ -544,7 +544,7 @@ function dlLine(isRM){
     formatter: (v) => fmtDL(v, isRM),
     color: ctx => ctx.dataset.borderColor,
     font:{size:9,weight:'700'},
-    anchor:'end', align:'end', offset:4,
+    anchor:'above', align:'above', offset:4,
     rotation:0,
     clip:false
   };
@@ -595,9 +595,9 @@ function renderCharts(filtered,d){
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
       data:{labels:lbl,datasets:[
         {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',
-          datalabels: trendDLshow ? {...dlLine(false),align:'top',color:'#1a5fa8'} : {display:false}},
+          datalabels: trendDLshow ? {...dlLine(false),align:'above',color:'#1a5fa8'} : {display:false}},
         {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',
-          datalabels: trendDLshow ? {...dlLine(true),align:'bottom',color:'#c47800'} : {display:false}}
+          datalabels: trendDLshow ? {...dlLine(true),align:'above',color:'#c47800'} : {display:false}}
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
@@ -929,7 +929,7 @@ function lineDL(isRM=false){
     anchor:'top', align:'top', offset:4,
     font:{size:8, weight:'600'},
     color: isRM ? '#c47800' : '#1a5fa8',
-    rotation:-90,
+    rotation:0,
     formatter:(v)=>fmtLbl(v, isRM),
     display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
   };
