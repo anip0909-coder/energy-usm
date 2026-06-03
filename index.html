@@ -537,7 +537,7 @@ function dlBar(isRM){
     clip:false
   };
 }
-// line chart data labels — vertical outside point
+// line chart data labels — horizontal outside point
 function dlLine(isRM){
   return {
     display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
@@ -545,7 +545,7 @@ function dlLine(isRM){
     color: ctx => ctx.dataset.borderColor,
     font:{size:9,weight:'700'},
     anchor:'end', align:'end', offset:4,
-    rotation:-90,
+    rotation:0,
     clip:false
   };
 }
