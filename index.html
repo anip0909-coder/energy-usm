@@ -9,65 +9,76 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
+
+/* ── TOPBAR ── */
 .topbar{background:linear-gradient(135deg,#0f2640,#1a3a5c);color:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,0.2)}
 .topbar-left{display:flex;align-items:center;gap:12px}
 .topbar-icon{width:38px;height:38px;background:rgba(255,255,255,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.topbar-title{font-size:16px;font-weight:700;letter-spacing:0.3px}
-.topbar-sub{font-size:11px;opacity:0.65;margin-top:2px}
-.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.live-pill{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);padding:5px 12px;border-radius:20px;color:#a5d6a7}
+.topbar-title{font-size:16px;font-weight:700}
+.topbar-sub{font-size:11px;opacity:.65;margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(76,175,80,.2);border:1px solid rgba(76,175,80,.4);padding:5px 12px;border-radius:20px;color:#a5d6a7}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#4caf50;box-shadow:0 0 6px #4caf50;animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-.countdown-pill{font-size:11px;background:rgba(255,255,255,0.08);padding:5px 12px;border-radius:20px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.countdown-pill{font-size:11px;background:rgba(255,255,255,.08);padding:5px 12px;border-radius:20px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:5px}
 
-/* ADMIN MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
+/* ── ADMIN MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-bg.show{display:flex}
-.modal{background:white;border-radius:16px;padding:28px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal{background:white;border-radius:16px;padding:28px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .modal h2{font-size:16px;color:#1a3a5c;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .modal p{font-size:12px;color:#999;margin-bottom:16px}
 .modal label{font-size:12px;font-weight:600;color:#555;display:block;margin-top:10px;margin-bottom:4px}
-.modal input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #c0cdd8;font-size:13px;font-family:monospace;outline:none;transition:border 0.2s}
+.modal input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #c0cdd8;font-size:13px;font-family:monospace;outline:none}
 .modal input:focus{border-color:#1a3a5c}
 .modal-btn{width:100%;margin-top:14px;padding:11px;background:#1a3a5c;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .modal-btn:hover{background:#0f2640}
 .modal-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;margin-top:-4px}
 .modal-err{font-size:12px;color:#c0392b;margin-top:8px;display:none;padding:6px 10px;background:#fff0f0;border-radius:6px}
 
+/* ── LAYOUT ── */
 .container{max-width:1120px;margin:0 auto;padding:22px 16px}
 .status-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
 .status-left{display:flex;align-items:center;gap:8px;font-size:12px;color:#888}
-.btn-group{display:flex;gap:8px}
-.icon-btn{font-size:12px;padding:7px 14px;border-radius:8px;border:1px solid #c0cdd8;background:white;color:#333;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.2s;font-weight:500}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+.icon-btn{font-size:12px;padding:7px 14px;border-radius:8px;border:1px solid #c0cdd8;background:white;color:#333;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;font-weight:500;white-space:nowrap}
 .icon-btn:hover{background:#f0f4f8;border-color:#1a3a5c;color:#1a3a5c}
-.icon-btn.spinning i{animation:spin 0.8s linear infinite}
+.icon-btn.pdf-btn{background:#1a3a5c;color:white;border-color:#1a3a5c}
+.icon-btn.pdf-btn:hover{background:#0f2640}
+.icon-btn.spinning i{animation:spin .8s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:white;padding:12px 16px;border-radius:10px;border:1px solid #e0e6ed}
-.filter-row label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.filter-row label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .filter-row select{font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer;font-weight:500}
 
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:22px}
-.card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;transition:all 0.2s;position:relative;overflow:hidden}
+/* ── METRIC CARDS ── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:22px}
+.card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;transition:all .2s;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#e0e6ed}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.08)}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
 .card.kampus::before{background:#1a5fa8}
 .card.hospital::before{background:#1e7e34}
 .card.solar-c::before{background:#e8a020}
+.card.jimat::before{background:#7c3aed}
+.card.eksport-rm::before{background:#0891b2}
 .card.total{background:linear-gradient(135deg,#0f2640,#1a3a5c);border-color:#1a3a5c}
 .card.total::before{display:none}
-.card-icon{font-size:20px;margin-bottom:8px;opacity:0.5}
-.card-label{font-size:10px;color:#999;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600}
-.card-value{font-size:19px;font-weight:700;color:#1a1a2e}
+.card-icon{font-size:20px;margin-bottom:8px;opacity:.5}
+.card-label{font-size:10px;color:#999;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.card-value{font-size:18px;font-weight:700;color:#1a1a2e}
 .card-unit{font-size:10px;color:#bbb;margin-top:3px}
-.card.total .card-label{color:rgba(255,255,255,0.6)}
+.card.total .card-label{color:rgba(255,255,255,.6)}
 .card.total .card-value{color:white}
-.card.total .card-unit{color:rgba(255,255,255,0.4)}
-.card.total .card-icon{color:rgba(255,255,255,0.3)}
+.card.total .card-unit{color:rgba(255,255,255,.4)}
+.card.total .card-icon{color:rgba(255,255,255,.3)}
 .card.solar-c .card-value{color:#c47800}
 .card.kampus .card-value{color:#1a5fa8}
 .card.hospital .card-value{color:#1e7e34}
+.card.jimat .card-value{color:#7c3aed}
+.card.eksport-rm .card-value{color:#0891b2}
 
+/* ── CHARTS ── */
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
 .chart-box{background:white;border-radius:12px;padding:18px;border:1px solid #e0e6ed}
 .chart-title{font-size:13px;font-weight:700;color:#333;margin-bottom:3px}
@@ -77,19 +88,68 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .leg-dot{width:9px;height:9px;border-radius:2px}
 .trend-box{background:white;border-radius:12px;padding:18px;border:1px solid #e0e6ed;margin-bottom:22px}
 
+/* ── HEALTH ── */
 .sec-title{font-size:14px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 .health-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
-.hcard{flex:1;min-width:200px;background:white;border:1px solid #e0e6ed;border-radius:12px;padding:16px}
-.hhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.hcard{flex:1;min-width:195px;background:white;border:1px solid #e0e6ed;border-radius:12px;padding:16px}
+.hhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
 .hname{font-size:13px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:6px}
 .badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700}
 .b-ok{background:#e6f4ea;color:#1e7e34}
 .b-warn{background:#fff3cd;color:#856404}
-.hstat{font-size:12px;color:#999;margin:6px 0;display:flex;justify-content:space-between}
+.hstat{font-size:12px;color:#999;margin:5px 0;display:flex;justify-content:space-between}
 .hstat span{color:#1a1a2e;font-weight:600;font-size:13px}
-.bar-bg{background:#eef0f3;border-radius:6px;height:8px;margin-top:14px}
-.bar-fill{height:8px;border-radius:6px;transition:width 0.6s ease}
+.bar-bg{background:#eef0f3;border-radius:6px;height:8px;margin-top:12px}
+.bar-fill{height:8px;border-radius:6px;transition:width .6s}
 
+/* ── YOY ── */
+.yoy-section{margin-bottom:22px}
+.yoy-title{font-size:14px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.yoy-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;font-size:13px}
+.yoy-top label{color:#888;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.yoy-top select{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;font-size:13px;color:#333;cursor:pointer}
+.range-box{background:white;border-radius:10px;border:1px solid #e0e6ed;padding:14px 16px;margin-bottom:14px}
+.range-box-title{font-size:12px;font-weight:700;color:#555;margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.4px}
+.month-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.mpill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #c0cdd8;background:white;color:#555;cursor:pointer;transition:all .15s;user-select:none}
+.mpill:hover{border-color:#1a3a5c;color:#1a3a5c}
+.mpill.in-range{background:#dde9f7;border-color:#1a5fa8;color:#1a5fa8}
+.mpill.range-start,.mpill.range-end{background:#1a3a5c;border-color:#1a3a5c;color:white}
+.range-info{font-size:12px;color:#888;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.range-info strong{color:#1a3a5c}
+.range-reset{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #c0cdd8;background:white;color:#888;cursor:pointer}
+.range-reset:hover{color:#c0392b;border-color:#c0392b}
+.yoy-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
+.yoy-card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;position:relative;overflow:hidden}
+.yoy-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.yoy-card.kwh-card::before{background:#1a5fa8}
+.yoy-card.bil-card::before{background:#1e7e34}
+.yoy-card.solar-card::before{background:#e8a020}
+.yoy-card.jimat-card::before{background:#7c3aed}
+.yoy-card-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px}
+.yoy-row{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0}
+.yoy-year-label{font-size:11px;color:#aaa;font-weight:500}
+.yoy-val{font-size:14px;font-weight:700;color:#1a1a2e}
+.yoy-divider{border:none;border-top:1px dashed #eee;margin:7px 0}
+.yoy-delta{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-top:5px;flex-wrap:wrap}
+.yoy-delta.up{color:#c0392b}
+.yoy-delta.down{color:#1e7e34}
+.yoy-delta.flat{color:#888}
+.yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
+.yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
+.yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
+.yoy-table{width:100%;border-collapse:collapse;font-size:12px}
+.yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.yoy-table td{padding:8px 10px;border-bottom:1px solid #f4f6f9;color:#333;white-space:nowrap}
+.yoy-table tr:last-child td{border-bottom:none}
+.yoy-table tr:hover td{background:#fafbfc}
+.td-up{color:#c0392b!important;font-weight:700}
+.td-down{color:#1e7e34!important;font-weight:700}
+.td-num{text-align:right;font-weight:600}
+.td-total td{background:#f0f4f8!important;font-weight:700}
+.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
+
+/* ── STATES ── */
 .loading-state{text-align:center;padding:70px 20px;color:#bbb}
 .loading-state i{font-size:40px;display:block;margin-bottom:14px;animation:spin 1s linear infinite;color:#1a3a5c}
 .empty-state{text-align:center;padding:50px;color:#bbb;background:white;border-radius:12px;border:1px dashed #d0d8e0}
@@ -97,21 +157,38 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .error-state strong{display:block;margin-bottom:8px;font-size:14px}
 
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
-@media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}}
+
+/* ── PRINT / PDF ── */
+@media print{
+  body{background:white!important}
+  .topbar{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
+  .container{padding:0!important;max-width:100%!important}
+  .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important}
+  .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
+  .print-header{display:block!important}
+  canvas{max-width:100%}
+}
+.print-header{display:none;text-align:center;padding:16px 0 8px;border-bottom:2px solid #1a3a5c;margin-bottom:16px}
+.print-header h1{font-size:18px;color:#1a3a5c;font-weight:700}
+.print-header p{font-size:12px;color:#666;margin-top:4px}
+
+@media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.yoy-charts{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ADMIN MODAL — hanya untuk admin tukar Sheet ID -->
+<!-- ADMIN MODAL -->
 <div class="modal-bg" id="admin-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeAdmin()">✕</button>
     <h2><i class="ti ti-shield-lock" style="color:#1a3a5c"></i> Tetapan Admin</h2>
-    <p>Hanya admin yang perlu mengubah tetapan ini. Pengguna biasa tidak perlu masuk ke sini.</p>
+    <p>Hanya admin yang perlu mengubah tetapan ini.</p>
     <label>Google Sheets ID:</label>
     <input type="text" id="input-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
     <label>Nama Tab Sheet:</label>
-    <input type="text" id="input-sheet-name" placeholder="Sheet1">
+    <input type="text" id="input-sheet-name" placeholder="JPPF">
     <div class="modal-err" id="modal-err">⚠ Sila isi kedua-dua ruangan</div>
     <button class="modal-btn" onclick="saveAdmin()"><i class="ti ti-device-floppy"></i> Simpan & Muat Semula</button>
   </div>
@@ -133,11 +210,18 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 </div>
 
 <div class="container">
+  <!-- print header (hidden on screen) -->
+  <div class="print-header">
+    <h1>Laporan Pemantauan Tenaga USM</h1>
+    <p id="print-date"></p>
+  </div>
+
   <div class="status-bar">
     <div class="status-left"><i class="ti ti-database"></i><span id="status-label">Memuat data...</span></div>
     <div class="btn-group">
       <button class="icon-btn" id="refresh-btn" onclick="manualRefresh()"><i class="ti ti-refresh"></i> Refresh</button>
-      <button class="icon-btn" onclick="openAdmin()" title="Admin sahaja"><i class="ti ti-settings"></i></button>
+      <button class="icon-btn pdf-btn" onclick="printPDF()"><i class="ti ti-file-type-pdf"></i> Cetak / Simpan PDF</button>
+      <button class="icon-btn" onclick="openAdmin()" title="Admin"><i class="ti ti-settings"></i></button>
     </div>
   </div>
 
@@ -155,52 +239,47 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 <footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
-// ════════════════════════════════════════════════════════
-//  KONFIGURASI — ADMIN SAHAJA UBAH BAHAGIAN INI
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// KONFIGURASI — ADMIN SAHAJA
+// ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
-// ════════════════════════════════════════════════════════
+const REFRESH_SECONDS    = 30;
+// ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
+document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
 
-// Gunakan config yang disimpan admin, atau gunakan default di atas
-function getConfig() {
-  try {
-    const s = localStorage.getItem('usm_admin_config');
-    if (s) return JSON.parse(s);
-  } catch(e) {}
-  return { sheetId: DEFAULT_SHEET_ID, sheetName: DEFAULT_SHEET_NAME };
+function getConfig(){
+  try{ const s=localStorage.getItem('usm_admin_config'); if(s)return JSON.parse(s); }catch(e){}
+  return {sheetId:DEFAULT_SHEET_ID,sheetName:DEFAULT_SHEET_NAME};
 }
+let CONFIG=getConfig();
+let allRows=[],chartKwh,chartBil,chartTrend,countdownTimer,secondsLeft=REFRESH_SECONDS;
 
-let CONFIG = getConfig();
-let allRows = [], chartKwh, chartBil, chartTrend;
-let countdownTimer, secondsLeft = REFRESH_SECONDS;
+const BULAN_ORDER=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
 
-const BULAN_MAP = {jan:'Januari',feb:'Februari',mar:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};
-const BULAN_ORDER = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
-
-function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);return BULAN_MAP[s]||String(v).trim()}
+function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);const m={jan:'Januari',feb:'Februari',mar:'Mac',mac:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};return m[s]||String(v).trim()}
 function fmt(n){return(!n||isNaN(n))?'—':Math.round(n).toLocaleString('ms-MY')}
 function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString('ms-MY')}
 
-// ── ADMIN ──
-function openAdmin(){
-  document.getElementById('input-sheet-id').value = CONFIG.sheetId;
-  document.getElementById('input-sheet-name').value = CONFIG.sheetName;
-  document.getElementById('admin-modal').classList.add('show');
+// ── PRINT PDF ──
+function printPDF(){
+  document.getElementById('print-date').textContent='Dicetak: '+new Date().toLocaleString('ms-MY');
+  window.print();
 }
-function closeAdmin(){ document.getElementById('admin-modal').classList.remove('show'); }
+
+// ── ADMIN ──
+function openAdmin(){document.getElementById('input-sheet-id').value=CONFIG.sheetId;document.getElementById('input-sheet-name').value=CONFIG.sheetName;document.getElementById('admin-modal').classList.add('show')}
+function closeAdmin(){document.getElementById('admin-modal').classList.remove('show')}
 function saveAdmin(){
-  const id = document.getElementById('input-sheet-id').value.trim();
-  const name = document.getElementById('input-sheet-name').value.trim();
-  if(!id||!name){ document.getElementById('modal-err').style.display='block'; return; }
-  CONFIG = {sheetId:id, sheetName:name};
-  localStorage.setItem('usm_admin_config', JSON.stringify(CONFIG));
-  closeAdmin();
-  allRows = [];
-  loadData();
+  const id=document.getElementById('input-sheet-id').value.trim();
+  const name=document.getElementById('input-sheet-name').value.trim();
+  if(!id||!name){document.getElementById('modal-err').style.display='block';return}
+  CONFIG={sheetId:id,sheetName:name};
+  localStorage.setItem('usm_admin_config',JSON.stringify(CONFIG));
+  closeAdmin();allRows=[];loadData();
 }
 
 // ── FETCH ──
@@ -234,7 +313,15 @@ function detectColumns(lines){
       else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('rm'))m.ssdRm=idx;
       else if(h.includes('total')&&h.includes('rm'))m.totalRm=idx;
       else if(h.includes('solar')&&h.includes('kwh'))m.solarKwh=idx;
-      else if(h.includes('eksport')||h.includes('export'))m.eksportKwh=idx;
+      // NEW: Amaun Eksport (RM) — checked before eksport kwh
+      else if((h.includes('eksport')||h.includes('export'))&&h.includes('rm'))m.eksportRm=idx;
+      else if((h.includes('amaun'))&&(h.includes('eksport')||h.includes('export')))m.eksportRm=idx;
+      // Penjimatan Sebenar USM
+      else if(h.includes('penjimatan'))m.penjimatan=idx;
+      else if(h.includes('saving')&&h.includes('usm'))m.penjimatan=idx;
+      // eksport kWh (must come after eksport RM check)
+      else if((h.includes('eksport')||h.includes('export'))&&!h.includes('rm'))m.eksportKwh=idx;
+      else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
     });
     return{headerIdx:i,colMap:m};
   }
@@ -248,7 +335,15 @@ function buildRows(lines,headerIdx,colMap){
     const bRaw=row[colMap.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
-    rows.push({bulan:normBulan(bRaw),tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh')});
+    rows.push({
+      bulan:normBulan(bRaw),
+      tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
+      ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
+      ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
+      solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
+      eksportRm:n('eksportRm'),        // NEW
+      penjimatan:n('penjimatan')       // NEW
+    });
   }
   return rows;
 }
@@ -266,12 +361,12 @@ async function loadData(isManual=false){
     if(!rows.length) throw new Error('Tiada baris data yang sah.');
     const isFirst=allRows.length===0;
     allRows=rows;
-    document.getElementById('status-label').textContent=`✓ ${rows.length} rekod | Dikemas kini: ${new Date().toLocaleTimeString('ms-MY')} | Sheet: ${CONFIG.sheetName}`;
+    document.getElementById('status-label').textContent=`✓ ${rows.length} rekod | ${new Date().toLocaleTimeString('ms-MY')} | Sheet: ${CONFIG.sheetName}`;
     if(isFirst){buildDropdowns();renderShell();}else{buildDropdowns();updateDisplay();}
   }catch(err){
     document.getElementById('status-label').textContent='⚠ '+err.message;
     if(allRows.length===0){
-      document.getElementById('main-content').innerHTML=`<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal sambung ke Google Sheets</strong>${err.message}<br><br><strong>Semak:</strong><br>1. Google Sheet dikongsi: Share → Anyone with the link → Viewer<br>2. Klik ikon ⚙ (Tetapan) untuk semak Sheet ID dan nama tab</div>`;
+      document.getElementById('main-content').innerHTML=`<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal sambung ke Google Sheets</strong>${err.message}<br><br><strong>Semak:</strong><br>1. Sheet dikongsi: Share → Anyone with link → Viewer<br>2. Klik ⚙ untuk semak Sheet ID dan nama tab</div>`;
     }
   }finally{
     btn.classList.remove('spinning');
@@ -279,11 +374,10 @@ async function loadData(isManual=false){
   }
 }
 
-function manualRefresh(){clearInterval(countdownTimer);loadData(true);}
+function manualRefresh(){clearInterval(countdownTimer);loadData(true)}
 
 function resetCountdown(){
-  secondsLeft=REFRESH_SECONDS;
-  clearInterval(countdownTimer);
+  secondsLeft=REFRESH_SECONDS;clearInterval(countdownTimer);
   countdownTimer=setInterval(()=>{
     secondsLeft--;
     const m=Math.floor(secondsLeft/60),s=secondsLeft%60;
@@ -294,12 +388,12 @@ function resetCountdown(){
 
 function buildDropdowns(){
   const years=[...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort();
-  const selT=document.getElementById('sel-tahun');const prevT=selT.value;
+  const selT=document.getElementById('sel-tahun');const pT=selT.value;
   selT.innerHTML='<option>-- Semua Tahun --</option>';
-  years.forEach(y=>{const o=document.createElement('option');o.textContent=y;if(y===prevT)o.selected=true;selT.appendChild(o);});
-  const selB=document.getElementById('sel-bulan');const prevB=selB.value;
+  years.forEach(y=>{const o=document.createElement('option');o.textContent=y;if(y===pT)o.selected=true;selT.appendChild(o);});
+  const selB=document.getElementById('sel-bulan');const pB=selB.value;
   selB.innerHTML='<option>-- Semua Bulan --</option>';
-  BULAN_ORDER.forEach(b=>{const o=document.createElement('option');o.textContent=b;if(b===prevB)o.selected=true;selB.appendChild(o);});
+  BULAN_ORDER.forEach(b=>{const o=document.createElement('option');o.textContent=b;if(b===pB)o.selected=true;selB.appendChild(o);});
 }
 
 function getFiltered(){
@@ -311,7 +405,12 @@ function getFiltered(){
 }
 
 function sumRows(rows){
-  return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,ssaRm:0,ssdRm:0,totalRm:0});
+  return rows.reduce((a,r)=>({
+    ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
+    solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,
+    eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,
+    ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm
+  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,ssaRm:0,ssdRm:0,totalRm:0});
 }
 
 function renderShell(){
@@ -320,45 +419,65 @@ function renderShell(){
     <div class="charts">
       <div class="chart-box">
         <div class="chart-title">Penggunaan Tenaga (kWh)</div>
-        <div class="chart-sub">SS-A Kampus vs SS-D HPUSM vs Solar</div>
-        <div class="legend"><span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span><span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span><span><span class="leg-dot" style="background:#e8a020"></span>Solar</span></div>
+        <div class="chart-sub">SS-A Kampus · SS-D HPUSM · Solar</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span>
+          <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
+          <span><span class="leg-dot" style="background:#e8a020"></span>Solar</span>
+        </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
       </div>
       <div class="chart-box">
-        <div class="chart-title">Bil Tenaga (RM)</div>
-        <div class="chart-sub">SS-A Kampus vs SS-D HPUSM</div>
-        <div class="legend"><span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span><span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span></div>
+        <div class="chart-title">Bil & Penjimatan (RM)</div>
+        <div class="chart-sub">SS-A · SS-D · Eksport · Penjimatan</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span>
+          <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
+          <span><span class="leg-dot" style="background:#0891b2"></span>Eksport</span>
+          <span><span class="leg-dot" style="background:#7c3aed"></span>Penjimatan</span>
+        </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
       </div>
     </div>
     <div class="trend-box">
-      <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
+      <div class="chart-title">Trend Bulanan — Total kWh & Penjimatan (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
-    <div class="health-row" id="health-row"></div>`;
+    <div class="health-row" id="health-row"></div>
+    <div id="yoy-section"></div>`;
+  buildYoY();
   updateDisplay();
 }
 
 function updateDisplay(){
   if(!document.getElementById('metrics-grid'))return;
   const filtered=getFiltered();
-  if(!filtered.length){document.getElementById('metrics-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-filter-off" style="font-size:30px;display:block;margin-bottom:10px"></i>Tiada data untuk pilihan ini</div>';return;}
+  if(!filtered.length){
+    document.getElementById('metrics-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-filter-off" style="font-size:30px;display:block;margin-bottom:10px"></i>Tiada data untuk pilihan ini</div>';
+    return;
+  }
   const d=sumRows(filtered);
   const solarPct=d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
   const label=filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
+
+  // ── 10 METRIC CARDS ──
   document.getElementById('metrics-grid').innerHTML=`
     <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
-    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}% drpd total</div></div>
+    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(d.totalKwh)}</div><div class="card-unit">${label}</div></div>
-    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM(d.ssaRm)}</div><div class="card-unit">Ringgit Malaysia</div></div>
-    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM(d.ssdRm)}</div><div class="card-unit">Ringgit Malaysia</div></div>
-    <div class="card solar-c"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Tenaga Eksport</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
+    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
+    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
+    <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
+    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan Sebenar USM</div><div class="card-value">${fmtRM(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
+    <div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
+
   renderCharts(filtered,d);
   renderHealth(d);
+  if(window._refreshYoYDropdowns) window._refreshYoYDropdowns();
 }
 
 function renderCharts(filtered,d){
@@ -369,183 +488,113 @@ function renderCharts(filtered,d){
   const tck={color:'#999',font:{size:10}};
   const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
   if(multi){
-    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:[{label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},{label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},{label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,0.85)',borderRadius:3,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
-    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:[{label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},{label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
+    chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:[
+      {label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+      {label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},
+      {label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false}
+    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:[
+      {label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+      {label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},
+      {label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
+      {label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false}
+    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
-    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[{label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',yAxisID:'y'},{label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#e8a020',yAxisID:'y2',borderDash:[4,3]}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:lbl,datasets:[
+      {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#1a5fa8',yAxisID:'y'},
+      {label:'Penjimatan RM',data:sorted.map(r=>r.penjimatan),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.07)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#7c3aed',yAxisID:'y2',borderDash:[4,3]}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'},position:'left'},y2:{ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{display:false},position:'right'}}}});
   }else{
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)','Solar'],datasets:[{data:[d.ssaKwh,d.ssdKwh,d.solarKwh],backgroundColor:['#1a5fa8','#1e7e34','#e8a020'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
-    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['SS-A (Kampus)','SS-D (HPUSM)'],datasets:[{data:[d.ssaRm,d.ssdRm],backgroundColor:['#1a5fa8','#1e7e34'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
-    if(chartTrend)chartTrend.destroy();
-    document.getElementById('trend-sub').textContent='Pilih lebih daripada 1 bulan untuk paparan trend';
-    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',data:{labels:['Total kWh','Total RM'],datasets:[{data:[d.totalKwh,d.totalRm],backgroundColor:['#1a5fa8','#e8a020'],borderRadius:6}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
+    chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:['Bil SS-A','Bil SS-D','Eksport (RM)','Penjimatan'],datasets:[{data:[d.ssaRm,d.ssdRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6,borderSkipped:false}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+v.toLocaleString()}}}}});
+    chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v.toLocaleString()}}}}});
   }
 }
 
 function renderHealth(d){
   const lSSA=Math.min(Math.round((d.ssaKwh/(d.ssaKwh+d.ssdKwh||1))*100),100),lSSD=100-lSSA;
   const sSSA=lSSA>70?'warn':'ok',sSSD=lSSD>70?'warn':'ok';
-  const solarOk=d.solarKwh>0;
   document.getElementById('health-row').innerHTML=`
-    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-building" style="color:#1a5fa8"></i> SS-A (Kampus)</div><span class="badge b-${sSSA}">${sSSA==='ok'?'NORMAL':'PERHATIAN'}</span></div><div class="hstat">Nisbah beban<span>${lSSA}%</span></div><div class="hstat">Jumlah kWh<span>${fmt(d.ssaKwh)}</span></div><div class="hstat">Jumlah Bil<span>${fmtRM(d.ssaRm)}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${lSSA}%;background:${sSSA==='ok'?'#1e7e34':'#e8a020'}"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-building-hospital" style="color:#1e7e34"></i> SS-D (HPUSM)</div><span class="badge b-${sSSD}">${sSSD==='ok'?'NORMAL':'PERHATIAN'}</span></div><div class="hstat">Nisbah beban<span>${lSSD}%</span></div><div class="hstat">Jumlah kWh<span>${fmt(d.ssdKwh)}</span></div><div class="hstat">Jumlah Bil<span>${fmtRM(d.ssdRm)}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${lSSD}%;background:${sSSD==='ok'?'#1e7e34':'#e8a020'}"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-solar-panel" style="color:#e8a020"></i> Tenaga Solar</div><span class="badge ${solarOk?'b-ok':'b-warn'}">${solarOk?'AKTIF':'TIADA DATA'}</span></div><div class="hstat">Janaan<span>${fmt(d.solarKwh)} kWh</span></div><div class="hstat">Eksport<span>${fmt(d.eksportKwh)} kWh</span></div><div class="hstat">% drpd total<span>${d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):0}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div></div>`;
+    <div class="hcard">
+      <div class="hhead"><div class="hname"><i class="ti ti-building" style="color:#1a5fa8"></i> SS-A (Kampus)</div><span class="badge b-${sSSA}">${sSSA==='ok'?'NORMAL':'PERHATIAN'}</span></div>
+      <div class="hstat">Nisbah beban<span>${lSSA}%</span></div>
+      <div class="hstat">Jumlah kWh<span>${fmt(d.ssaKwh)}</span></div>
+      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssaRm)}</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${lSSA}%;background:${sSSA==='ok'?'#1e7e34':'#e8a020'}"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead"><div class="hname"><i class="ti ti-building-hospital" style="color:#1e7e34"></i> SS-D (HPUSM)</div><span class="badge b-${sSSD}">${sSSD==='ok'?'NORMAL':'PERHATIAN'}</span></div>
+      <div class="hstat">Nisbah beban<span>${lSSD}%</span></div>
+      <div class="hstat">Jumlah kWh<span>${fmt(d.ssdKwh)}</span></div>
+      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssdRm)}</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${lSSD}%;background:${sSSD==='ok'?'#1e7e34':'#e8a020'}"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead"><div class="hname"><i class="ti ti-solar-panel" style="color:#e8a020"></i> Solar & Penjimatan</div><span class="badge b-ok">${d.solarKwh>0?'AKTIF':'TIADA DATA'}</span></div>
+      <div class="hstat">Janaan Solar<span>${fmt(d.solarKwh)} kWh</span></div>
+      <div class="hstat">Eksport kWh<span>${fmt(d.eksportKwh)} kWh</span></div>
+      <div class="hstat">Amaun Eksport<span>${fmtRM(d.eksportRm)}</span></div>
+      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM(d.penjimatan)}</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div>
+    </div>`;
 }
 
-// Mulakan
-loadData();
-</script>
-</body>
-</html>
-<!-- PATCH: YoY comparison with month range picker -->
-<script>
-(function patchYoY(){
+// ══════════════════════════════════════════════
+// YoY SECTION
+// ══════════════════════════════════════════════
+let rangeStart=0,rangeEnd=11,yoySelecting=false,yoyKwhChart,yoyBilChart;
 
-const styleEl = document.createElement('style');
-styleEl.textContent = `
-.yoy-section{margin-bottom:22px}
-.yoy-title{font-size:14px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-
-/* top controls row */
-.yoy-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;font-size:13px}
-.yoy-top label{color:#888;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
-.yoy-top select{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;font-size:13px;color:#333;cursor:pointer}
-
-/* month range picker */
-.range-box{background:white;border-radius:10px;border:1px solid #e0e6ed;padding:14px 16px;margin-bottom:14px}
-.range-box-title{font-size:12px;font-weight:700;color:#555;margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.4px}
-.month-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.mpill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #c0cdd8;background:white;color:#555;cursor:pointer;transition:all .15s;user-select:none}
-.mpill:hover{border-color:#1a3a5c;color:#1a3a5c}
-.mpill.in-range{background:#dde9f7;border-color:#1a5fa8;color:#1a5fa8}
-.mpill.range-start,.mpill.range-end{background:#1a3a5c;border-color:#1a3a5c;color:white}
-.range-info{font-size:12px;color:#888;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.range-info strong{color:#1a3a5c}
-.range-reset{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #c0cdd8;background:white;color:#888;cursor:pointer}
-.range-reset:hover{color:#c0392b;border-color:#c0392b}
-
-/* summary cards */
-.yoy-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
-.yoy-card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;position:relative;overflow:hidden}
-.yoy-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.yoy-card.kwh-card::before{background:#1a5fa8}
-.yoy-card.bil-card::before{background:#1e7e34}
-.yoy-card.solar-card::before{background:#e8a020}
-.yoy-card-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px}
-.yoy-row{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0}
-.yoy-year-label{font-size:11px;color:#aaa;font-weight:500}
-.yoy-val{font-size:15px;font-weight:700;color:#1a1a2e}
-.yoy-divider{border:none;border-top:1px dashed #eee;margin:7px 0}
-.yoy-delta{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-top:5px;flex-wrap:wrap}
-.yoy-delta.up{color:#c0392b}
-.yoy-delta.down{color:#1e7e34}
-.yoy-delta.flat{color:#888}
-
-/* charts & table */
-.yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
-.yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
-.yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
-.yoy-table{width:100%;border-collapse:collapse;font-size:12px}
-.yoy-table th{background:#f0f4f8;padding:8px 12px;text-align:left;font-weight:700;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-.yoy-table td{padding:8px 12px;border-bottom:1px solid #f4f6f9;color:#333}
-.yoy-table tr:last-child td{border-bottom:none}
-.yoy-table tr:hover td{background:#fafbfc}
-.td-up{color:#c0392b!important;font-weight:700}
-.td-down{color:#1e7e34!important;font-weight:700}
-.td-num{text-align:right;font-weight:600}
-.td-total{background:#f0f4f8!important;font-weight:700}
-.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
-@media(max-width:640px){.yoy-charts{grid-template-columns:1fr}}
-`;
-document.head.appendChild(styleEl);
-
-const BULAN_ORDER = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
-const BULAN_SHORT = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
-
-// Range state
-let rangeStart = 0, rangeEnd = 11, selecting = false;
-
-function injectYoYSection(){
-  const healthRow = document.getElementById('health-row');
-  if(!healthRow) return;
-  const wrapper = healthRow.parentElement;
-  const div = document.createElement('div');
-  div.className='yoy-section'; div.id='yoy-section';
-
-  // Build month pills HTML
-  const pillsHTML = BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="mpill-${i}">${b}</span>`).join('');
-
-  div.innerHTML=`
-    <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
-
+function buildYoY(){
+  const el=document.getElementById('yoy-section');
+  if(!el)return;
+  const pillsHTML=BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="mpill-${i}">${b}</span>`).join('');
+  el.innerHTML=`
+    <div class="yoy-title" style="margin-top:8px"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
     <div class="yoy-top">
-      <label>Tahun Semasa:</label>
-      <select id="yoy-curr"></select>
-      <label style="margin-left:4px">Berbanding:</label>
-      <select id="yoy-prev"></select>
+      <label>Tahun Semasa:</label><select id="yoy-curr"></select>
+      <label style="margin-left:6px">Berbanding:</label><select id="yoy-prev"></select>
     </div>
-
     <div class="range-box">
-      <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
+      <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan — Klik mula, klik akhir</div>
       <div class="month-pills" id="month-pills">${pillsHTML}</div>
-      <div class="range-info">
-        Skop: <strong id="range-label">Januari — Disember (12 bulan)</strong>
-        <button class="range-reset" onclick="resetRange()"><i class="ti ti-refresh"></i> Reset</button>
+      <div class="range-info">Skop: <strong id="range-label">Januari — Disember (12 bulan)</strong>
+        <button class="range-reset" onclick="resetYoyRange()"><i class="ti ti-refresh"></i> Reset</button>
       </div>
     </div>
-
     <div id="yoy-content"></div>`;
-  wrapper.appendChild(div);
-
-  document.getElementById('yoy-curr').addEventListener('change', renderYoY);
-  document.getElementById('yoy-prev').addEventListener('change', renderYoY);
-
-  // Month pill click logic — click start, click end
-  document.getElementById('month-pills').addEventListener('click', e=>{
-    const pill = e.target.closest('.mpill');
-    if(!pill) return;
-    const idx = parseInt(pill.dataset.idx);
-    if(!selecting){
-      rangeStart = idx; rangeEnd = idx; selecting = true;
-    } else {
-      if(idx < rangeStart){ rangeStart = idx; }
-      else { rangeEnd = idx; }
-      selecting = false;
-    }
-    updatePills(); renderYoY();
+  document.getElementById('yoy-curr').addEventListener('change',renderYoY);
+  document.getElementById('yoy-prev').addEventListener('change',renderYoY);
+  document.getElementById('month-pills').addEventListener('click',e=>{
+    const pill=e.target.closest('.mpill');if(!pill)return;
+    const idx=parseInt(pill.dataset.idx);
+    if(!yoySelecting){rangeStart=idx;rangeEnd=idx;yoySelecting=true;}
+    else{if(idx<rangeStart)rangeStart=idx;else rangeEnd=idx;yoySelecting=false;}
+    updateYoyPills();renderYoY();
   });
-
-  updatePills();
+  updateYoyPills();
 }
 
-function updatePills(){
-  const s = Math.min(rangeStart,rangeEnd), e = Math.max(rangeStart,rangeEnd);
+window.resetYoyRange=function(){rangeStart=0;rangeEnd=11;yoySelecting=false;updateYoyPills();renderYoY();};
+
+function updateYoyPills(){
+  const s=Math.min(rangeStart,rangeEnd),e=Math.max(rangeStart,rangeEnd);
   BULAN_SHORT.forEach((_,i)=>{
-    const p = document.getElementById('mpill-'+i);
-    if(!p) return;
+    const p=document.getElementById('mpill-'+i);if(!p)return;
     p.className='mpill';
-    if(i===s) p.classList.add('range-start');
-    if(i===e && e!==s) p.classList.add('range-end');
-    if(i>s && i<e) p.classList.add('in-range');
+    if(i===s)p.classList.add('range-start');
+    if(i===e&&e!==s)p.classList.add('range-end');
+    if(i>s&&i<e)p.classList.add('in-range');
   });
-  const label = document.getElementById('range-label');
-  if(label){
-    const s2=Math.min(rangeStart,rangeEnd), e2=Math.max(rangeStart,rangeEnd);
-    const n = e2-s2+1;
-    label.textContent = s2===e2
-      ? BULAN_ORDER[s2]+' sahaja'
-      : BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+n+' bulan)';
-  }
+  const lb=document.getElementById('range-label');
+  if(lb){const s2=Math.min(rangeStart,rangeEnd),e2=Math.max(rangeStart,rangeEnd);lb.textContent=s2===e2?BULAN_ORDER[s2]+' sahaja':BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+(e2-s2+1)+' bulan)';}
 }
 
-window.resetRange = function(){ rangeStart=0; rangeEnd=11; selecting=false; updatePills(); renderYoY(); };
-
-window._refreshYoYDropdowns = function(){
-  const years=[...new Set(window._allRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
-  const curr=document.getElementById('yoy-curr'), prev=document.getElementById('yoy-prev');
-  if(!curr||!prev) return;
-  const oldC=curr.value, oldP=prev.value;
-  curr.innerHTML=''; prev.innerHTML='';
+window._refreshYoYDropdowns=function(){
+  const years=[...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  const curr=document.getElementById('yoy-curr'),prev=document.getElementById('yoy-prev');
+  if(!curr||!prev)return;
+  const oldC=curr.value,oldP=prev.value;
+  curr.innerHTML='';prev.innerHTML='';
   years.forEach((y,i)=>{
     const oc=document.createElement('option');oc.textContent=y;oc.value=y;if(y===oldC||(oldC===''&&i===0))oc.selected=true;curr.appendChild(oc);
     const op=document.createElement('option');op.textContent=y;op.value=y;if(y===oldP||(oldP===''&&i===1))op.selected=true;prev.appendChild(op);
@@ -554,189 +603,166 @@ window._refreshYoYDropdowns = function(){
 };
 
 function getRowsInRange(year){
-  const s=Math.min(rangeStart,rangeEnd), e=Math.max(rangeStart,rangeEnd);
-  const bulanDlm = BULAN_ORDER.slice(s, e+1);
-  return window._allRows.filter(r=>r.tahun===year && bulanDlm.includes(r.bulan));
+  const s=Math.min(rangeStart,rangeEnd),e=Math.max(rangeStart,rangeEnd);
+  return allRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
 }
 
-function sumR(rows){ return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,ssaRm:0,ssdRm:0,totalRm:0}); }
-function fmtN(n){ return Math.round(n).toLocaleString('ms-MY'); }
-function fmtRM2(n){ return 'RM '+Math.round(n).toLocaleString('ms-MY'); }
-function delta(c,p){
-  if(!p) return {pct:'—',cls:'flat',arrow:'→'};
-  const pct=(c-p)/p*100;
-  return {pct:(pct>=0?'+':'')+pct.toFixed(1)+'%', cls:pct>0.05?'up':pct<-0.05?'down':'flat', arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};
-}
-
-let yoyKwhChart, yoyBilChart;
+function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,ssaRm:0,ssdRm:0,totalRm:0});}
+function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
+function fmtRM2(n){return 'RM '+Math.round(n).toLocaleString('ms-MY')}
+function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
 
 function renderYoY(){
   const currY=document.getElementById('yoy-curr')?.value;
   const prevY=document.getElementById('yoy-prev')?.value;
   const el=document.getElementById('yoy-content');
-  if(!el||!currY||!prevY) return;
-
-  const s=Math.min(rangeStart,rangeEnd), e=Math.max(rangeStart,rangeEnd);
-  const bulanDlm = BULAN_ORDER.slice(s, e+1);
-  const shortDlm = BULAN_SHORT.slice(s, e+1);
-
-  const currRows=getRowsInRange(currY), prevRows=getRowsInRange(prevY);
-  if(!currRows.length&&!prevRows.length){
-    el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk tahun dan julat bulan yang dipilih</div>';
-    return;
-  }
-
-  const c=sumR(currRows), p=sumR(prevRows);
-  const dKwh=delta(c.totalKwh,p.totalKwh), dBil=delta(c.totalRm,p.totalRm);
-  const dSSAk=delta(c.ssaKwh,p.ssaKwh), dSSDk=delta(c.ssdKwh,p.ssdKwh);
-  const dSSAr=delta(c.ssaRm,p.ssaRm), dSSDr=delta(c.ssdRm,p.ssdRm);
-  const dSol=delta(c.solarKwh,p.solarKwh);
-  const rangeStr = s===e ? BULAN_ORDER[s] : BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
+  if(!el||!currY||!prevY)return;
+  const s=Math.min(rangeStart,rangeEnd),e=Math.max(rangeStart,rangeEnd);
+  const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
+  const currRows=getRowsInRange(currY),prevRows=getRowsInRange(prevY);
+  if(!currRows.length&&!prevRows.length){el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk pilihan ini</div>';return;}
+  const c=sumR(currRows),p=sumR(prevRows);
+  const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
+  const dK=delta(c.totalKwh,p.totalKwh),dB=delta(c.totalRm,p.totalRm);
+  const dSSAk=delta(c.ssaKwh,p.ssaKwh),dSSDk=delta(c.ssdKwh,p.ssdKwh);
+  const dSSAr=delta(c.ssaRm,p.ssaRm),dSSDr=delta(c.ssdRm,p.ssdRm);
+  const dSol=delta(c.solarKwh,p.solarKwh),dExp=delta(c.eksportRm,p.eksportRm),dJim=delta(c.penjimatan,p.penjimatan);
 
   let html=`<div class="yoy-summary">
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
-      <hr class="yoy-divider">
-      <div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct} <span style="font-weight:400;font-size:10px">vs ${prevY}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dK.cls}">${dK.arrow} ${dK.pct}</div>
     </div>
     <div class="yoy-card bil-card">
       <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
-      <hr class="yoy-divider">
-      <div class="yoy-delta ${dBil.cls}">${dBil.arrow} ${dBil.pct} <span style="font-weight:400;font-size:10px">vs ${prevY}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dB.cls}">${dB.arrow} ${dB.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
-      <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh (Kampus)</div>
+      <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.ssaKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.ssaKwh)}</span></div>
-      <hr class="yoy-divider">
-      <div class="yoy-delta ${dSSAk.cls}">${dSSAk.arrow} ${dSSAk.pct}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.ssaKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dSSAk.cls}">${dSSAk.arrow} ${dSSAk.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
-      <div class="yoy-card-label"><i class="ti ti-building-hospital"></i> SS-D kWh (HPUSM)</div>
+      <div class="yoy-card-label"><i class="ti ti-building-hospital"></i> SS-D kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.ssdKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.ssdKwh)}</span></div>
-      <hr class="yoy-divider">
-      <div class="yoy-delta ${dSSDk.cls}">${dSSDk.arrow} ${dSSDk.pct}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.ssdKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dSSDk.cls}">${dSSDk.arrow} ${dSSDk.pct}</div>
     </div>
     <div class="yoy-card solar-card">
       <div class="yoy-card-label"><i class="ti ti-solar-panel"></i> Janaan Solar</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#c47800">${fmtN(c.solarKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.solarKwh)}</span></div>
-      <hr class="yoy-divider">
-      <div class="yoy-delta ${dSol.cls}">${dSol.arrow} ${dSol.pct}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.solarKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dSol.cls}">${dSol.arrow} ${dSol.pct}</div>
+    </div>
+    <div class="yoy-card" style="border-top:3px solid #0891b2">
+      <div class="yoy-card-label" style="color:#0891b2"><i class="ti ti-arrow-up-right"></i> Amaun Eksport (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#0891b2">${fmtRM2(c.eksportRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.eksportRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dExp.cls}">${dExp.arrow} ${dExp.pct}</div>
+    </div>
+    <div class="yoy-card jimat-card">
+      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> Penjimatan USM (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.penjimatan)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dJim.cls}">${dJim.arrow} ${dJim.pct}</div>
     </div>
     <div class="yoy-card bil-card">
-      <div class="yoy-card-label"><i class="ti ti-receipt"></i> Bil SS-A + SS-D</div>
-      <div class="yoy-row"><span class="yoy-year-label">SS-A ${currY}</span><span class="yoy-val" style="font-size:13px;color:#1a5fa8">${fmtRM2(c.ssaRm)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">SS-D ${currY}</span><span class="yoy-val" style="font-size:13px;color:#1e7e34">${fmtRM2(c.ssdRm)}</span></div>
+      <div class="yoy-card-label"><i class="ti ti-receipt"></i> Bil SS-A vs SS-D</div>
+      <div class="yoy-row"><span class="yoy-year-label">SS-A ${currY}</span><span class="yoy-val" style="font-size:12px;color:#1a5fa8">${fmtRM2(c.ssaRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">SS-D ${currY}</span><span class="yoy-val" style="font-size:12px;color:#1e7e34">${fmtRM2(c.ssdRm)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta" style="font-size:11px;gap:8px">
-        <span class="${dSSAr.cls}">SS-A ${dSSAr.arrow}${dSSAr.pct}</span>
-        <span class="${dSSDr.cls}">SS-D ${dSSDr.arrow}${dSSDr.pct}</span>
+      <div class="yoy-delta" style="font-size:11px;gap:6px">
+        <span class="${dSSAr.cls}">A ${dSSAr.arrow}${dSSAr.pct}</span>
+        <span class="${dSSDr.cls}">D ${dSSDr.arrow}${dSSDr.pct}</span>
       </div>
     </div>
   </div>`;
 
-  // Charts
+  // charts
   const getCurr=b=>currRows.find(r=>r.bulan===b);
   const getPrev=b=>prevRows.find(r=>r.bulan===b);
-  const cKwh=bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh);
-  const pKwh=bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh);
-  const cBil=bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm);
-  const pBil=bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm);
-
   html+=`<div class="yoy-charts">
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — ${rangeStr}</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
-      <div class="legend" style="margin-bottom:10px">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a0bdd8;margin-right:4px"></span>${prevY}</span>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh — ${rangeStr}</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:8px">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#a0bdd8;margin-right:4px"></span>${prevY}</span>
       </div>
-      <div style="position:relative;width:100%;height:220px"><canvas id="yoy-kwh-chart"></canvas></div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="yoy-kwh-chart"></canvas></div>
     </div>
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — ${rangeStr}</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
-      <div class="legend" style="margin-bottom:10px">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>${currY}</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8ec49a;margin-right:4px"></span>${prevY}</span>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan & Eksport (RM) — ${rangeStr}</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:8px">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
       </div>
-      <div style="position:relative;width:100%;height:220px"><canvas id="yoy-bil-chart"></canvas></div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
     </div>
   </div>`;
 
-  // Table
+  // table
   html+=`<div class="yoy-table-box">
-    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">
-      Jadual Perbandingan — ${rangeStr} &nbsp;|&nbsp; ${currY} vs ${prevY}
-    </div>
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
     <table class="yoy-table"><thead><tr>
       <th>Bulan</th>
       <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
       <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
+      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th>
     </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
-    const cr=getCurr(b), pr=getPrev(b);
-    const dK=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
-    const dB=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
+    const cr=getCurr(b),pr=getPrev(b);
+    const dKr=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
+    const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
     html+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
       <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
       <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
-      <td class="td-num td-${dK.cls}">${(cr&&pr)?dK.pct:'—'}</td>
+      <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
       <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
       <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
-      <td class="td-num td-${dB.cls}">${(cr&&pr)?dB.pct:'—'}</td>
+      <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
+      <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
+      <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
     </tr>`;
   });
-  // Jumlah row
-  const dKT=delta(c.totalKwh,p.totalKwh), dBT=delta(c.totalRm,p.totalRm);
+  const dKT=delta(c.totalKwh,p.totalKwh),dBT=delta(c.totalRm,p.totalRm);
   html+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
-    <td class="td-num">${fmtN(c.totalKwh)}</td>
-    <td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
+    <td class="td-num">${fmtN(c.totalKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
-    <td class="td-num">${fmtRM2(c.totalRm)}</td>
-    <td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
+    <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
-  </tr>`;
-  html+=`</tbody></table></div>`;
+    <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
+    <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
+  </tr></tbody></table></div>`;
 
   el.innerHTML=html;
 
-  // Draw charts
   if(yoyKwhChart)yoyKwhChart.destroy();
   if(yoyBilChart)yoyBilChart.destroy();
   const tck={color:'#999',font:{size:10}};
-  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
-
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:cKwh,backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:pKwh,backgroundColor:'rgba(160,189,216,0.7)',borderRadius:3,borderSkipped:false}
+    {label:currY,data:bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
-
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:cBil,backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:pBil,backgroundColor:'rgba(142,196,154,0.7)',borderRadius:3,borderSkipped:false}
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false}
   ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
 }
 
-const origRenderShell=window.renderShell;
-window.renderShell=function(){
-  origRenderShell&&origRenderShell();
-  setTimeout(()=>{injectYoYSection();window._allRows=allRows;window._refreshYoYDropdowns();},100);
-};
-const origUpdateDisplay=window.updateDisplay;
-window.updateDisplay=function(){
-  origUpdateDisplay&&origUpdateDisplay();
-  window._allRows=allRows;
-  if(document.getElementById('yoy-curr'))window._refreshYoYDropdowns();
-};
-
-})();
+// ── INIT ──
+loadData();
 </script>
+</body>
+</html>
