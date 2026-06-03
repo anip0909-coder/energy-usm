@@ -160,7 +160,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ════════════════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ════════════════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -397,286 +397,345 @@ loadData();
 </script>
 </body>
 </html>
-<!-- PATCH: YoY comparison styles & section injected via script below -->
+<!-- PATCH: YoY comparison with month range picker -->
 <script>
 (function patchYoY(){
 
-// ── TAMBAH CSS ──
-const css = `
+const styleEl = document.createElement('style');
+styleEl.textContent = `
 .yoy-section{margin-bottom:22px}
 .yoy-title{font-size:14px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.yoy-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed;font-size:13px}
-.yoy-controls label{color:#888;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
-.yoy-controls select{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;font-size:13px;color:#333;cursor:pointer}
-.yoy-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+
+/* top controls row */
+.yoy-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;font-size:13px}
+.yoy-top label{color:#888;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.yoy-top select{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;font-size:13px;color:#333;cursor:pointer}
+
+/* month range picker */
+.range-box{background:white;border-radius:10px;border:1px solid #e0e6ed;padding:14px 16px;margin-bottom:14px}
+.range-box-title{font-size:12px;font-weight:700;color:#555;margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.4px}
+.month-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.mpill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #c0cdd8;background:white;color:#555;cursor:pointer;transition:all .15s;user-select:none}
+.mpill:hover{border-color:#1a3a5c;color:#1a3a5c}
+.mpill.in-range{background:#dde9f7;border-color:#1a5fa8;color:#1a5fa8}
+.mpill.range-start,.mpill.range-end{background:#1a3a5c;border-color:#1a3a5c;color:white}
+.range-info{font-size:12px;color:#888;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.range-info strong{color:#1a3a5c}
+.range-reset{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #c0cdd8;background:white;color:#888;cursor:pointer}
+.range-reset:hover{color:#c0392b;border-color:#c0392b}
+
+/* summary cards */
+.yoy-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
 .yoy-card{background:white;border-radius:12px;padding:14px 16px;border:1px solid #e0e6ed;position:relative;overflow:hidden}
 .yoy-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .yoy-card.kwh-card::before{background:#1a5fa8}
 .yoy-card.bil-card::before{background:#1e7e34}
 .yoy-card.solar-card::before{background:#e8a020}
 .yoy-card-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px}
-.yoy-row{display:flex;justify-content:space-between;align-items:baseline;margin:5px 0}
+.yoy-row{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0}
 .yoy-year-label{font-size:11px;color:#aaa;font-weight:500}
 .yoy-val{font-size:15px;font-weight:700;color:#1a1a2e}
-.yoy-divider{border:none;border-top:1px dashed #eee;margin:8px 0}
-.yoy-delta{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-top:6px}
+.yoy-divider{border:none;border-top:1px dashed #eee;margin:7px 0}
+.yoy-delta{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-top:5px;flex-wrap:wrap}
 .yoy-delta.up{color:#c0392b}
 .yoy-delta.down{color:#1e7e34}
 .yoy-delta.flat{color:#888}
+
+/* charts & table */
 .yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
-.yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto}
+.yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
 .yoy-table{width:100%;border-collapse:collapse;font-size:12px}
-.yoy-table th{background:#f0f4f8;padding:8px 12px;text-align:left;font-weight:700;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-.yoy-table td{padding:8px 12px;border-bottom:1px solid #f0f4f8;color:#333}
+.yoy-table th{background:#f0f4f8;padding:8px 12px;text-align:left;font-weight:700;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.yoy-table td{padding:8px 12px;border-bottom:1px solid #f4f6f9;color:#333}
+.yoy-table tr:last-child td{border-bottom:none}
 .yoy-table tr:hover td{background:#fafbfc}
-.yoy-table .td-up{color:#c0392b;font-weight:700}
-.yoy-table .td-down{color:#1e7e34;font-weight:700}
-.yoy-table .td-num{text-align:right;font-weight:600}
-.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px}
+.td-up{color:#c0392b!important;font-weight:700}
+.td-down{color:#1e7e34!important;font-weight:700}
+.td-num{text-align:right;font-weight:600}
+.td-total{background:#f0f4f8!important;font-weight:700}
+.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
 @media(max-width:640px){.yoy-charts{grid-template-columns:1fr}}
 `;
-const styleEl = document.createElement('style');
-styleEl.textContent = css;
 document.head.appendChild(styleEl);
 
-// ── INJECT HTML AFTER health-row ──
+const BULAN_ORDER = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const BULAN_SHORT = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+
+// Range state
+let rangeStart = 0, rangeEnd = 11, selecting = false;
+
 function injectYoYSection(){
   const healthRow = document.getElementById('health-row');
   if(!healthRow) return;
   const wrapper = healthRow.parentElement;
-
   const div = document.createElement('div');
-  div.className = 'yoy-section';
-  div.id = 'yoy-section';
-  div.innerHTML = `
+  div.className='yoy-section'; div.id='yoy-section';
+
+  // Build month pills HTML
+  const pillsHTML = BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="mpill-${i}">${b}</span>`).join('');
+
+  div.innerHTML=`
     <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
-    <div class="yoy-controls">
+
+    <div class="yoy-top">
       <label>Tahun Semasa:</label>
       <select id="yoy-curr"></select>
-      <label style="margin-left:6px">Berbanding:</label>
+      <label style="margin-left:4px">Berbanding:</label>
       <select id="yoy-prev"></select>
-      <label style="margin-left:6px">Skop:</label>
-      <select id="yoy-scope">
-        <option value="all">Semua Bulan</option>
-        <option value="jan">Januari</option><option value="feb">Februari</option>
-        <option value="mac">Mac</option><option value="apr">April</option>
-        <option value="mei">Mei</option><option value="jun">Jun</option>
-        <option value="jul">Julai</option><option value="ogos">Ogos</option>
-        <option value="sep">September</option><option value="okt">Oktober</option>
-        <option value="nov">November</option><option value="dis">Disember</option>
-      </select>
     </div>
+
+    <div class="range-box">
+      <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
+      <div class="month-pills" id="month-pills">${pillsHTML}</div>
+      <div class="range-info">
+        Skop: <strong id="range-label">Januari — Disember (12 bulan)</strong>
+        <button class="range-reset" onclick="resetRange()"><i class="ti ti-refresh"></i> Reset</button>
+      </div>
+    </div>
+
     <div id="yoy-content"></div>`;
   wrapper.appendChild(div);
 
   document.getElementById('yoy-curr').addEventListener('change', renderYoY);
   document.getElementById('yoy-prev').addEventListener('change', renderYoY);
-  document.getElementById('yoy-scope').addEventListener('change', renderYoY);
+
+  // Month pill click logic — click start, click end
+  document.getElementById('month-pills').addEventListener('click', e=>{
+    const pill = e.target.closest('.mpill');
+    if(!pill) return;
+    const idx = parseInt(pill.dataset.idx);
+    if(!selecting){
+      rangeStart = idx; rangeEnd = idx; selecting = true;
+    } else {
+      if(idx < rangeStart){ rangeStart = idx; }
+      else { rangeEnd = idx; }
+      selecting = false;
+    }
+    updatePills(); renderYoY();
+  });
+
+  updatePills();
 }
 
-// ── POPULATE YEAR DROPDOWNS ──
+function updatePills(){
+  const s = Math.min(rangeStart,rangeEnd), e = Math.max(rangeStart,rangeEnd);
+  BULAN_SHORT.forEach((_,i)=>{
+    const p = document.getElementById('mpill-'+i);
+    if(!p) return;
+    p.className='mpill';
+    if(i===s) p.classList.add('range-start');
+    if(i===e && e!==s) p.classList.add('range-end');
+    if(i>s && i<e) p.classList.add('in-range');
+  });
+  const label = document.getElementById('range-label');
+  if(label){
+    const s2=Math.min(rangeStart,rangeEnd), e2=Math.max(rangeStart,rangeEnd);
+    const n = e2-s2+1;
+    label.textContent = s2===e2
+      ? BULAN_ORDER[s2]+' sahaja'
+      : BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+n+' bulan)';
+  }
+}
+
+window.resetRange = function(){ rangeStart=0; rangeEnd=11; selecting=false; updatePills(); renderYoY(); };
+
 window._refreshYoYDropdowns = function(){
-  const years = [...new Set(window._allRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
-  const curr = document.getElementById('yoy-curr');
-  const prev = document.getElementById('yoy-prev');
+  const years=[...new Set(window._allRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  const curr=document.getElementById('yoy-curr'), prev=document.getElementById('yoy-prev');
   if(!curr||!prev) return;
   const oldC=curr.value, oldP=prev.value;
   curr.innerHTML=''; prev.innerHTML='';
   years.forEach((y,i)=>{
-    const oc=document.createElement('option'); oc.textContent=y; oc.value=y; if(y===oldC||(oldC===''&&i===0))oc.selected=true; curr.appendChild(oc);
-    const op=document.createElement('option'); op.textContent=y; op.value=y; if(y===oldP||(oldP===''&&i===1))op.selected=true; prev.appendChild(op);
+    const oc=document.createElement('option');oc.textContent=y;oc.value=y;if(y===oldC||(oldC===''&&i===0))oc.selected=true;curr.appendChild(oc);
+    const op=document.createElement('option');op.textContent=y;op.value=y;if(y===oldP||(oldP===''&&i===1))op.selected=true;prev.appendChild(op);
   });
   renderYoY();
 };
 
-const BULAN_ORDER_YOY = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
-const BULAN_SHORT = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
-const SCOPE_MAP = {jan:'Januari',feb:'Februari',mac:'Mac',apr:'April',mei:'Mei',jun:'Jun',jul:'Julai',ogos:'Ogos',sep:'September',okt:'Oktober',nov:'November',dis:'Disember'};
-
-function getRowsForYear(year, scope){
-  let rows = window._allRows.filter(r=>r.tahun===year);
-  if(scope!=='all') rows=rows.filter(r=>r.bulan===SCOPE_MAP[scope]);
-  return rows;
+function getRowsInRange(year){
+  const s=Math.min(rangeStart,rangeEnd), e=Math.max(rangeStart,rangeEnd);
+  const bulanDlm = BULAN_ORDER.slice(s, e+1);
+  return window._allRows.filter(r=>r.tahun===year && bulanDlm.includes(r.bulan));
 }
 
 function sumR(rows){ return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,ssaRm:0,ssdRm:0,totalRm:0}); }
 function fmtN(n){ return Math.round(n).toLocaleString('ms-MY'); }
 function fmtRM2(n){ return 'RM '+Math.round(n).toLocaleString('ms-MY'); }
-function delta(curr,prev){
-  if(!prev) return {pct:'—',cls:'flat',arrow:'→'};
-  const pct=((curr-prev)/prev*100);
-  return { pct: (pct>=0?'+':'')+pct.toFixed(1)+'%', cls: pct>0?'up':(pct<0?'down':'flat'), arrow: pct>0?'↑':(pct<0?'↓':'→'), raw:pct };
+function delta(c,p){
+  if(!p) return {pct:'—',cls:'flat',arrow:'→'};
+  const pct=(c-p)/p*100;
+  return {pct:(pct>=0?'+':'')+pct.toFixed(1)+'%', cls:pct>0.05?'up':pct<-0.05?'down':'flat', arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};
 }
 
 let yoyKwhChart, yoyBilChart;
 
 function renderYoY(){
-  const currY = document.getElementById('yoy-curr')?.value;
-  const prevY = document.getElementById('yoy-prev')?.value;
-  const scope = document.getElementById('yoy-scope')?.value||'all';
-  const el = document.getElementById('yoy-content');
+  const currY=document.getElementById('yoy-curr')?.value;
+  const prevY=document.getElementById('yoy-prev')?.value;
+  const el=document.getElementById('yoy-content');
   if(!el||!currY||!prevY) return;
 
-  const currRows = getRowsForYear(currY, scope);
-  const prevRows = getRowsForYear(prevY, scope);
+  const s=Math.min(rangeStart,rangeEnd), e=Math.max(rangeStart,rangeEnd);
+  const bulanDlm = BULAN_ORDER.slice(s, e+1);
+  const shortDlm = BULAN_SHORT.slice(s, e+1);
 
-  if(!currRows.length && !prevRows.length){
-    el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk tahun yang dipilih</div>';
+  const currRows=getRowsInRange(currY), prevRows=getRowsInRange(prevY);
+  if(!currRows.length&&!prevRows.length){
+    el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk tahun dan julat bulan yang dipilih</div>';
     return;
   }
 
-  const c = sumR(currRows), p = sumR(prevRows);
-  const dKwh=delta(c.totalKwh,p.totalKwh), dBil=delta(c.totalRm,p.totalRm), dSolar=delta(c.solarKwh,p.solarKwh);
-  const dSSA_kwh=delta(c.ssaKwh,p.ssaKwh), dSSD_kwh=delta(c.ssdKwh,p.ssdKwh);
-  const dSSA_rm=delta(c.ssaRm,p.ssaRm), dSSD_rm=delta(c.ssdRm,p.ssdRm);
+  const c=sumR(currRows), p=sumR(prevRows);
+  const dKwh=delta(c.totalKwh,p.totalKwh), dBil=delta(c.totalRm,p.totalRm);
+  const dSSAk=delta(c.ssaKwh,p.ssaKwh), dSSDk=delta(c.ssdKwh,p.ssdKwh);
+  const dSSAr=delta(c.ssaRm,p.ssaRm), dSSDr=delta(c.ssdRm,p.ssdRm);
+  const dSol=delta(c.solarKwh,p.solarKwh);
+  const rangeStr = s===e ? BULAN_ORDER[s] : BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
 
-  // Summary cards
-  let html = `<div class="yoy-summary">
+  let html=`<div class="yoy-summary">
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct} <span style="font-weight:400;font-size:11px">berbanding ${prevY}</span></div>
+      <div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct} <span style="font-weight:400;font-size:10px">vs ${prevY}</span></div>
     </div>
     <div class="yoy-card bil-card">
       <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dBil.cls}">${dBil.arrow} ${dBil.pct} <span style="font-weight:400;font-size:11px">berbanding ${prevY}</span></div>
+      <div class="yoy-delta ${dBil.cls}">${dBil.arrow} ${dBil.pct} <span style="font-weight:400;font-size:10px">vs ${prevY}</span></div>
     </div>
-    <div class="yoy-card kwh-card" style="--c:#1a5fa8">
+    <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh (Kampus)</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.ssaKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.ssaKwh)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dSSA_kwh.cls}">${dSSA_kwh.arrow} ${dSSA_kwh.pct}</div>
+      <div class="yoy-delta ${dSSAk.cls}">${dSSAk.arrow} ${dSSAk.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building-hospital"></i> SS-D kWh (HPUSM)</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.ssdKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.ssdKwh)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dSSD_kwh.cls}">${dSSD_kwh.arrow} ${dSSD_kwh.pct}</div>
+      <div class="yoy-delta ${dSSDk.cls}">${dSSDk.arrow} ${dSSDk.pct}</div>
     </div>
     <div class="yoy-card solar-card">
-      <div class="yoy-card-label"><i class="ti ti-solar-panel"></i> Janaan Solar (kWh)</div>
+      <div class="yoy-card-label"><i class="ti ti-solar-panel"></i> Janaan Solar</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#c47800">${fmtN(c.solarKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:13px;color:#aaa">${fmtN(p.solarKwh)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dSolar.cls}">${dSolar.arrow} ${dSolar.pct}</div>
+      <div class="yoy-delta ${dSol.cls}">${dSol.arrow} ${dSol.pct}</div>
     </div>
     <div class="yoy-card bil-card">
       <div class="yoy-card-label"><i class="ti ti-receipt"></i> Bil SS-A + SS-D</div>
       <div class="yoy-row"><span class="yoy-year-label">SS-A ${currY}</span><span class="yoy-val" style="font-size:13px;color:#1a5fa8">${fmtRM2(c.ssaRm)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">SS-D ${currY}</span><span class="yoy-val" style="font-size:13px;color:#1e7e34">${fmtRM2(c.ssdRm)}</span></div>
       <hr class="yoy-divider">
-      <div class="yoy-delta ${dSSA_rm.cls}">SS-A ${dSSA_rm.arrow} ${dSSA_rm.pct} &nbsp; <span class="${dSSD_rm.cls}">SS-D ${dSSD_rm.arrow} ${dSSD_rm.pct}</span></div>
+      <div class="yoy-delta" style="font-size:11px;gap:8px">
+        <span class="${dSSAr.cls}">SS-A ${dSSAr.arrow}${dSSAr.pct}</span>
+        <span class="${dSSDr.cls}">SS-D ${dSSDr.arrow}${dSSDr.pct}</span>
+      </div>
     </div>
   </div>`;
 
-  // Monthly comparison charts
-  const months = BULAN_ORDER_YOY;
-  const shorts = BULAN_SHORT;
-  const getCurrMonth = b => currRows.find(r=>r.bulan===b);
-  const getPrevMonth = b => prevRows.find(r=>r.bulan===b);
+  // Charts
+  const getCurr=b=>currRows.find(r=>r.bulan===b);
+  const getPrev=b=>prevRows.find(r=>r.bulan===b);
+  const cKwh=bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh);
+  const pKwh=bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh);
+  const cBil=bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm);
+  const pBil=bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm);
 
-  if(scope==='all'){
-    const cKwh=months.map(b=>(getCurrMonth(b)||{totalKwh:0}).totalKwh);
-    const pKwh=months.map(b=>(getPrevMonth(b)||{totalKwh:0}).totalKwh);
-    const cBil=months.map(b=>(getCurrMonth(b)||{totalRm:0}).totalRm);
-    const pBil=months.map(b=>(getPrevMonth(b)||{totalRm:0}).totalRm);
-
-    html += `<div class="yoy-charts">
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:4px">Perbandingan kWh Bulanan</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
-        <div class="legend" style="margin-bottom:10px">
-          <span><span class="leg-dot" style="background:#1a5fa8;display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px"></span>${currY}</span>
-          <span><span class="leg-dot" style="background:#a0bdd8;display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px"></span>${prevY}</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="yoy-kwh-chart"></canvas></div>
+  html+=`<div class="yoy-charts">
+    <div class="yoy-chart-box">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — ${rangeStr}</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:10px">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a0bdd8;margin-right:4px"></span>${prevY}</span>
       </div>
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:4px">Perbandingan Bil (RM) Bulanan</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
-        <div class="legend" style="margin-bottom:10px">
-          <span><span class="leg-dot" style="background:#1e7e34;display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px"></span>${currY}</span>
-          <span><span class="leg-dot" style="background:#8ec49a;display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px"></span>${prevY}</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="yoy-bil-chart"></canvas></div>
+      <div style="position:relative;width:100%;height:220px"><canvas id="yoy-kwh-chart"></canvas></div>
+    </div>
+    <div class="yoy-chart-box">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — ${rangeStr}</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:10px">${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:10px">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>${currY}</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8ec49a;margin-right:4px"></span>${prevY}</span>
       </div>
-    </div>`;
+      <div style="position:relative;width:100%;height:220px"><canvas id="yoy-bil-chart"></canvas></div>
+    </div>
+  </div>`;
 
-    // Monthly detail table
-    html += `<div class="yoy-table-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual Perbandingan Bulanan — ${currY} vs ${prevY}</div>
-      <table class="yoy-table">
-        <thead><tr>
-          <th>Bulan</th>
-          <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
-          <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
-        </tr></thead>
-        <tbody>`;
-    months.forEach((b,i)=>{
-      const cr=getCurrMonth(b), pr=getPrevMonth(b);
-      if(!cr&&!pr) return;
-      const dK=delta(cr?cr.totalKwh:0, pr?pr.totalKwh:0);
-      const dB=delta(cr?cr.totalRm:0, pr?pr.totalRm:0);
-      html+=`<tr>
-        <td><strong>${shorts[i]}</strong></td>
-        <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
-        <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
-        <td class="td-num td-${dK.cls}">${(cr&&pr)?dK.pct:'—'}</td>
-        <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
-        <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
-        <td class="td-num td-${dB.cls}">${(cr&&pr)?dB.pct:'—'}</td>
-      </tr>`;
-    });
-    html+=`</tbody></table></div>`;
-  }
+  // Table
+  html+=`<div class="yoy-table-box">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">
+      Jadual Perbandingan — ${rangeStr} &nbsp;|&nbsp; ${currY} vs ${prevY}
+    </div>
+    <table class="yoy-table"><thead><tr>
+      <th>Bulan</th>
+      <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
+      <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
+    </tr></thead><tbody>`;
+  bulanDlm.forEach((b,i)=>{
+    const cr=getCurr(b), pr=getPrev(b);
+    const dK=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
+    const dB=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
+    html+=`<tr>
+      <td><strong>${shortDlm[i]}</strong></td>
+      <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
+      <td class="td-num td-${dK.cls}">${(cr&&pr)?dK.pct:'—'}</td>
+      <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
+      <td class="td-num td-${dB.cls}">${(cr&&pr)?dB.pct:'—'}</td>
+    </tr>`;
+  });
+  // Jumlah row
+  const dKT=delta(c.totalKwh,p.totalKwh), dBT=delta(c.totalRm,p.totalRm);
+  html+=`<tr class="td-total">
+    <td><strong>JUMLAH</strong></td>
+    <td class="td-num">${fmtN(c.totalKwh)}</td>
+    <td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
+    <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
+    <td class="td-num">${fmtRM2(c.totalRm)}</td>
+    <td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
+    <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
+  </tr>`;
+  html+=`</tbody></table></div>`;
 
-  el.innerHTML = html;
+  el.innerHTML=html;
 
   // Draw charts
-  if(scope==='all'){
-    const months2=BULAN_ORDER_YOY;
-    const cKwh=months2.map(b=>(getCurrMonth(b)||{totalKwh:0}).totalKwh);
-    const pKwh=months2.map(b=>(getPrevMonth(b)||{totalKwh:0}).totalKwh);
-    const cBil=months2.map(b=>(getCurrMonth(b)||{totalRm:0}).totalRm);
-    const pBil=months2.map(b=>(getPrevMonth(b)||{totalRm:0}).totalRm);
-    const tck={color:'#999',font:{size:10}};
-    const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
+  if(yoyKwhChart)yoyKwhChart.destroy();
+  if(yoyBilChart)yoyBilChart.destroy();
+  const tck={color:'#999',font:{size:10}};
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
 
-    if(yoyKwhChart)yoyKwhChart.destroy();
-    if(yoyBilChart)yoyBilChart.destroy();
+  yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
+    {label:currY,data:cKwh,backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:pKwh,backgroundColor:'rgba(160,189,216,0.7)',borderRadius:3,borderSkipped:false}
+  ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
 
-    yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:BULAN_SHORT,datasets:[
-      {label:currY,data:cKwh,backgroundColor:'rgba(26,95,168,0.85)',borderRadius:3,borderSkipped:false},
-      {label:prevY,data:pKwh,backgroundColor:'rgba(160,189,216,0.7)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
-
-    yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:BULAN_SHORT,datasets:[
-      {label:currY,data:cBil,backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},
-      {label:prevY,data:pBil,backgroundColor:'rgba(142,196,154,0.7)',borderRadius:3,borderSkipped:false}
-    ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
-  }
+  yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
+    {label:currY,data:cBil,backgroundColor:'rgba(30,126,52,0.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:pBil,backgroundColor:'rgba(142,196,154,0.7)',borderRadius:3,borderSkipped:false}
+  ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
 }
 
-// ── HOOK INTO EXISTING renderShell ──
-const origRenderShell = window.renderShell;
-window.renderShell = function(){
-  origRenderShell && origRenderShell();
-  setTimeout(()=>{ injectYoYSection(); window._allRows=allRows; window._refreshYoYDropdowns(); },100);
+const origRenderShell=window.renderShell;
+window.renderShell=function(){
+  origRenderShell&&origRenderShell();
+  setTimeout(()=>{injectYoYSection();window._allRows=allRows;window._refreshYoYDropdowns();},100);
 };
-
-const origUpdateDisplay = window.updateDisplay;
-window.updateDisplay = function(){
-  origUpdateDisplay && origUpdateDisplay();
-  window._allRows = allRows;
-  if(document.getElementById('yoy-curr')) window._refreshYoYDropdowns();
+const origUpdateDisplay=window.updateDisplay;
+window.updateDisplay=function(){
+  origUpdateDisplay&&origUpdateDisplay();
+  window._allRows=allRows;
+  if(document.getElementById('yoy-curr'))window._refreshYoYDropdowns();
 };
 
 })();
