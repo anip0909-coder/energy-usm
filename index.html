@@ -526,25 +526,26 @@ function fmtDL(v,isRM){
   if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
   return (isRM?'RM ':'')+Math.round(v).toLocaleString();
 }
-// bar chart data labels — shown above each bar, hide when multi & crowded
+// bar chart data labels — vertical, outside end of bar
 function dlBar(isRM){
   return {
     display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
     formatter: (v) => fmtDL(v, isRM),
-    color:'#444', font:{size:9,weight:'600'},
-    anchor:'end', align:'end', offset:2,
-    rotation:0,
+    color:'#333', font:{size:9,weight:'700'},
+    anchor:'end', align:'end', offset:4,
+    rotation:-90,
     clip:false
   };
 }
-// line chart data labels — show on every point
+// line chart data labels — vertical outside point
 function dlLine(isRM){
   return {
     display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
     formatter: (v) => fmtDL(v, isRM),
     color: ctx => ctx.dataset.borderColor,
     font:{size:9,weight:'700'},
-    anchor:'top', align:'top', offset:4,
+    anchor:'end', align:'end', offset:4,
+    rotation:-90,
     clip:false
   };
 }
@@ -561,7 +562,7 @@ function renderCharts(filtered,d){
 
   const baseOpts=(isRM)=>({
     responsive:true, maintainAspectRatio:false,
-    layout:{padding:{top:22}},
+    layout:{padding:{top:55, right:8}},
     plugins:{
       legend:{display:false},
       datalabels: hideDL ? {display:false} : dlBar(isRM)
@@ -600,7 +601,7 @@ function renderCharts(filtered,d){
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
-        layout:{padding:{top:26,bottom:20}},
+        layout:{padding:{top:55,bottom:10}},
         interaction:{mode:'index',intersect:false},
         plugins:{
           legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
