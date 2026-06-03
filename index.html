@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga USMKK</title>
+<title>Pemantauan Tenaga USM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -149,7 +149,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .td-down{color:#1e7e34!important;font-weight:700}
 .td-num{text-align:right;font-weight:600}
 .td-total td{background:#f0f4f8!important;font-weight:700}
-.yoy-no-data{text-align:above;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
+.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
 
 /* ── STATES ── */
 .loading-state{text-align:center;padding:70px 20px;color:#bbb}
@@ -180,8 +180,8 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   .print-header{display:block!important}
   canvas{max-width:100%}
 }
-.print-header{display:none;text-align:center;padding:16px 0 8px;border-bottom:2px solid #1a3a5c;margin-bottom:16px}
-.print-header h1{font-size:18px;color:#1a3a5c;font-weight:700}
+.print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
+.print-header h1{font-size:20px;color:#1a3a5c;font-weight:700;letter-spacing:.3px}
 .print-header p{font-size:12px;color:#666;margin-top:4px}
 
 @media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.yoy-charts{grid-template-columns:1fr}}
@@ -209,7 +209,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
+      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -224,6 +224,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="print-header">
     <h1>Laporan Pemantauan Tenaga Elektrik USMKK</h1>
     <p id="print-date"></p>
+    <p id="print-scope" style="font-size:13px;color:#1a3a5c;font-weight:600;margin-top:4px"></p>
   </div>
 
   <div class="status-bar">
@@ -252,7 +253,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USMKK &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
+<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
 // ══════════════════════════════════════════════
@@ -260,7 +261,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -282,7 +283,17 @@ function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString(
 
 // ── PRINT PDF ──
 function printPDF(){
-  document.getElementById('print-date').textContent='Dicetak: '+new Date().toLocaleString('ms-MY');
+  const tahun = document.getElementById('sel-tahun').value;
+  const bulan = document.getElementById('sel-bulan').value;
+  const tStr = tahun.includes('Semua') ? 'Semua Tahun' : tahun;
+  const bStr = bulan.includes('Semua') ? 'Semua Bulan' : bulan;
+  let scopeStr = '';
+  if(!tahun.includes('Semua') && !bulan.includes('Semua')) scopeStr = `Tempoh: ${bStr} ${tStr}`;
+  else if(!tahun.includes('Semua')) scopeStr = `Tahun: ${tStr}`;
+  else if(!bulan.includes('Semua')) scopeStr = `Bulan: ${bStr} (Semua Tahun)`;
+  else scopeStr = 'Tempoh: Semua Data';
+  document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
+  document.getElementById('print-scope').textContent = scopeStr;
   window.print();
 }
 
@@ -537,7 +548,7 @@ function dlBar(isRM){
     clip:false
   };
 }
-// line chart data labels — horizontal outside point
+// line chart data labels — vertical outside point
 function dlLine(isRM){
   return {
     display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
@@ -545,7 +556,7 @@ function dlLine(isRM){
     color: ctx => ctx.dataset.borderColor,
     font:{size:9,weight:'700'},
     anchor:'end', align:'end', offset:4,
-    rotation:0,
+    rotation:-90,
     clip:false
   };
 }
@@ -592,16 +603,26 @@ function renderCharts(filtered,d){
     // ── Trend line — Total kWh & Total RM ──
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
     const trendDLshow = !hideDL;
+    const dlTrendKwh = trendDLshow ? {
+      display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+      formatter: v => fmtDL(v, false),
+      color:'#1a5fa8', font:{size:9,weight:'700'},
+      anchor:'end', align:'top', offset:4, rotation:0, clip:false
+    } : {display:false};
+    const dlTrendRM = trendDLshow ? {
+      display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+      formatter: v => fmtDL(v, true),
+      color:'#c47800', font:{size:9,weight:'700'},
+      anchor:'end', align:'bottom', offset:4, rotation:0, clip:false
+    } : {display:false};
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
       data:{labels:lbl,datasets:[
-        {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',
-          datalabels: trendDLshow ? {...dlLine(false),align:'top',color:'#1a5fa8'} : {display:false}},
-        {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',
-          datalabels: trendDLshow ? {...dlLine(true),align:'top',color:'#c47800'} : {display:false}}
+        {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',datalabels:dlTrendKwh},
+        {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',datalabels:dlTrendRM}
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
-        layout:{padding:{top:55,bottom:10}},
+        layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
           legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
@@ -823,11 +844,11 @@ function renderYoY(){
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-kwh-chart"></canvas></div>
     </div>
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan Bil (RM) — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan & Eksport (RM) — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Total RM ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Total RM ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
@@ -875,16 +896,31 @@ function renderYoY(){
   if(yoyKwhChart)yoyKwhChart.destroy();
   if(yoyBilChart)yoyBilChart.destroy();
   const tck={color:'#999',font:{size:10}};
-  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:tck,grid:{color:'rgba(0,0,0,0.05)'}}}};
+  const yoyHideDL = shortDlm.length > 12;
+  const dlYoy=(isRM)=> yoyHideDL ? {display:false} : {
+    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+    formatter: v => fmtDL(v, isRM),
+    color:'#333', font:{size:9,weight:'700'},
+    anchor:'end', align:'end', offset:4, rotation:-90, clip:false
+  };
+  const yoyBase=(isRM)=>({
+    responsive:true, maintainAspectRatio:false,
+    layout:{padding:{top:55,right:8}},
+    plugins:{legend:{display:false}, datalabels:dlYoy(isRM)},
+    scales:{
+      x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},
+      y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
+    }
+  });
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
     {label:currY,data:bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
     {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
-  ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()}}}}});
+  ]},options:yoyBase(false)});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'Total RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Total RM '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
     {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false}
-  ]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...tck,callback:v=>'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())}}}}});
+  ]},options:yoyBase(true)});
 }
 
 // ── INIT ──
@@ -905,7 +941,7 @@ function barDL(isRM=false, color='#333'){
     anchor:'end', align:'end', offset:2,
     font:{size:9, weight:'600'},
     color: color,
-    rotation:-90,
+    rotation:0,
     formatter:(v)=>fmtLbl(v, isRM),
     display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
   };
@@ -914,7 +950,7 @@ function barDL(isRM=false, color='#333'){
 // For multi-dataset bars — hide label if value is 0
 function barDLmulti(isRM=false){
   return {
-    anchor:'top', align:'top', offset:1,
+    anchor:'end', align:'end', offset:1,
     font:{size:8, weight:'600'},
     color:'#444',
     clamp:true,
@@ -926,10 +962,9 @@ function barDLmulti(isRM=false){
 // For LINE chart — show label at each point
 function lineDL(isRM=false){
   return {
-    anchor:'above', align:'above', offset:4,
+    anchor:'top', align:'top', offset:4,
     font:{size:8, weight:'600'},
     color: isRM ? '#c47800' : '#1a5fa8',
-    rotation:0,
     formatter:(v)=>fmtLbl(v, isRM),
     display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
   };
