@@ -914,7 +914,7 @@ function barDL(isRM=false, color='#333'){
 // For multi-dataset bars — hide label if value is 0
 function barDLmulti(isRM=false){
   return {
-    anchor:'end', align:'end', offset:2,
+    anchor:'end', align:'end', offset:1,
     font:{size:8, weight:'600'},
     color:'#444',
     clamp:true,
@@ -926,9 +926,10 @@ function barDLmulti(isRM=false){
 // For LINE chart — show label at each point
 function lineDL(isRM=false){
   return {
-    anchor:'top', align:'top', offset:2,
+    anchor:'top', align:'top', offset:4,
     font:{size:8, weight:'600'},
     color: isRM ? '#c47800' : '#1a5fa8',
+    rotation:-90,
     formatter:(v)=>fmtLbl(v, isRM),
     display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
   };
