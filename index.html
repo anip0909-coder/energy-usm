@@ -595,9 +595,9 @@ function renderCharts(filtered,d){
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
       data:{labels:lbl,datasets:[
         {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',
-          datalabels: trendDLshow ? {...dlLine(false),align:'above',color:'#1a5fa8'} : {display:false}},
+          datalabels: trendDLshow ? {...dlLine(false),align:'end',color:'#1a5fa8'} : {display:false}},
         {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',
-          datalabels: trendDLshow ? {...dlLine(true),align:'above',color:'#c47800'} : {display:false}}
+          datalabels: trendDLshow ? {...dlLine(true),align:'end',color:'#c47800'} : {display:false}}
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
@@ -914,7 +914,7 @@ function barDL(isRM=false, color='#333'){
 // For multi-dataset bars — hide label if value is 0
 function barDLmulti(isRM=false){
   return {
-    anchor:'end', align:'end', offset:1,
+    anchor:'top', align:'top', offset:1,
     font:{size:8, weight:'600'},
     color:'#444',
     clamp:true,
@@ -926,7 +926,7 @@ function barDLmulti(isRM=false){
 // For LINE chart — show label at each point
 function lineDL(isRM=false){
   return {
-    anchor:'top', align:'top', offset:4,
+    anchor:'above', align:'above', offset:4,
     font:{size:8, weight:'600'},
     color: isRM ? '#c47800' : '#1a5fa8',
     rotation:0,
