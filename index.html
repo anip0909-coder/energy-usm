@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga Elektrik USMKK</title>
+<title>Pemantauan Tenaga USM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -215,7 +215,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
+      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -227,8 +227,8 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 
 <!-- TAB NAV -->
 <div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga USMKK</button>
-  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC kWh Chiller</button>
+  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga JPPF</button>
+  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
 </div>
 
 <div class="container">
@@ -277,7 +277,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USMKK &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
+<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
 // ══════════════════════════════════════════════
@@ -285,7 +285,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -1046,14 +1046,15 @@ function parseEPC(csv){
     if(!row.some(c=>c.includes('bulan'))) continue;
     hi=i;
     row.forEach((h,idx)=>{
-      if(h.includes('bulan'))                                m.bulan=idx;
-      else if(h.includes('tahun')&&!h.includes('baseline')) m.tahun=idx;
-      else if(h.includes('trauma')||h.includes('ppsg'))     m.chillerTrauma=idx;
-      else if(h.includes('general')||h.includes('ot'))      m.chillerGeneral=idx;
-      else if(h.includes('total')&&h.includes('kwh'))       m.totalKwh=idx;
-      else if(h.includes('tahun')&&h.includes('baseline'))  m.tahunBaseline=idx;
-      else if (h.includes('baseline') && (h.includes('trauma') || h.includes('ppsg'))) m.baselineTraumaKwh = idx;
-      else if (h.includes('baseline') && (h.includes('general') || h.includes('ot')))  m.baselineGeneralKwh = idx;
+      if(h.includes('bulan'))                                        m.bulan=idx;
+      else if(h.includes('tahun')&&!h.includes('baseline'))         m.tahun=idx;
+      else if(h.includes('tahun')&&h.includes('baseline'))          m.tahunBaseline=idx;
+      // Trauma & PPSG — must check baseline FIRST before general trauma
+      else if((h.includes('baseline'))&&(h.includes('trauma')||h.includes('ppsg'))) m.baselineTrauma=idx;
+      else if((h.includes('baseline'))&&(h.includes('general')||h.includes('ot')))  m.baselineGeneral=idx;
+      else if(h.includes('trauma')||h.includes('ppsg'))             m.chillerTrauma=idx;
+      else if(h.includes('general')||h.includes('ot'))              m.chillerGeneral=idx;
+      else if(h.includes('total')&&h.includes('kwh'))               m.totalKwh=idx;
     });
     break;
   }
@@ -1067,7 +1068,9 @@ function parseEPC(csv){
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
       chillerTrauma:n('chillerTrauma'), chillerGeneral:n('chillerGeneral'),
-      totalKwh:n('totalKwh'), baselineTraumaKwh:n('baselineTraumaKwh'), baselineGeneralKwh:n( 'baselineGeneralKwh' )
+      totalKwh:n('totalKwh'),
+      baselineTrauma:n('baselineTrauma'),
+      baselineGeneral:n('baselineGeneral')
     });
   }
   return rows;
@@ -1078,57 +1081,154 @@ function renderEPC(){
   const years = [...new Set(epcRows.map(r=>r.tahun).filter(Boolean))].sort();
   const yearOpts = ['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
   const monthOpts = ['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+  const pillsHTML = BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="epc-mpill-${i}">${b}</span>`).join('');
+
   el.innerHTML = `
     <div class="filter-row" style="margin-top:18px">
-      <label><i class="ti ti-filter"></i> Tapis EPC:</label>
+      <label><i class="ti ti-filter"></i> Tapis:</label>
       <select id="epc-sel-tahun" onchange="updateEPC()">${yearOpts}</select>
       <select id="epc-sel-bulan" onchange="updateEPC()">${monthOpts}</select>
       <button class="icon-btn" style="margin-left:auto" onclick="loadEPC()"><i class="ti ti-refresh"></i> Refresh</button>
     </div>
-    <div class="metrics" id="epc-metrics"></div>
-    <div class="charts" style="margin-bottom:22px">
-      <div class="chart-box">
-        <div class="chart-title">Penggunaan kWh Chiller</div>
-        <div class="chart-sub" id="epc-chart-sub">—</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#0e7490"></span>Trauma & PPSG</span>
-          <span><span class="leg-dot" style="background:#0f766e"></span>General OT</span>
-        </div>
-        <div style="position:relative;width:100%;height:240px"><canvas id="epc-kwh-chart"></canvas></div>
+
+    <!-- 3 Kad Metrik -->
+    <div class="metrics" id="epc-metrics" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"></div>
+
+    <!-- 3 Carta -->
+    <!-- Carta 1: Trauma & PPSG -->
+    <div class="chart-box" style="margin-bottom:18px">
+      <div class="chart-title">kWh Chiller — Trauma & PPSG</div>
+      <div class="chart-sub" id="epc-sub-trauma">—</div>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#0e7490"></span>Trauma & PPSG kWh</span>
+        <span><span class="leg-dot" style="background:#f59e0b;border:1.5px dashed #f59e0b;background:none;width:18px;height:0;border-top:2.5px dashed #f59e0b;border-radius:0"></span>Baseline Trauma</span>
       </div>
-      <div class="chart-box">
-        <div class="chart-title">kWh Semasa vs Baseline 2017</div>
-        <div class="chart-sub">Perbandingan bulanan dengan sasaran</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#0e7490"></span>kWh Semasa</span>
-          <span><span class="leg-dot" style="background:#f59e0b"></span>Baseline 2017</span>
-        </div>
-        <div style="position:relative;width:100%;height:240px"><canvas id="epc-baseline-chart"></canvas></div>
+      <div style="position:relative;width:100%;height:260px"><canvas id="epc-trauma-chart"></canvas></div>
+    </div>
+
+    <!-- Carta 2: General OT -->
+    <div class="chart-box" style="margin-bottom:18px">
+      <div class="chart-title">kWh Chiller — General OT</div>
+      <div class="chart-sub" id="epc-sub-general">—</div>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#0f766e"></span>General OT kWh</span>
+        <span><span class="leg-dot" style="background:none;width:18px;height:0;border-top:2.5px dashed #f59e0b;border-radius:0"></span>Baseline General OT</span>
       </div>
+      <div style="position:relative;width:100%;height:260px"><canvas id="epc-general-chart"></canvas></div>
     </div>
-    <div class="trend-box">
-      <div class="chart-title">Analisis YoY — Pengurangan kWh vs Baseline 2017</div>
-      <div class="chart-sub" id="epc-saving-sub">Bar hijau = penjimatan, bar merah = melebihi baseline</div>
-      <div style="position:relative;width:100%;height:220px"><canvas id="epc-saving-chart"></canvas></div>
+
+    <!-- Carta 3: Analisis YoY -->
+    <div class="yoy-section">
+      <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#0e7490"></i> Analisis Perbandingan Tahun ke Tahun (YoY)</div>
+      <div class="yoy-top">
+        <label>Tahun Semasa:</label><select id="epc-yoy-curr"></select>
+        <label style="margin-left:6px">Berbanding:</label><select id="epc-yoy-prev"></select>
+      </div>
+      <div class="range-box">
+        <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#0e7490"></i> Pilih Julat Bulan</div>
+        <div class="month-pills" id="epc-month-pills">${pillsHTML}</div>
+        <div class="range-info">Skop: <strong id="epc-range-label">Januari — Disember (12 bulan)</strong>
+          <button class="range-reset" onclick="resetEpcRange()"><i class="ti ti-refresh"></i> Reset</button>
+        </div>
+      </div>
+      <!-- YoY summary cards -->
+      <div id="epc-yoy-summary"></div>
+      <!-- 2 carta YoY berasingan -->
+      <div class="yoy-charts">
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Trauma & PPSG — YoY vs Baseline</div>
+          <div class="chart-sub" id="epc-yoy-trauma-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0e7490;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f59e0b;margin-right:4px"></span>Baseline</span>
+          </div>
+          <div style="position:relative;width:100%;height:260px"><canvas id="epc-yoy-trauma-chart"></canvas></div>
+        </div>
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">General OT — YoY vs Baseline</div>
+          <div class="chart-sub" id="epc-yoy-general-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0f766e;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f59e0b;margin-right:4px"></span>Baseline</span>
+          </div>
+          <div style="position:relative;width:100%;height:260px"><canvas id="epc-yoy-general-chart"></canvas></div>
+        </div>
+      </div>
+      <!-- Jadual YoY -->
+      <div class="yoy-table-box"><div id="epc-yoy-table"></div></div>
     </div>
-    <div class="sec-title" style="margin-top:22px"><i class="ti ti-leaf"></i> Ringkasan Penjimatan EPC</div>
+
+    <div class="sec-title" style="margin-top:8px"><i class="ti ti-leaf"></i> Ringkasan Penjimatan EPC</div>
     <div class="health-row" id="epc-health"></div>`;
+
+  // YoY year dropdowns
+  const epcYears=[...new Set(epcRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  const curr=document.getElementById('epc-yoy-curr'),prev=document.getElementById('epc-yoy-prev');
+  curr.innerHTML='';prev.innerHTML='';
+  epcYears.forEach((y,i)=>{
+    const oc=document.createElement('option');oc.value=y;oc.textContent=y;if(i===0)oc.selected=true;curr.appendChild(oc);
+    const op=document.createElement('option');op.value=y;op.textContent=y;if(i===1)op.selected=true;prev.appendChild(op);
+  });
+  curr.addEventListener('change',renderEpcYoY);
+  prev.addEventListener('change',renderEpcYoY);
+
+  // Month pills
+  document.getElementById('epc-month-pills').addEventListener('click',e=>{
+    const pill=e.target.closest('.mpill');if(!pill)return;
+    const idx=parseInt(pill.dataset.idx);
+    if(!epcYoySelecting){epcRangeStart=idx;epcRangeEnd=idx;epcYoySelecting=true;}
+    else{if(idx<epcRangeStart)epcRangeStart=idx;else epcRangeEnd=idx;epcYoySelecting=false;}
+    updateEpcPills();renderEpcYoY();
+  });
+  updateEpcPills();
   updateEPC();
+  renderEpcYoY();
 }
+
+// EPC range state
+let epcRangeStart=0,epcRangeEnd=11,epcYoySelecting=false;
+let epcChartTrauma=null,epcChartGeneral=null,epcChartYoyTrauma=null,epcChartYoyGeneral=null;
+
+window.resetEpcRange=function(){epcRangeStart=0;epcRangeEnd=11;epcYoySelecting=false;updateEpcPills();renderEpcYoY();};
+
+function updateEpcPills(){
+  const s=Math.min(epcRangeStart,epcRangeEnd),e=Math.max(epcRangeStart,epcRangeEnd);
+  BULAN_SHORT.forEach((_,i)=>{
+    const p=document.getElementById('epc-mpill-'+i);if(!p)return;
+    p.className='mpill';
+    if(i===s)p.classList.add('range-start');
+    if(i===e&&e!==s)p.classList.add('range-end');
+    if(i>s&&i<e)p.classList.add('in-range');
+  });
+  const lb=document.getElementById('epc-range-label');
+  if(lb){const s2=Math.min(epcRangeStart,epcRangeEnd),e2=Math.max(epcRangeStart,epcRangeEnd);lb.textContent=s2===e2?BULAN_ORDER[s2]+' sahaja':BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+(e2-s2+1)+' bulan)';}
+}
+
+function getEpcInRange(year){
+  const s=Math.min(epcRangeStart,epcRangeEnd),e=Math.max(epcRangeStart,epcRangeEnd);
+  return epcRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
+}
+
+function sumEpc(rows){return rows.reduce((a,r)=>({chillerTrauma:a.chillerTrauma+r.chillerTrauma,chillerGeneral:a.chillerGeneral+r.chillerGeneral,totalKwh:a.totalKwh+r.totalKwh,baselineTrauma:a.baselineTrauma+r.baselineTrauma,baselineGeneral:a.baselineGeneral+r.baselineGeneral}),{chillerTrauma:0,chillerGeneral:0,totalKwh:0,baselineTrauma:0,baselineGeneral:0});}
 
 function updateEPC(){
   const t=document.getElementById('epc-sel-tahun')?.value;
   const b=document.getElementById('epc-sel-bulan')?.value;
   let rows=epcRows;
-  if(t) rows=rows.filter(r=>r.tahun===t);
-  if(b) rows=rows.filter(r=>r.bulan===b);
+  if(t)rows=rows.filter(r=>r.tahun===t);
+  if(b)rows=rows.filter(r=>r.bulan===b);
   if(!rows.length){document.getElementById('epc-metrics').innerHTML='<div class="empty-state" style="grid-column:1/-1">Tiada data untuk pilihan ini</div>';return;}
 
-  const d=rows.reduce((a,r)=>({chillerTrauma:a.chillerTrauma+r.chillerTrauma,chillerGeneral:a.chillerGeneral+r.chillerGeneral,totalKwh:a.totalKwh+r.totalKwh,baselineKwh:a.baselineKwh+r.baselineKwh}),{chillerTrauma:0,chillerGeneral:0,totalKwh:0,baselineKwh:0});
-  const saving=d.baselineKwh-d.totalKwh;
-  const savPct=d.baselineKwh>0?(saving/d.baselineKwh*100).toFixed(1):'0.0';
+  const d=sumEpc(rows);
+  const baselineTotal=d.baselineTrauma+d.baselineGeneral;
   const label=rows.length===1?(rows[0].bulan+' '+rows[0].tahun):rows.length+' rekod';
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
+  const sub=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
 
+  // ── 3 KAD METRIK ──
   document.getElementById('epc-metrics').innerHTML=`
     <div class="card" style="border-top:3px solid #0e7490">
       <div class="card-icon" style="color:#0e7490"><i class="ti ti-building-hospital"></i></div>
@@ -1142,79 +1242,185 @@ function updateEPC(){
       <div class="card-value" style="color:#0f766e">${fmt(d.chillerGeneral)}</div>
       <div class="card-unit">kWh</div>
     </div>
-    <div class="card total">
-      <div class="card-icon"><i class="ti ti-plug"></i></div>
-      <div class="card-label">Jumlah kWh Semasa</div>
-      <div class="card-value">${fmt(d.totalKwh)}</div>
-      <div class="card-unit">${label}</div>
-    </div>
     <div class="card" style="border-top:3px solid #f59e0b">
       <div class="card-icon" style="color:#f59e0b"><i class="ti ti-history"></i></div>
-      <div class="card-label" style="color:#f59e0b">kWh Baseline 2017</div>
-      <div class="card-value" style="color:#f59e0b">${fmt(d.baselineKwh)}</div>
-      <div class="card-unit">kWh rujukan</div>
-    </div>
-    <div class="card" style="border-top:3px solid ${saving>=0?'#1e7e34':'#c0392b'}">
-      <div class="card-icon" style="color:${saving>=0?'#1e7e34':'#c0392b'}"><i class="ti ti-${saving>=0?'trending-down':'trending-up'}"></i></div>
-      <div class="card-label" style="color:${saving>=0?'#1e7e34':'#c0392b'}">${saving>=0?'Penjimatan':'Lebihan'} vs Baseline</div>
-      <div class="card-value" style="color:${saving>=0?'#1e7e34':'#c0392b'}">${saving>=0?'':'-'}${fmt(Math.abs(saving))}</div>
-      <div class="card-unit">kWh · ${Math.abs(savPct)}% ${saving>=0?'jimat':'lebih'}</div>
+      <div class="card-label" style="color:#f59e0b">Baseline 2017 (Jumlah)</div>
+      <div class="card-value" style="color:#f59e0b">${fmt(baselineTotal)}</div>
+      <div class="card-unit">Trauma: ${fmt(d.baselineTrauma)} · General: ${fmt(d.baselineGeneral)}</div>
     </div>`;
-
-  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
-  document.getElementById('epc-chart-sub').textContent=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
 
   const tck={color:'#999',font:{size:10}};
   const hideDL=sorted.length>12;
-  const dlV={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const eBase={responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:dlV},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}};
+  const dlBar={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
 
-  if(epcChartKwh)epcChartKwh.destroy();
-  epcChartKwh=new Chart(document.getElementById('epc-kwh-chart'),{type:'bar',data:{labels:lbl,datasets:[
-    {label:'Trauma & PPSG',data:sorted.map(r=>r.chillerTrauma),backgroundColor:'rgba(14,116,144,.85)',borderRadius:3,borderSkipped:false},
-    {label:'General OT',data:sorted.map(r=>r.chillerGeneral),backgroundColor:'rgba(15,118,110,.85)',borderRadius:3,borderSkipped:false}
-  ]},options:eBase});
+  // ── CARTA 1: Trauma + line baseline trauma ──
+  document.getElementById('epc-sub-trauma').textContent=sub;
+  if(epcChartTrauma)epcChartTrauma.destroy();
+  epcChartTrauma=new Chart(document.getElementById('epc-trauma-chart'),{
+    data:{labels:lbl,datasets:[
+      {type:'bar',  label:'Trauma & PPSG', data:sorted.map(r=>r.chillerTrauma),  backgroundColor:'rgba(14,116,144,.85)',borderRadius:3,borderSkipped:false,yAxisID:'y',datalabels:hideDL?{display:false}:dlBar},
+      {type:'line', label:'Baseline Trauma',data:sorted.map(r=>r.baselineTrauma),borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b',tension:.3,yAxisID:'y',datalabels:{display:false}}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
 
-  if(epcChartYoy)epcChartYoy.destroy();
-  epcChartYoy=new Chart(document.getElementById('epc-baseline-chart'),{type:'bar',data:{labels:lbl,datasets:[
-    {label:'kWh Semasa',data:sorted.map(r=>r.totalKwh),backgroundColor:'rgba(14,116,144,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Baseline',data:sorted.map(r=>r.baselineKwh),backgroundColor:'rgba(245,158,11,.7)',borderRadius:3,borderSkipped:false}
-  ]},options:eBase});
+  // ── CARTA 2: General OT + line baseline general ──
+  document.getElementById('epc-sub-general').textContent=sub;
+  if(epcChartGeneral)epcChartGeneral.destroy();
+  epcChartGeneral=new Chart(document.getElementById('epc-general-chart'),{
+    data:{labels:lbl,datasets:[
+      {type:'bar',  label:'General OT',      data:sorted.map(r=>r.chillerGeneral),  backgroundColor:'rgba(15,118,110,.85)',borderRadius:3,borderSkipped:false,yAxisID:'y',datalabels:hideDL?{display:false}:dlBar},
+      {type:'line', label:'Baseline General', data:sorted.map(r=>r.baselineGeneral),borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b',tension:.3,yAxisID:'y',datalabels:{display:false}}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
 
-  const savingData=sorted.map(r=>r.baselineKwh-r.totalKwh);
-  document.getElementById('epc-saving-sub').textContent=`Jumlah: ${saving>=0?'Penjimatan':'Lebihan'} ${fmt(Math.abs(saving))} kWh (${Math.abs(savPct)}% vs Baseline 2017)`;
-  const sc=Chart.getChart('epc-saving-chart');if(sc)sc.destroy();
-  new Chart(document.getElementById('epc-saving-chart'),{type:'bar',data:{labels:lbl,datasets:[{
-    label:'Δ kWh',data:savingData,
-    backgroundColor:savingData.map(v=>v>=0?'rgba(30,126,52,.85)':'rgba(192,57,43,.85)'),
-    borderRadius:3,borderSkipped:false
-  }]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:{display:true,formatter:v=>fmtDL(Math.abs(v),false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}});
-
-  const tPct=d.totalKwh>0?(d.chillerTrauma/d.totalKwh*100).toFixed(1):'0';
-  const gPct=d.totalKwh>0?(d.chillerGeneral/d.totalKwh*100).toFixed(1):'0';
+  // health
+  const savT=d.baselineTrauma-d.chillerTrauma, savG=d.baselineGeneral-d.chillerGeneral;
+  const pT=d.baselineTrauma>0?(savT/d.baselineTrauma*100).toFixed(1):'0';
+  const pG=d.baselineGeneral>0?(savG/d.baselineGeneral*100).toFixed(1):'0';
   document.getElementById('epc-health').innerHTML=`
     <div class="hcard">
-      <div class="hhead"><div class="hname" style="color:#0e7490"><i class="ti ti-building-hospital"></i> Trauma & PPSG</div></div>
-      <div class="hstat">Penggunaan<span>${fmt(d.chillerTrauma)} kWh</span></div>
-      <div class="hstat">% drpd jumlah<span>${tPct}%</span></div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${tPct}%;background:#0e7490"></div></div>
+      <div class="hhead"><div class="hname" style="color:#0e7490"><i class="ti ti-building-hospital"></i> Trauma & PPSG</div><span class="badge ${savT>=0?'b-ok':'b-warn'}">${savT>=0?'JIMAT':'LEBIH'}</span></div>
+      <div class="hstat">Semasa<span>${fmt(d.chillerTrauma)} kWh</span></div>
+      <div class="hstat">Baseline<span>${fmt(d.baselineTrauma)} kWh</span></div>
+      <div class="hstat">Penjimatan<span style="color:${savT>=0?'#1e7e34':'#c0392b'};font-weight:700">${savT>=0?'↓':'↑'} ${fmt(Math.abs(savT))} (${Math.abs(pT)}%)</span></div>
     </div>
     <div class="hcard">
-      <div class="hhead"><div class="hname" style="color:#0f766e"><i class="ti ti-building"></i> General OT</div></div>
-      <div class="hstat">Penggunaan<span>${fmt(d.chillerGeneral)} kWh</span></div>
-      <div class="hstat">% drpd jumlah<span>${gPct}%</span></div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${gPct}%;background:#0f766e"></div></div>
+      <div class="hhead"><div class="hname" style="color:#0f766e"><i class="ti ti-building"></i> General OT</div><span class="badge ${savG>=0?'b-ok':'b-warn'}">${savG>=0?'JIMAT':'LEBIH'}</span></div>
+      <div class="hstat">Semasa<span>${fmt(d.chillerGeneral)} kWh</span></div>
+      <div class="hstat">Baseline<span>${fmt(d.baselineGeneral)} kWh</span></div>
+      <div class="hstat">Penjimatan<span style="color:${savG>=0?'#1e7e34':'#c0392b'};font-weight:700">${savG>=0?'↓':'↑'} ${fmt(Math.abs(savG))} (${Math.abs(pG)}%)</span></div>
     </div>
     <div class="hcard">
-      <div class="hhead">
-        <div class="hname"><i class="ti ti-leaf" style="color:#1e7e34"></i> Status EPC</div>
-        <span class="badge ${saving>=0?'b-ok':'b-warn'}">${saving>=0?'JIMAT':'MELEBIHI'}</span>
-      </div>
-      <div class="hstat">Baseline 2017<span>${fmt(d.baselineKwh)} kWh</span></div>
-      <div class="hstat">Semasa<span>${fmt(d.totalKwh)} kWh</span></div>
-      <div class="hstat">Δ kWh<span style="color:${saving>=0?'#1e7e34':'#c0392b'};font-weight:700">${saving>=0?'↓ Jimat ':'↑ Lebih '}${fmt(Math.abs(saving))} (${Math.abs(savPct)}%)</span></div>
+      <div class="hhead"><div class="hname"><i class="ti ti-leaf" style="color:#1e7e34"></i> Status EPC Keseluruhan</div><span class="badge ${(savT+savG)>=0?'b-ok':'b-warn'}">${(savT+savG)>=0?'JIMAT':'MELEBIHI'}</span></div>
+      <div class="hstat">Jumlah Semasa<span>${fmt(d.totalKwh)} kWh</span></div>
+      <div class="hstat">Jumlah Baseline<span>${fmt(baselineTotal)} kWh</span></div>
+      <div class="hstat">Jumlah Penjimatan<span style="color:${(savT+savG)>=0?'#1e7e34':'#c0392b'};font-weight:700">${(savT+savG)>=0?'↓':'↑'} ${fmt(Math.abs(savT+savG))} kWh</span></div>
     </div>`;
+}
+
+function renderEpcYoY(){
+  const currY=document.getElementById('epc-yoy-curr')?.value;
+  const prevY=document.getElementById('epc-yoy-prev')?.value;
+  if(!currY||!prevY)return;
+  const s=Math.min(epcRangeStart,epcRangeEnd),e=Math.max(epcRangeStart,epcRangeEnd);
+  const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
+  const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
+  const cRows=getEpcInRange(currY),pRows=getEpcInRange(prevY);
+  const c=sumEpc(cRows),p=sumEpc(pRows);
+  const dlt=(cv,pv)=>{if(!pv)return{pct:'—',cls:'flat',arrow:'→'};const pct=(cv-pv)/pv*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};};
+  const dT=dlt(c.chillerTrauma,p.chillerTrauma),dG=dlt(c.chillerGeneral,p.chillerGeneral),dTot=dlt(c.totalKwh,p.totalKwh);
+  const savTc=c.baselineTrauma-c.chillerTrauma,savGc=c.baselineGeneral-c.chillerGeneral;
+  const savTp=p.baselineTrauma-p.chillerTrauma,savGp=p.baselineGeneral-p.chillerGeneral;
+
+  // summary cards
+  document.getElementById('epc-yoy-summary').innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
+    <div class="yoy-card" style="border-top:3px solid #0e7490">
+      <div class="yoy-card-label" style="color:#0e7490"><i class="ti ti-building-hospital"></i> Trauma & PPSG kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#0e7490">${fmtN(c.chillerTrauma)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.chillerTrauma)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dT.cls}">${dT.arrow} ${dT.pct}</div>
+    </div>
+    <div class="yoy-card" style="border-top:3px solid #0f766e">
+      <div class="yoy-card-label" style="color:#0f766e"><i class="ti ti-building"></i> General OT kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#0f766e">${fmtN(c.chillerGeneral)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.chillerGeneral)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dG.cls}">${dG.arrow} ${dG.pct}</div>
+    </div>
+    <div class="yoy-card kwh-card">
+      <div class="yoy-card-label"><i class="ti ti-plug"></i> Total kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dTot.cls}">${dTot.arrow} ${dTot.pct}</div>
+    </div>
+    <div class="yoy-card" style="border-top:3px solid ${savTc>=0?'#1e7e34':'#c0392b'}">
+      <div class="yoy-card-label" style="color:${savTc>=0?'#1e7e34':'#c0392b'}"><i class="ti ti-leaf"></i> Penjimatan Trauma ${currY}</div>
+      <div class="yoy-row"><span class="yoy-year-label">vs Baseline</span><span class="yoy-val" style="color:${savTc>=0?'#1e7e34':'#c0392b'}">${savTc>=0?'↓':'↑'} ${fmtN(Math.abs(savTc))}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${savTp>=0?'↓':'↑'} ${fmtN(Math.abs(savTp))}</span></div>
+    </div>
+    <div class="yoy-card" style="border-top:3px solid ${savGc>=0?'#1e7e34':'#c0392b'}">
+      <div class="yoy-card-label" style="color:${savGc>=0?'#1e7e34':'#c0392b'}"><i class="ti ti-leaf"></i> Penjimatan General ${currY}</div>
+      <div class="yoy-row"><span class="yoy-year-label">vs Baseline</span><span class="yoy-val" style="color:${savGc>=0?'#1e7e34':'#c0392b'}">${savGc>=0?'↓':'↑'} ${fmtN(Math.abs(savGc))}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${savGp>=0?'↓':'↑'} ${fmtN(Math.abs(savGp))}</span></div>
+    </div>
+  </div>`;
+
+  const getCurr=b=>cRows.find(r=>r.bulan===b);
+  const getPrev=b=>pRows.find(r=>r.bulan===b);
+  document.getElementById('epc-yoy-trauma-sub').textContent=`${rangeStr} | ${currY} vs ${prevY} vs Baseline`;
+  document.getElementById('epc-yoy-general-sub').textContent=`${rangeStr} | ${currY} vs ${prevY} vs Baseline`;
+
+  const tck={color:'#999',font:{size:10}};
+  const hideDL=shortDlm.length>12;
+  const dlYV={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
+  const yBase={responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}};
+
+  if(epcChartYoyTrauma)epcChartYoyTrauma.destroy();
+  epcChartYoyTrauma=new Chart(document.getElementById('epc-yoy-trauma-chart'),{
+    data:{labels:shortDlm,datasets:[
+      {type:'bar', label:'Semasa '+currY,   data:bulanDlm.map(b=>(getCurr(b)||{chillerTrauma:0}).chillerTrauma),  backgroundColor:'rgba(14,116,144,.9)',  borderRadius:3,borderSkipped:false,datalabels:hideDL?{display:false}:dlYV},
+      {type:'bar', label:'Lalu '+prevY,     data:bulanDlm.map(b=>(getPrev(b)||{chillerTrauma:0}).chillerTrauma),  backgroundColor:'rgba(147,197,253,.8)', borderRadius:3,borderSkipped:false,datalabels:{display:false}},
+      {type:'line',label:'Baseline Trauma', data:bulanDlm.map(b=>{const r=getCurr(b)||getPrev(b);return r?r.baselineTrauma:0;}), borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b',tension:.3,datalabels:{display:false}}
+    ]},
+    options:yBase
+  });
+
+  if(epcChartYoyGeneral)epcChartYoyGeneral.destroy();
+  epcChartYoyGeneral=new Chart(document.getElementById('epc-yoy-general-chart'),{
+    data:{labels:shortDlm,datasets:[
+      {type:'bar', label:'Semasa '+currY,    data:bulanDlm.map(b=>(getCurr(b)||{chillerGeneral:0}).chillerGeneral),  backgroundColor:'rgba(15,118,110,.9)',  borderRadius:3,borderSkipped:false,datalabels:hideDL?{display:false}:dlYV},
+      {type:'bar', label:'Lalu '+prevY,      data:bulanDlm.map(b=>(getPrev(b)||{chillerGeneral:0}).chillerGeneral),  backgroundColor:'rgba(110,231,183,.8)', borderRadius:3,borderSkipped:false,datalabels:{display:false}},
+      {type:'line',label:'Baseline General', data:bulanDlm.map(b=>{const r=getCurr(b)||getPrev(b);return r?r.baselineGeneral:0;}), borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b',tension:.3,datalabels:{display:false}}
+    ]},
+    options:yBase
+  });
+
+  // Jadual YoY
+  let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY EPC — ${rangeStr} | ${currY} vs ${prevY}</div>
+  <table class="yoy-table"><thead><tr>
+    <th>Bulan</th>
+    <th class="td-num">Trauma ${currY}</th><th class="td-num">Trauma ${prevY}</th><th class="td-num">Δ</th><th class="td-num">Baseline T</th><th class="td-num">Penjimatan T</th>
+    <th class="td-num">General ${currY}</th><th class="td-num">General ${prevY}</th><th class="td-num">Δ</th><th class="td-num">Baseline G</th><th class="td-num">Penjimatan G</th>
+  </tr></thead><tbody>`;
+  let totCT=0,totPT=0,totCG=0,totPG=0,totBT=0,totBG=0,totST=0,totSG=0;
+  bulanDlm.forEach((b,i)=>{
+    const cr=getCurr(b),pr=getPrev(b);
+    const bRow=cr||pr;
+    const bT=bRow?bRow.baselineTrauma:0, bG=bRow?bRow.baselineGeneral:0;
+    const dTr=dlt(cr?cr.chillerTrauma:0,pr?pr.chillerTrauma:0);
+    const dGn=dlt(cr?cr.chillerGeneral:0,pr?pr.chillerGeneral:0);
+    const sT=cr?bT-cr.chillerTrauma:0, sG=cr?bG-cr.chillerGeneral:0;
+    if(cr){totCT+=cr.chillerTrauma;totCG+=cr.chillerGeneral;totST+=sT;totSG+=sG;}
+    if(pr){totPT+=pr.chillerTrauma;totPG+=pr.chillerGeneral;}
+    totBT+=bT;totBG+=bG;
+    th+=`<tr>
+      <td><strong>${shortDlm[i]}</strong></td>
+      <td class="td-num" style="color:#0e7490">${cr?fmtN(cr.chillerTrauma):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.chillerTrauma):'—'}</td>
+      <td class="td-num td-${dTr.cls}">${(cr&&pr)?dTr.pct:'—'}</td>
+      <td class="td-num" style="color:#f59e0b">${bT?fmtN(bT):'—'}</td>
+      <td class="td-num" style="color:${sT>=0?'#1e7e34':'#c0392b'};font-weight:700">${cr?(sT>=0?'↓ ':'↑ ')+fmtN(Math.abs(sT)):'—'}</td>
+      <td class="td-num" style="color:#0f766e">${cr?fmtN(cr.chillerGeneral):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.chillerGeneral):'—'}</td>
+      <td class="td-num td-${dGn.cls}">${(cr&&pr)?dGn.pct:'—'}</td>
+      <td class="td-num" style="color:#f59e0b">${bG?fmtN(bG):'—'}</td>
+      <td class="td-num" style="color:${sG>=0?'#1e7e34':'#c0392b'};font-weight:700">${cr?(sG>=0?'↓ ':'↑ ')+fmtN(Math.abs(sG)):'—'}</td>
+    </tr>`;
+  });
+  const dTotT=dlt(totCT,totPT),dTotG=dlt(totCG,totPG);
+  th+=`<tr class="td-total">
+    <td><strong>JUMLAH</strong></td>
+    <td class="td-num">${fmtN(totCT)}</td><td class="td-num" style="color:#aaa">${fmtN(totPT)}</td>
+    <td class="td-num td-${dTotT.cls}">${dTotT.pct}</td>
+    <td class="td-num" style="color:#f59e0b">${fmtN(totBT)}</td>
+    <td class="td-num" style="color:${totST>=0?'#1e7e34':'#c0392b'};font-weight:700">${(totST>=0?'↓ ':'↑ ')+fmtN(Math.abs(totST))}</td>
+    <td class="td-num">${fmtN(totCG)}</td><td class="td-num" style="color:#aaa">${fmtN(totPG)}</td>
+    <td class="td-num td-${dTotG.cls}">${dTotG.pct}</td>
+    <td class="td-num" style="color:#f59e0b">${fmtN(totBG)}</td>
+    <td class="td-num" style="color:${totSG>=0?'#1e7e34':'#c0392b'};font-weight:700">${(totSG>=0?'↓ ':'↑ ')+fmtN(Math.abs(totSG))}</td>
+  </tr></tbody></table>`;
+  document.getElementById('epc-yoy-table').innerHTML=th;
 }
 
 loadData();
