@@ -349,6 +349,8 @@ function detectColumns(lines){
       // eksport kWh (must come after eksport RM check)
       else if((h.includes('eksport')||h.includes('export'))&&!h.includes('rm'))m.eksportKwh=idx;
       else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
+      else if(h.includes('pv')&&h.includes('solar')&&h.includes('rm'))m.bilPvSolar=idx;
+      else if(h.includes('hi-tech')&&h.includes('rm'))m.bilPvSolar=idx;
     });
     return{headerIdx:i,colMap:m};
   }
@@ -368,8 +370,9 @@ function buildRows(lines,headerIdx,colMap){
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
       ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
-      eksportRm:n('eksportRm'),        // NEW
-      penjimatan:n('penjimatan')       // NEW
+      eksportRm:n('eksportRm'),
+      penjimatan:n('penjimatan'),
+      bilPvSolar:n('bilPvSolar')
     });
   }
   return rows;
@@ -435,9 +438,9 @@ function sumRows(rows){
   return rows.reduce((a,r)=>({
     ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
     solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,
-    eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,
+    eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,
     ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm
-  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,ssaRm:0,ssdRm:0,totalRm:0});
+  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});
 }
 
 function renderShell(){
@@ -462,6 +465,7 @@ function renderShell(){
           <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
           <span><span class="leg-dot" style="background:#0891b2"></span>Eksport</span>
           <span><span class="leg-dot" style="background:#7c3aed"></span>Penjimatan</span>
+          <span><span class="leg-dot" style="background:#be185d"></span>PV Solar</span>
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
       </div>
@@ -500,6 +504,7 @@ function updateDisplay(){
     <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
     <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan Sebenar USM</div><div class="card-value">${fmtRM(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
     <div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
+    <div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
 
   renderCharts(filtered,d);
@@ -598,6 +603,7 @@ function renderCharts(filtered,d){
     if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
     bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
     bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
+    bilDatasets.push({label:'PV Solar',data:sorted.map(r=>r.bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false});
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
 
     // ── Trend line — Total kWh & Total RM ──
@@ -645,7 +651,7 @@ function renderCharts(filtered,d){
     const bilLbls=[],bilVals=[],bilClr=[];
     if(showSSA){bilLbls.push('Bil SS-A');bilVals.push(d.ssaRm);bilClr.push('#1a5fa8');}
     if(showSSD){bilLbls.push('Bil SS-D');bilVals.push(d.ssdRm);bilClr.push('#1e7e34');}
-    bilLbls.push('Eksport (RM)','Penjimatan');bilVals.push(d.eksportRm,d.penjimatan);bilClr.push('#0891b2','#7c3aed');
+    bilLbls.push('Eksport (RM)','Penjimatan','PV Solar');bilVals.push(d.eksportRm,d.penjimatan,d.bilPvSolar);bilClr.push('#0891b2','#7c3aed','#be185d');
 
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:kwhLbls,datasets:[{data:kwhVals,backgroundColor:kwhClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
@@ -754,7 +760,7 @@ function getRowsInRange(year){
   return allRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
 }
 
-function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,ssaRm:0,ssdRm:0,totalRm:0});}
+function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
 function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2(n){return 'RM '+Math.round(n).toLocaleString('ms-MY')}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
@@ -773,7 +779,7 @@ function renderYoY(){
   const dK=delta(c.totalKwh,p.totalKwh),dB=delta(c.totalRm,p.totalRm);
   const dSSAk=delta(c.ssaKwh,p.ssaKwh),dSSDk=delta(c.ssdKwh,p.ssdKwh);
   const dSSAr=delta(c.ssaRm,p.ssaRm),dSSDr=delta(c.ssdRm,p.ssdRm);
-  const dSol=delta(c.solarKwh,p.solarKwh),dExp=delta(c.eksportRm,p.eksportRm),dJim=delta(c.penjimatan,p.penjimatan);
+  const dSol=delta(c.solarKwh,p.solarKwh),dExp=delta(c.eksportRm,p.eksportRm),dJim=delta(c.penjimatan,p.penjimatan),dPvSolar=delta(c.bilPvSolar,p.bilPvSolar);
 
   let html=`<div class="yoy-summary">
     <div class="yoy-card kwh-card">
@@ -818,6 +824,12 @@ function renderYoY(){
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.penjimatan)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dJim.cls}">${dJim.arrow} ${dJim.pct}</div>
     </div>
+    <div class="yoy-card" style="border-top:3px solid #be185d">
+      <div class="yoy-card-label" style="color:#be185d"><i class="ti ti-solar-panel-2"></i> Bil PV Hi-Tech Solar</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.bilPvSolar)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dPvSolar.cls}">${dPvSolar.arrow} ${dPvSolar.pct}</div>
+    </div>
     <div class="yoy-card bil-card">
       <div class="yoy-card-label"><i class="ti ti-receipt"></i> Bil SS-A vs SS-D</div>
       <div class="yoy-row"><span class="yoy-year-label">SS-A ${currY}</span><span class="yoy-val" style="font-size:12px;color:#1a5fa8">${fmtRM2(c.ssaRm)}</span></div>
@@ -850,6 +862,7 @@ function renderYoY(){
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#be185d;margin-right:4px"></span>PV Solar ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
     </div>
@@ -862,7 +875,7 @@ function renderYoY(){
       <th>Bulan</th>
       <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
       <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
-      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th>
+      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
@@ -878,6 +891,7 @@ function renderYoY(){
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
       <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
+      <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
   const dKT=delta(c.totalKwh,p.totalKwh),dBT=delta(c.totalRm,p.totalRm);
@@ -889,6 +903,7 @@ function renderYoY(){
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
     <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
+    <td class="td-num" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</td>
   </tr></tbody></table></div>`;
 
   el.innerHTML=html;
@@ -919,7 +934,8 @@ function renderYoY(){
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
     {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
     {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
-    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false}
+    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
+    {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
 }
 
