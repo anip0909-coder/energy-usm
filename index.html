@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga USM</title>
+<title>Pemantauan Tenaga Elektrik USMKK</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -215,7 +215,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
+      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -227,8 +227,8 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 
 <!-- TAB NAV -->
 <div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga JPPF</button>
-  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
+  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga USMKK</button>
+  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC kWh Chiller</button>
 </div>
 
 <div class="container">
@@ -277,7 +277,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
+<footer>Sistem Pemantauan Tenaga &copy; USMKK &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
 // ══════════════════════════════════════════════
@@ -285,7 +285,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 30;
+const REFRESH_SECONDS    = 1800;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -1052,7 +1052,8 @@ function parseEPC(csv){
       else if(h.includes('general')||h.includes('ot'))      m.chillerGeneral=idx;
       else if(h.includes('total')&&h.includes('kwh'))       m.totalKwh=idx;
       else if(h.includes('tahun')&&h.includes('baseline'))  m.tahunBaseline=idx;
-      else if(h.includes('baseline')||(h.includes('basline')&&h.includes('kwh'))) m.baselineKwh=idx;
+      else if (h.includes('baseline') && (h.includes('trauma') || h.includes('ppsg'))) m.baselineTraumaKwh = idx;
+      else if (h.includes('baseline') && (h.includes('general') || h.includes('ot')))  m.baselineGeneralKwh = idx;
     });
     break;
   }
@@ -1066,7 +1067,7 @@ function parseEPC(csv){
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
       chillerTrauma:n('chillerTrauma'), chillerGeneral:n('chillerGeneral'),
-      totalKwh:n('totalKwh'), baselineKwh:n('baselineKwh')
+      totalKwh:n('totalKwh'), baselineTraumaKwh:n('baselineTraumaKwh'), baselineGeneralKwh:n( 'baselineGeneralKwh' )
     });
   }
   return rows;
