@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga Elektrik USMKK</title>
+<title>Pemantauan Tenaga USM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -166,6 +166,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .toggle-btn.active:not(.ssa):not(.ssd){background:#1a3a5c;border-color:#1a3a5c;color:white}
 .toggle-btn:hover:not(.active){border-color:#1a3a5c;color:#1a3a5c}
 
+/* ── TAB NAV ── */
+.tab-nav{background:white;border-bottom:2px solid #e0e6ed;display:flex;gap:0;padding:0 28px}
+.tab-btn{padding:12px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:7px;transition:all .2s}
+.tab-btn:hover{color:#1a3a5c}
+.tab-btn.active{color:#1a3a5c;border-bottom-color:#1a3a5c}
+
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
@@ -209,7 +215,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
+      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -217,6 +223,12 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
     <div class="live-pill"><span class="live-dot"></span> LIVE</div>
     <div class="countdown-pill"><i class="ti ti-refresh"></i> Refresh: <strong id="countdown-label">—</strong></div>
   </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga JPPF</button>
+  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
 </div>
 
 <div class="container">
@@ -248,12 +260,24 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
     </div>
   </div>
 
+  <!-- JPPF TAB PANEL -->
+  <div id="panel-jppf">
+
   <div id="main-content">
     <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
   </div>
+
+  </div><!-- end panel-jppf -->
+
+  <!-- EPC TAB PANEL -->
+  <div id="panel-epc" style="display:none">
+    <div id="epc-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data EPC...</div>
+    </div>
+  </div>
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USMKK &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
+<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
 // ══════════════════════════════════════════════
@@ -261,7 +285,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -856,11 +880,12 @@ function renderYoY(){
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-kwh-chart"></canvas></div>
     </div>
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil USMKK (RM) — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan & Eksport (RM) — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Total RM ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Total RM ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#be185d;margin-right:4px"></span>PV Solar ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
@@ -931,8 +956,9 @@ function renderYoY(){
     {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
     {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
 }
@@ -973,15 +999,221 @@ function barDLmulti(isRM=false){
   };
 }
 
-// For LINE chart — show label at each point
-function lineDL(isRM=false){
-  return {
-    anchor:'top', align:'top', offset:4,
-    font:{size:8, weight:'600'},
-    color: isRM ? '#c47800' : '#1a5fa8',
-    formatter:(v)=>fmtLbl(v, isRM),
-    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
-  };
+// ══════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════
+let activeTab = 'jppf';
+function switchTab(tab){
+  activeTab = tab;
+  document.getElementById('panel-jppf').style.display = tab==='jppf' ? 'block' : 'none';
+  document.getElementById('panel-epc').style.display  = tab==='epc'  ? 'block' : 'none';
+  document.getElementById('tab-jppf').classList.toggle('active', tab==='jppf');
+  document.getElementById('tab-epc').classList.toggle('active',  tab==='epc');
+  if(tab==='epc' && epcRows.length===0) loadEPC();
+}
+
+// ══════════════════════════════════════════════
+// EPC MODULE
+// ══════════════════════════════════════════════
+const EPC_SHEET_GID = '2029914262';
+let epcRows = [], epcChartKwh=null, epcChartYoy=null;
+
+async function loadEPC(){
+  const el = document.getElementById('epc-content');
+  el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data EPC...</div>';
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${EPC_SHEET_GID}&t=${Date.now()}`;
+    const res = await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+    epcRows = parseEPC(csv);
+    if(!epcRows.length) throw new Error('Tiada data EPC dijumpai. Semak nama tab dan GID.');
+    renderEPC();
+  }catch(err){
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab EPC</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul.</div>`;
+  }
+}
+
+function parseEPC(csv){
+  const lines = csv.split('\n').map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(const ch of line){if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=ch;}
+    cols.push(cur.trim());return cols.map(c=>c.replace(/"/g,'').trim());
+  });
+  let hi=-1, m={};
+  for(let i=0;i<Math.min(lines.length,15);i++){
+    const row=lines[i].map(c=>c.toLowerCase());
+    if(!row.some(c=>c.includes('bulan'))) continue;
+    hi=i;
+    row.forEach((h,idx)=>{
+      if(h.includes('bulan'))                                m.bulan=idx;
+      else if(h.includes('tahun')&&!h.includes('baseline')) m.tahun=idx;
+      else if(h.includes('trauma')||h.includes('ppsg'))     m.chillerTrauma=idx;
+      else if(h.includes('general')||h.includes('ot'))      m.chillerGeneral=idx;
+      else if(h.includes('total')&&h.includes('kwh'))       m.totalKwh=idx;
+      else if(h.includes('tahun')&&h.includes('baseline'))  m.tahunBaseline=idx;
+      else if(h.includes('baseline')||(h.includes('basline')&&h.includes('kwh'))) m.baselineKwh=idx;
+    });
+    break;
+  }
+  if(hi<0) return [];
+  const rows=[];
+  for(let i=hi+1;i<lines.length;i++){
+    const row=lines[i];
+    const bRaw=row[m.bulan];
+    if(!bRaw||bRaw==='') continue;
+    const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    rows.push({
+      bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
+      chillerTrauma:n('chillerTrauma'), chillerGeneral:n('chillerGeneral'),
+      totalKwh:n('totalKwh'), baselineKwh:n('baselineKwh')
+    });
+  }
+  return rows;
+}
+
+function renderEPC(){
+  const el = document.getElementById('epc-content');
+  const years = [...new Set(epcRows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts = ['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts = ['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+  el.innerHTML = `
+    <div class="filter-row" style="margin-top:18px">
+      <label><i class="ti ti-filter"></i> Tapis EPC:</label>
+      <select id="epc-sel-tahun" onchange="updateEPC()">${yearOpts}</select>
+      <select id="epc-sel-bulan" onchange="updateEPC()">${monthOpts}</select>
+      <button class="icon-btn" style="margin-left:auto" onclick="loadEPC()"><i class="ti ti-refresh"></i> Refresh</button>
+    </div>
+    <div class="metrics" id="epc-metrics"></div>
+    <div class="charts" style="margin-bottom:22px">
+      <div class="chart-box">
+        <div class="chart-title">Penggunaan kWh Chiller</div>
+        <div class="chart-sub" id="epc-chart-sub">—</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#0e7490"></span>Trauma & PPSG</span>
+          <span><span class="leg-dot" style="background:#0f766e"></span>General OT</span>
+        </div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="epc-kwh-chart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">kWh Semasa vs Baseline 2017</div>
+        <div class="chart-sub">Perbandingan bulanan dengan sasaran</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#0e7490"></span>kWh Semasa</span>
+          <span><span class="leg-dot" style="background:#f59e0b"></span>Baseline 2017</span>
+        </div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="epc-baseline-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="trend-box">
+      <div class="chart-title">Analisis YoY — Pengurangan kWh vs Baseline 2017</div>
+      <div class="chart-sub" id="epc-saving-sub">Bar hijau = penjimatan, bar merah = melebihi baseline</div>
+      <div style="position:relative;width:100%;height:220px"><canvas id="epc-saving-chart"></canvas></div>
+    </div>
+    <div class="sec-title" style="margin-top:22px"><i class="ti ti-leaf"></i> Ringkasan Penjimatan EPC</div>
+    <div class="health-row" id="epc-health"></div>`;
+  updateEPC();
+}
+
+function updateEPC(){
+  const t=document.getElementById('epc-sel-tahun')?.value;
+  const b=document.getElementById('epc-sel-bulan')?.value;
+  let rows=epcRows;
+  if(t) rows=rows.filter(r=>r.tahun===t);
+  if(b) rows=rows.filter(r=>r.bulan===b);
+  if(!rows.length){document.getElementById('epc-metrics').innerHTML='<div class="empty-state" style="grid-column:1/-1">Tiada data untuk pilihan ini</div>';return;}
+
+  const d=rows.reduce((a,r)=>({chillerTrauma:a.chillerTrauma+r.chillerTrauma,chillerGeneral:a.chillerGeneral+r.chillerGeneral,totalKwh:a.totalKwh+r.totalKwh,baselineKwh:a.baselineKwh+r.baselineKwh}),{chillerTrauma:0,chillerGeneral:0,totalKwh:0,baselineKwh:0});
+  const saving=d.baselineKwh-d.totalKwh;
+  const savPct=d.baselineKwh>0?(saving/d.baselineKwh*100).toFixed(1):'0.0';
+  const label=rows.length===1?(rows[0].bulan+' '+rows[0].tahun):rows.length+' rekod';
+
+  document.getElementById('epc-metrics').innerHTML=`
+    <div class="card" style="border-top:3px solid #0e7490">
+      <div class="card-icon" style="color:#0e7490"><i class="ti ti-building-hospital"></i></div>
+      <div class="card-label" style="color:#0e7490">Chiller Trauma & PPSG</div>
+      <div class="card-value" style="color:#0e7490">${fmt(d.chillerTrauma)}</div>
+      <div class="card-unit">kWh</div>
+    </div>
+    <div class="card" style="border-top:3px solid #0f766e">
+      <div class="card-icon" style="color:#0f766e"><i class="ti ti-building"></i></div>
+      <div class="card-label" style="color:#0f766e">Chiller General OT</div>
+      <div class="card-value" style="color:#0f766e">${fmt(d.chillerGeneral)}</div>
+      <div class="card-unit">kWh</div>
+    </div>
+    <div class="card total">
+      <div class="card-icon"><i class="ti ti-plug"></i></div>
+      <div class="card-label">Jumlah kWh Semasa</div>
+      <div class="card-value">${fmt(d.totalKwh)}</div>
+      <div class="card-unit">${label}</div>
+    </div>
+    <div class="card" style="border-top:3px solid #f59e0b">
+      <div class="card-icon" style="color:#f59e0b"><i class="ti ti-history"></i></div>
+      <div class="card-label" style="color:#f59e0b">kWh Baseline 2017</div>
+      <div class="card-value" style="color:#f59e0b">${fmt(d.baselineKwh)}</div>
+      <div class="card-unit">kWh rujukan</div>
+    </div>
+    <div class="card" style="border-top:3px solid ${saving>=0?'#1e7e34':'#c0392b'}">
+      <div class="card-icon" style="color:${saving>=0?'#1e7e34':'#c0392b'}"><i class="ti ti-${saving>=0?'trending-down':'trending-up'}"></i></div>
+      <div class="card-label" style="color:${saving>=0?'#1e7e34':'#c0392b'}">${saving>=0?'Penjimatan':'Lebihan'} vs Baseline</div>
+      <div class="card-value" style="color:${saving>=0?'#1e7e34':'#c0392b'}">${saving>=0?'':'-'}${fmt(Math.abs(saving))}</div>
+      <div class="card-unit">kWh · ${Math.abs(savPct)}% ${saving>=0?'jimat':'lebih'}</div>
+    </div>`;
+
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
+  document.getElementById('epc-chart-sub').textContent=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
+
+  const tck={color:'#999',font:{size:10}};
+  const hideDL=sorted.length>12;
+  const dlV={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
+  const eBase={responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:dlV},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}};
+
+  if(epcChartKwh)epcChartKwh.destroy();
+  epcChartKwh=new Chart(document.getElementById('epc-kwh-chart'),{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Trauma & PPSG',data:sorted.map(r=>r.chillerTrauma),backgroundColor:'rgba(14,116,144,.85)',borderRadius:3,borderSkipped:false},
+    {label:'General OT',data:sorted.map(r=>r.chillerGeneral),backgroundColor:'rgba(15,118,110,.85)',borderRadius:3,borderSkipped:false}
+  ]},options:eBase});
+
+  if(epcChartYoy)epcChartYoy.destroy();
+  epcChartYoy=new Chart(document.getElementById('epc-baseline-chart'),{type:'bar',data:{labels:lbl,datasets:[
+    {label:'kWh Semasa',data:sorted.map(r=>r.totalKwh),backgroundColor:'rgba(14,116,144,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Baseline',data:sorted.map(r=>r.baselineKwh),backgroundColor:'rgba(245,158,11,.7)',borderRadius:3,borderSkipped:false}
+  ]},options:eBase});
+
+  const savingData=sorted.map(r=>r.baselineKwh-r.totalKwh);
+  document.getElementById('epc-saving-sub').textContent=`Jumlah: ${saving>=0?'Penjimatan':'Lebihan'} ${fmt(Math.abs(saving))} kWh (${Math.abs(savPct)}% vs Baseline 2017)`;
+  const sc=Chart.getChart('epc-saving-chart');if(sc)sc.destroy();
+  new Chart(document.getElementById('epc-saving-chart'),{type:'bar',data:{labels:lbl,datasets:[{
+    label:'Δ kWh',data:savingData,
+    backgroundColor:savingData.map(v=>v>=0?'rgba(30,126,52,.85)':'rgba(192,57,43,.85)'),
+    borderRadius:3,borderSkipped:false
+  }]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:{display:true,formatter:v=>fmtDL(Math.abs(v),false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+
+  const tPct=d.totalKwh>0?(d.chillerTrauma/d.totalKwh*100).toFixed(1):'0';
+  const gPct=d.totalKwh>0?(d.chillerGeneral/d.totalKwh*100).toFixed(1):'0';
+  document.getElementById('epc-health').innerHTML=`
+    <div class="hcard">
+      <div class="hhead"><div class="hname" style="color:#0e7490"><i class="ti ti-building-hospital"></i> Trauma & PPSG</div></div>
+      <div class="hstat">Penggunaan<span>${fmt(d.chillerTrauma)} kWh</span></div>
+      <div class="hstat">% drpd jumlah<span>${tPct}%</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${tPct}%;background:#0e7490"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead"><div class="hname" style="color:#0f766e"><i class="ti ti-building"></i> General OT</div></div>
+      <div class="hstat">Penggunaan<span>${fmt(d.chillerGeneral)} kWh</span></div>
+      <div class="hstat">% drpd jumlah<span>${gPct}%</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${gPct}%;background:#0f766e"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead">
+        <div class="hname"><i class="ti ti-leaf" style="color:#1e7e34"></i> Status EPC</div>
+        <span class="badge ${saving>=0?'b-ok':'b-warn'}">${saving>=0?'JIMAT':'MELEBIHI'}</span>
+      </div>
+      <div class="hstat">Baseline 2017<span>${fmt(d.baselineKwh)} kWh</span></div>
+      <div class="hstat">Semasa<span>${fmt(d.totalKwh)} kWh</span></div>
+      <div class="hstat">Δ kWh<span style="color:${saving>=0?'#1e7e34':'#c0392b'};font-weight:700">${saving>=0?'↓ Jimat ':'↑ Lebih '}${fmt(Math.abs(saving))} (${Math.abs(savPct)}%)</span></div>
+    </div>`;
 }
 
 loadData();
