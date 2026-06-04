@@ -859,10 +859,9 @@ function renderYoY(){
       <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil USMKK (RM) — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>totalRm ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>totalRm ${prevY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#be185d;margin-right:4px"></span>PV Solar ${currY}</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>totalRm ${currY}</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>totalRm ${prevY}</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#be185d;margin-right:4px"></span>PV Solar ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
     </div>
@@ -934,7 +933,6 @@ function renderYoY(){
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
     {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
     {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
-    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
     {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
 }
