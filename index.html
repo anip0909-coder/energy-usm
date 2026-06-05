@@ -1046,15 +1046,17 @@ function parseEPC(csv){
     if(!row.some(c=>c.includes('bulan'))) continue;
     hi=i;
     row.forEach((h,idx)=>{
-      if(h.includes('bulan'))                                        m.bulan=idx;
-      else if(h.includes('tahun')&&!h.includes('baseline'))         m.tahun=idx;
-      else if(h.includes('tahun')&&h.includes('baseline'))          m.tahunBaseline=idx;
-      // Trauma & PPSG — must check baseline FIRST before general trauma
-      else if((h.includes('baseline'))&&(h.includes('trauma')||h.includes('ppsg'))) m.baselineTrauma=idx;
-      else if((h.includes('baseline'))&&(h.includes('general')||h.includes('ot')))  m.baselineGeneral=idx;
-      else if(h.includes('trauma')||h.includes('ppsg'))             m.chillerTrauma=idx;
-      else if(h.includes('general')||h.includes('ot'))              m.chillerGeneral=idx;
-      else if(h.includes('total')&&h.includes('kwh'))               m.totalKwh=idx;
+      if(h.includes('bulan'))                                         m.bulan=idx;
+      else if(h.includes('tahun')&&h.includes('baseline'))           m.tahunBaseline=idx;
+      else if(h.includes('tahun'))                                    m.tahun=idx;
+      // Baseline columns — check BEFORE chiller columns
+      else if(h.includes('baseline')&&(h.includes('trauma')||h.includes('ppsg')))  m.baselineTrauma=idx;
+      else if(h.includes('baseline')&&(h.includes('general')||h.includes('ot')))   m.baselineGeneral=idx;
+      // Total kWh — check BEFORE individual chillers
+      else if(h.includes('total')&&h.includes('kwh'))                m.totalKwh=idx;
+      // Individual chiller columns
+      else if(h.includes('trauma')||h.includes('ppsg'))              m.chillerTrauma=idx;
+      else if(h.includes('general')||h.includes('ot'))               m.chillerGeneral=idx;
     });
     break;
   }
