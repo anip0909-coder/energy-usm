@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga Elektrik USMKK</title>
+<title>Pemantauan Tenaga USM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -191,6 +191,92 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 .print-header p{font-size:12px;color:#666;margin-top:4px}
 
 @media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.yoy-charts{grid-template-columns:1fr}}
+
+/* ── DARK MODE ── */
+body.dark{background:#0f172a;color:#e2e8f0}
+body.dark .topbar{background:linear-gradient(135deg,#020617,#0f172a)}
+body.dark .tab-nav{background:#1e293b;border-color:#334155}
+body.dark .tab-btn{color:#94a3b8}
+body.dark .tab-btn.active{color:#93c5fd;border-bottom-color:#93c5fd}
+body.dark .filter-row,body.dark .card,body.dark .chart-box,body.dark .trend-box,
+body.dark .hcard,body.dark .yoy-card,body.dark .yoy-chart-box,body.dark .yoy-table-box,
+body.dark .range-box,body.dark .yoy-top,body.dark .modal,body.dark .edit-modal-box{background:#1e293b;border-color:#334155;color:#e2e8f0}
+body.dark .filter-row select,body.dark .yoy-top select,body.dark .edit-modal-box input,body.dark .edit-modal-box select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+body.dark .card-label,body.dark .card-unit{color:#94a3b8}
+body.dark .card-value{color:#f1f5f9}
+body.dark .card.total{background:linear-gradient(135deg,#1e3a5f,#1e40af)}
+body.dark .yoy-table th{background:#0f172a;color:#94a3b8}
+body.dark .yoy-table td{color:#e2e8f0;border-color:#334155}
+body.dark .yoy-table tr:hover td{background:#0f172a}
+body.dark .icon-btn{background:#1e293b;border-color:#475569;color:#e2e8f0}
+body.dark .icon-btn:hover{background:#334155}
+body.dark .status-left{color:#94a3b8}
+body.dark .modal-bg{background:rgba(0,0,0,.8)}
+body.dark .hstat{color:#94a3b8}
+body.dark .bar-bg{background:#334155}
+body.dark .range-box-title{color:#94a3b8}
+body.dark .mpill{background:#0f172a;border-color:#475569;color:#94a3b8}
+body.dark .mpill:hover{border-color:#93c5fd;color:#93c5fd}
+body.dark .yoy-year-label{color:#64748b}
+body.dark footer{color:#475569;border-color:#334155}
+body.dark .error-state{background:#2d1515;border-color:#7f1d1d}
+body.dark .empty-state{background:#1e293b;border-color:#334155}
+body.dark .toggle-group .toggle-btn{background:#0f172a;border-color:#475569;color:#94a3b8}
+
+/* dark mode toggle button */
+.dm-btn{font-size:16px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;font-size:13px}
+.dm-btn:hover{background:rgba(255,255,255,.2)}
+
+/* ── EDIT / DELETE TABLE STYLES ── */
+.data-table-wrap{background:white;border-radius:12px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:22px}
+body.dark .data-table-wrap{background:#1e293b;border-color:#334155}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.data-table th{background:#f0f4f8;padding:9px 10px;text-align:left;font-weight:700;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;position:sticky;top:0}
+body.dark .data-table th{background:#0f172a;color:#94a3b8}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f0f4f8;color:#333;white-space:nowrap}
+body.dark .data-table td{border-color:#334155;color:#e2e8f0}
+.data-table tr:hover td{background:#f8fafc}
+body.dark .data-table tr:hover td{background:#0f172a}
+.btn-edit{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #1a5fa8;background:white;color:#1a5fa8;cursor:pointer;font-weight:600}
+.btn-edit:hover{background:#1a5fa8;color:white}
+body.dark .btn-edit{background:#1e293b;border-color:#3b82f6;color:#93c5fd}
+body.dark .btn-edit:hover{background:#3b82f6;color:white}
+.btn-del{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #c0392b;background:white;color:#c0392b;cursor:pointer;font-weight:600;margin-left:4px}
+.btn-del:hover{background:#c0392b;color:white}
+body.dark .btn-del{background:#1e293b;border-color:#ef4444;color:#fca5a5}
+body.dark .btn-del:hover{background:#ef4444;color:white}
+
+/* edit modal */
+.edit-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.edit-modal-bg.show{display:flex}
+.edit-modal-box{background:white;border-radius:16px;padding:28px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.edit-modal-box h2{font-size:16px;font-weight:700;color:#1a3a5c;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.edit-modal-box p{font-size:12px;color:#999;margin-bottom:16px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.edit-field label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.edit-field input{width:100%;padding:8px 10px;border-radius:7px;border:1.5px solid #c0cdd8;font-size:13px;outline:none;transition:border .2s}
+.edit-field input:focus{border-color:#1a3a5c}
+.edit-field input[readonly]{background:#f8fafc;color:#888}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.btn-save{padding:9px 20px;background:#1a3a5c;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:#0f2640}
+.btn-cancel{padding:9px 20px;background:white;color:#666;border:1px solid #c0cdd8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-cancel:hover{background:#f0f4f8}
+.modal-msg{font-size:13px;padding:8px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.modal-msg.ok{background:#e6f4ea;color:#1e7e34}
+.modal-msg.err{background:#fdecea;color:#c0392b}
+
+/* admin unlock strip */
+.admin-strip{display:flex;align-items:center;gap:10px;padding:10px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;margin-bottom:16px;flex-wrap:wrap}
+body.dark .admin-strip{background:#1e293b;border-color:#334155}
+.admin-strip label{font-size:12px;color:#888;font-weight:600;white-space:nowrap}
+.admin-strip input{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;font-size:13px;width:180px;outline:none}
+body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.admin-strip button{padding:6px 14px;border-radius:7px;background:#1a3a5c;color:white;border:none;font-size:12px;font-weight:600;cursor:pointer}
+.admin-strip .lock-status{font-size:12px;font-weight:700}
+.lock-status.locked{color:#c0392b}
+.lock-status.unlocked{color:#1e7e34}
+
 </style>
 </head>
 <body>
@@ -215,19 +301,22 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
+      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
   <div class="topbar-right">
     <div class="live-pill"><span class="live-dot"></span> LIVE</div>
     <div class="countdown-pill"><i class="ti ti-refresh"></i> Refresh: <strong id="countdown-label">—</strong></div>
+    <button class="dm-btn" onclick="toggleDarkMode()" title="Mod Gelap/Cerah">
+      <i class="ti ti-moon" id="dm-icon"></i><span id="dm-label">Gelap</span>
+    </button>
   </div>
 </div>
 
 <!-- TAB NAV -->
 <div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga USMKK</button>
+  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga JPPF</button>
   <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
 </div>
 
@@ -277,7 +366,34 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   </div>
 </div>
 
-<footer>Sistem Pemantauan Tenaga &copy; USMKK &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
+<!-- EDIT MODAL -->
+<div class="edit-modal-bg" id="edit-modal">
+  <div class="edit-modal-box">
+    <h2><i class="ti ti-edit" style="color:#1a3a5c"></i> <span id="edit-modal-title">Kemaskini Rekod</span></h2>
+    <p id="edit-modal-sub">Edit nilai di bawah dan klik Simpan.</p>
+    <div class="modal-msg" id="edit-msg"></div>
+    <div class="edit-grid" id="edit-fields"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Batal</button>
+      <button class="btn-save" onclick="submitEdit()"><i class="ti ti-device-floppy"></i> Simpan ke Google Sheets</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="edit-modal-bg" id="del-modal">
+  <div class="edit-modal-box" style="max-width:420px">
+    <h2><i class="ti ti-trash" style="color:#c0392b"></i> Padam Rekod</h2>
+    <p id="del-modal-sub">Rekod ini akan dipadam dari Google Sheets secara kekal.</p>
+    <div class="modal-msg" id="del-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDelModal()">Batal</button>
+      <button class="btn-save" style="background:#c0392b" onclick="submitDelete()"><i class="ti ti-trash"></i> Ya, Padam</button>
+    </div>
+  </div>
+</div>
+
+<footer>Sistem Pemantauan Tenaga &copy; USM &mdash; Auto-refresh setiap <span id="footer-sec"></span> saat</footer>
 
 <script>
 // ══════════════════════════════════════════════
@@ -285,7 +401,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 30;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -880,11 +996,12 @@ function renderYoY(){
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-kwh-chart"></canvas></div>
     </div>
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil (RM) — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penjimatan & Eksport (RM) — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Total RM ${currY}</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Total RM ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7c3aed;margin-right:4px"></span>Penjimatan ${currY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c4b5fd;margin-right:4px"></span>Penjimatan ${prevY}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#0891b2;margin-right:4px"></span>Eksport ${currY}</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#be185d;margin-right:4px"></span>PV Solar ${currY}</span>
       </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="yoy-bil-chart"></canvas></div>
@@ -955,8 +1072,9 @@ function renderYoY(){
     {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{penjimatan:0}).penjimatan),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'Eksport RM '+currY,data:bulanDlm.map(b=>(getCurr(b)||{eksportRm:0}).eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false},
     {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
 }
@@ -1422,6 +1540,208 @@ function renderEpcYoY(){
   </tr></tbody></table>`;
   document.getElementById('epc-yoy-table').innerHTML=th;
 }
+
+// ══════════════════════════════════════════════
+// DARK MODE
+// ══════════════════════════════════════════════
+function toggleDarkMode(){
+  const isDark=document.body.classList.toggle('dark');
+  const ic=document.getElementById('dm-icon'); if(ic) ic.className=isDark?'ti ti-sun':'ti ti-moon';
+  const lb=document.getElementById('dm-label'); if(lb) lb.textContent=isDark?'Cerah':'Gelap';
+  localStorage.setItem('usm_dark',isDark?'1':'0');
+}
+if(localStorage.getItem('usm_dark')==='1'){
+  document.body.classList.add('dark');
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ic=document.getElementById('dm-icon'); if(ic) ic.className='ti ti-sun';
+    const lb=document.getElementById('dm-label'); if(lb) lb.textContent='Cerah';
+  });
+}
+
+// ══════════════════════════════════════════════
+// ADMIN UNLOCK
+// ══════════════════════════════════════════════
+let adminUnlocked=false;
+function unlockAdmin(pw,gasUrl){
+  if(!pw){alert('Sila masukkan password admin.');return;}
+  adminUnlocked=true;
+  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
+  localStorage.setItem('usm_admin_pw',pw);
+  // show edit/delete columns in all tables
+  document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
+  document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+}
+
+// ══════════════════════════════════════════════
+// EDIT / DELETE
+// ══════════════════════════════════════════════
+const JPPF_EDIT_FIELDS=[
+  {key:'ssaKwh',   label:'SS-A kWh'},
+  {key:'ssdKwh',   label:'SS-D kWh'},
+  {key:'solarKwh', label:'Janaan Solar kWh'},
+  {key:'ssaRm',    label:'Bil SS-A (RM)'},
+  {key:'ssdRm',    label:'Bil SS-D (RM)'},
+  {key:'eksportKwh',label:'Tenaga Eksport kWh'},
+  {key:'eksportRm', label:'Amaun Eksport (RM)'},
+  {key:'penjimatan',label:'Penjimatan Sebenar USM (RM)'},
+  {key:'bilPvSolar',label:'Bil PV Hi-Tech Solar (RM)'},
+];
+const EPC_EDIT_FIELDS=[
+  {key:'chillerTrauma',  label:'Chiller Trauma & PPSG kWh'},
+  {key:'chillerGeneral', label:'Chiller General OT kWh'},
+  {key:'totalKwh',       label:'Total kWh'},
+  {key:'tahunBaseline',  label:'Tahun Baseline'},
+  {key:'baselineTrauma', label:'Baseline Trauma kWh'},
+  {key:'baselineGeneral',label:'Baseline General OT kWh'},
+];
+
+let editRow=null, delRow=null;
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('show');}
+function closeDelModal(){document.getElementById('del-modal').classList.remove('show');}
+
+function openEditModal(tab,row){
+  if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
+  editRow={tab,...row};
+  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS;
+  document.getElementById('edit-modal-title').textContent=`Kemaskini — ${row.bulan} ${row.tahun}`;
+  document.getElementById('edit-modal-sub').textContent=`Tab: ${tab.toUpperCase()} | ${row.bulan} ${row.tahun}`;
+  document.getElementById('edit-msg').style.display='none';
+  let html=`<div class="edit-field"><label>Bulan</label><input readonly value="${row.bulan}"></div>
+             <div class="edit-field"><label>Tahun</label><input readonly value="${row.tahun}"></div>`;
+  fields.forEach(f=>{ html+=`<div class="edit-field"><label>${f.label}</label><input type="number" id="ef-${f.key}" value="${row[f.key]!==undefined?row[f.key]:''}" step="any"></div>`; });
+  document.getElementById('edit-fields').innerHTML=html;
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+async function submitEdit(){
+  const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi.','err');return;}
+  const fields={bulan:editRow.bulan,tahun:editRow.tahun};
+  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el)fields[f.key]=el.value;});
+  const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
+  try{
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'update',password:pw,tab:editRow.tab,fields})});
+    const data=await res.json();
+    if(data.ok){showEditMsg(data.message,'ok');setTimeout(()=>{closeEditModal();manualRefresh();},1500);}
+    else showEditMsg(data.error,'err');
+  }catch(e){showEditMsg('Ralat: '+e.message,'err');}
+  finally{btn.textContent='Simpan ke Google Sheets';btn.disabled=false;}
+}
+function showEditMsg(msg,type){const el=document.getElementById('edit-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
+
+function openDelModal(tab,bulan,tahun){
+  if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
+  delRow={tab,bulan,tahun};
+  document.getElementById('del-modal-sub').textContent=`Padam rekod: ${bulan} ${tahun} dari tab ${tab.toUpperCase()}? Tindakan ini tidak boleh dibatalkan.`;
+  document.getElementById('del-msg').style.display='none';
+  document.getElementById('del-modal').classList.add('show');
+}
+async function submitDelete(){
+  const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
+  const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
+  try{
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun})});
+    const data=await res.json();
+    if(data.ok){showDelMsg(data.message,'ok');setTimeout(()=>{closeDelModal();manualRefresh();},1500);}
+    else showDelMsg(data.error,'err');
+  }catch(e){showDelMsg('Ralat: '+e.message,'err');}
+  finally{btn.textContent='Ya, Padam';btn.disabled=false;}
+}
+function showDelMsg(msg,type){const el=document.getElementById('del-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
+
+// ── Admin strip + data tables ──
+function buildAdminStrip(){
+  return `<div class="admin-strip">
+    <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
+    <label>Password:</label>
+    <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
+    <label>Apps Script URL:</label>
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
+    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
+    <span class="lock-status locked">🔒 Terkunci</span>
+  </div>`;
+}
+
+function buildJppfTable(rows){
+  if(!rows||!rows.length) return '';
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data JPPF</div>
+  ${buildAdminStrip()}
+  <div class="data-table-wrap"><table class="data-table"><thead><tr>
+    <th>Bulan</th><th>Tahun</th><th>SS-A kWh</th><th>SS-D kWh</th><th>Solar kWh</th>
+    <th>Bil SS-A</th><th>Bil SS-D</th><th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
+    <th class="edit-action-col" style="display:none">Tindakan</th>
+  </tr></thead><tbody>`;
+  sorted.forEach(r=>{
+    const rs=JSON.stringify(r).replace(/'/g,"\\'");
+    h+=`<tr>
+      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
+      <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt(r.solarKwh)}</td>
+      <td>${fmtRM(r.ssaRm)}</td><td>${fmtRM(r.ssdRm)}</td>
+      <td>${fmt(r.eksportKwh)}</td><td>${fmtRM(r.eksportRm)}</td><td>${fmtRM(r.penjimatan)}</td><td>${fmtRM(r.bilPvSolar)}</td>
+      <td class="edit-action-col" style="display:none">
+        <button class="btn-edit" onclick="openEditModal('jppf',allRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-del"  onclick="openDelModal('jppf','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+  return h+'</tbody></table></div>';
+}
+
+function buildEpcTable(rows){
+  if(!rows||!rows.length) return '';
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data EPC</div>
+  ${buildAdminStrip()}
+  <div class="data-table-wrap"><table class="data-table"><thead><tr>
+    <th>Bulan</th><th>Tahun</th><th>Trauma kWh</th><th>General OT kWh</th><th>Total kWh</th>
+    <th>Tahun Baseline</th><th>Baseline Trauma</th><th>Baseline General</th>
+    <th class="edit-action-col" style="display:none">Tindakan</th>
+  </tr></thead><tbody>`;
+  sorted.forEach(r=>{
+    h+=`<tr>
+      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
+      <td>${fmt(r.chillerTrauma)}</td><td>${fmt(r.chillerGeneral)}</td><td>${fmt(r.totalKwh)}</td>
+      <td>${r.tahunBaseline||'—'}</td><td>${fmt(r.baselineTrauma)}</td><td>${fmt(r.baselineGeneral)}</td>
+      <td class="edit-action-col" style="display:none">
+        <button class="btn-edit" onclick="openEditModal('epc',epcRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-del"  onclick="openDelModal('epc','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+  return h+'</tbody></table></div>';
+}
+
+// Inject data tables after renderShell and renderEPC are called
+const _origRenderShell = window.renderShell;
+window.renderShell = function(){
+  _origRenderShell && _origRenderShell();
+  // append JPPF table after health-row
+  setTimeout(()=>{
+    const hr=document.getElementById('health-row');
+    if(hr&&!document.getElementById('jppf-data-table')){
+      const div=document.createElement('div');div.id='jppf-data-table';
+      div.innerHTML=buildJppfTable(allRows);
+      hr.parentElement.appendChild(div);
+    }
+  },150);
+};
+
+const _origRenderEPC = window.renderEPC;
+window.renderEPC = function(){
+  _origRenderEPC && _origRenderEPC();
+  setTimeout(()=>{
+    const hr=document.getElementById('epc-health');
+    if(hr&&!document.getElementById('epc-data-table')){
+      const div=document.createElement('div');div.id='epc-data-table';
+      div.innerHTML=buildEpcTable(epcRows);
+      hr.parentElement.appendChild(div);
+    }
+  },150);
+};
 
 loadData();
 </script>
