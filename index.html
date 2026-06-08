@@ -1632,19 +1632,32 @@ function openEditModal(tab,row){
   document.getElementById('edit-modal').classList.add('show');
 }
 
+async function gasRequest(payload){
+  // Apps Script requires Content-Type text/plain to avoid CORS preflight
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
+  const res=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  });
+  const text=await res.text();
+  try{ return JSON.parse(text); }
+  catch(e){ throw new Error('Respons tidak sah. Semak URL deployment Apps Script.'); }
+}
+
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
   const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi.','err');return;}
+  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
-  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el)fields[f.key]=el.value;});
+  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'update',password:pw,tab:editRow.tab,fields})});
-    const data=await res.json();
+    const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
     if(data.ok){showEditMsg(data.message,'ok');setTimeout(()=>{closeEditModal();manualRefresh();},1500);}
-    else showEditMsg(data.error,'err');
-  }catch(e){showEditMsg('Ralat: '+e.message,'err');}
+    else showEditMsg('⚠ '+data.error,'err');
+  }catch(e){showEditMsg('⚠ '+e.message,'err');}
   finally{btn.textContent='Simpan ke Google Sheets';btn.disabled=false;}
 }
 function showEditMsg(msg,type){const el=document.getElementById('edit-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
@@ -1662,11 +1675,10 @@ async function submitDelete(){
   if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun})});
-    const data=await res.json();
+    const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
     if(data.ok){showDelMsg(data.message,'ok');setTimeout(()=>{closeDelModal();manualRefresh();},1500);}
-    else showDelMsg(data.error,'err');
-  }catch(e){showDelMsg('Ralat: '+e.message,'err');}
+    else showDelMsg('⚠ '+data.error,'err');
+  }catch(e){showDelMsg('⚠ '+e.message,'err');}
   finally{btn.textContent='Ya, Padam';btn.disabled=false;}
 }
 function showDelMsg(msg,type){const el=document.getElementById('del-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
