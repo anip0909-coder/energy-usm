@@ -1784,7 +1784,7 @@ function filterJppfTable(){
   const rows=document.querySelectorAll('#jppf-tbl-body tr');
   const t=document.getElementById('epc-tbl-tahun')?.value||'';
   const b=document.getElementById('epc-tbl-bulan')?.value||'';
-  const rows=document.querySelectorAll('#jppf-tbl-body tr');
+  const rows=document.querySelectorAll('#epc-tbl-body tr');
   let visible=0;
   rows.forEach(row=>{
     const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
