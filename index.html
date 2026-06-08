@@ -183,13 +183,29 @@ body.dark .jppf-mgmt-title{color:#e2e8f0}
 .jppf-mgmt-chevron{font-size:18px;color:#888;transition:transform .25s}
 .jppf-mgmt-chevron.open{transform:rotate(180deg)}
 .jppf-mgmt-body{margin-top:10px}
+.epc-mgmt{margin-bottom:22px}
+.epc-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;user-select:none;transition:background .15s}
+body.dark .epc-mgmt-header{background:#1e293b;border-color:#334155}
+.epc-mgmt-header:hover{background:#f8fafc}
+body.dark .epc-mgmt-header:hover{background:#0f172a}
+.epc-mgmt-title{font-size:14px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px}
+body.dark .epc-mgmt-title{color:#e2e8f0}
+.epc-mgmt-chevron{font-size:18px;color:#888;transition:transform .25s}
+.epc-mgmt-chevron.open{transform:rotate(180deg)}
+.epc-mgmt-body{margin-top:10px}
+.epc-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed}
+body.dark .epc-tbl-filter{background:#1e293b;border-color:#334155}
+.epc-tbl-filter label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.epc-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer}
+body.dark .epc-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.epc-tbl-count{font-size:12px;color:#aaa;margin-left:auto}
 .jppf-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed}
 body.dark .jppf-tbl-filter{background:#1e293b;border-color:#334155}
 .jppf-tbl-filter label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
 .jppf-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer}
 body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:#475569}
 .jppf-tbl-count{font-size:12px;color:#aaa;margin-left:auto}
-@media print{.jppf-mgmt{display:none!important}}
+@media print{.jppf-mgmt{display:none!important}.epc-mgmt{display:none!important}}
 
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
@@ -1800,16 +1816,15 @@ function clearJppfFilter(){
 
 function buildEpcTable(rows){
   if(!rows||!rows.length) return '';
+  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+
   const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data EPC</div>
-  ${buildAdminStrip()}
-  <div class="data-table-wrap"><table class="data-table"><thead><tr>
-    <th>Bulan</th><th>Tahun</th><th>Trauma kWh</th><th>General OT kWh</th><th>Total kWh</th>
-    <th>Tahun Baseline</th><th>Baseline Trauma</th><th>Baseline General</th>
-    <th class="edit-action-col" style="display:none">Tindakan</th>
-  </tr></thead><tbody>`;
+
+  let rowsHtml='';
   sorted.forEach(r=>{
-    h+=`<tr>
+    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
       <td>${fmt(r.chillerTrauma)}</td><td>${fmt(r.chillerGeneral)}</td><td>${fmt(r.totalKwh)}</td>
       <td>${r.tahunBaseline||'—'}</td><td>${fmt(r.baselineTrauma)}</td><td>${fmt(r.baselineGeneral)}</td>
@@ -1819,7 +1834,78 @@ function buildEpcTable(rows){
       </td>
     </tr>`;
   });
-  return h+'</tbody></table></div>';
+
+  return `<div class="epc-mgmt" id="epc-mgmt-wrap">
+    <!-- HEADER — klik untuk minimize -->
+    <div class="epc-mgmt-header" onclick="toggleEpcMgmt()">
+      <div class="epc-mgmt-title">
+        <i class="ti ti-table" style="color:#0e7490"></i>
+        Pengurusan Data EPC
+        <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
+      </div>
+      <i class="ti ti-chevron-down epc-mgmt-chevron open" id="epc-chevron"></i>
+    </div>
+
+    <!-- BODY — collapsible -->
+    <div class="epc-mgmt-body" id="epc-mgmt-body">
+      ${buildAdminStrip()}
+
+      <!-- FILTER BAR -->
+      <div class="epc-tbl-filter">
+        <label><i class="ti ti-filter"></i> Filter:</label>
+        <select id="epc-tbl-tahun" onchange="filterEpcTable()">${yearOpts}</select>
+        <select id="epc-tbl-bulan" onchange="filterEpcTable()">${monthOpts}</select>
+        <button onclick="clearEpcFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
+        <span class="epc-tbl-count" id="epc-tbl-count">${sorted.length} rekod</span>
+      </div>
+
+      <!-- TABLE -->
+      <div class="data-table-wrap">
+        <table class="data-table" id="epc-data-tbl">
+          <thead><tr>
+            <th>Bulan</th><th>Tahun</th>
+            <th>Trauma kWh</th><th>General OT kWh</th><th>Total kWh</th>
+            <th>Tahun Baseline</th><th>Baseline Trauma</th><th>Baseline General</th>
+            <th class="edit-action-col" style="display:none">Tindakan</th>
+          </tr></thead>
+          <tbody id="epc-tbl-body">${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── EPC Minimize toggle ──
+function toggleEpcMgmt(){
+  const body=document.getElementById('epc-mgmt-body');
+  const chev=document.getElementById('epc-chevron');
+  if(!body||!chev) return;
+  const isOpen=chev.classList.contains('open');
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
+}
+
+// ── EPC Filter table ──
+function filterEpcTable(){
+  const t=document.getElementById('epc-tbl-tahun')?.value||'';
+  const b=document.getElementById('epc-tbl-bulan')?.value||'';
+  const rows=document.querySelectorAll('#epc-tbl-body tr');
+  let visible=0;
+  rows.forEach(row=>{
+    const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
+    const show=(!t||rt===t)&&(!b||rb===b);
+    row.style.display=show?'':'none';
+    if(show) visible++;
+  });
+  const cnt=document.getElementById('epc-tbl-count');
+  if(cnt) cnt.textContent=visible+' rekod';
+}
+
+function clearEpcFilter(){
+  const st=document.getElementById('epc-tbl-tahun');
+  const sb=document.getElementById('epc-tbl-bulan');
+  if(st) st.value=''; if(sb) sb.value='';
+  filterEpcTable();
 }
 
 // Inject data tables after renderShell and renderEPC are called
