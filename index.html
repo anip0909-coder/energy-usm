@@ -1769,8 +1769,6 @@ function buildJppfTable(rows){
 function toggleJppfMgmt(){
   const body=document.getElementById('jppf-mgmt-body');
   const chev=document.getElementById('jppf-chevron');
-  const body=document.getElementById('epc-mgmt-body');
-  const chev=document.getElementById('epc-chevron');
   if(!body||!chev) return;
   const isOpen=chev.classList.contains('open');
   body.style.display=isOpen?'none':'block';
@@ -1782,9 +1780,6 @@ function filterJppfTable(){
   const t=document.getElementById('jppf-tbl-tahun')?.value||'';
   const b=document.getElementById('jppf-tbl-bulan')?.value||'';
   const rows=document.querySelectorAll('#jppf-tbl-body tr');
-  const t=document.getElementById('epc-tbl-tahun')?.value||'';
-  const b=document.getElementById('epc-tbl-bulan')?.value||'';
-  const rows=document.querySelectorAll('#epc-tbl-body tr');
   let visible=0;
   rows.forEach(row=>{
     const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
@@ -1793,7 +1788,6 @@ function filterJppfTable(){
     if(show) visible++;
   });
   const cnt=document.getElementById('jppf-tbl-count');
-  const cnt=document.getElementById('epc-tbl-count');
   if(cnt) cnt.textContent=visible+' rekod';
 }
 
