@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pemantauan Tenaga USM</title>
+<title>Pemantauan Tenaga Elektrik USMKK</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -320,7 +320,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div class="topbar-left">
     <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
     <div>
-      <div class="topbar-title">Sistem Pemantauan Tenaga USM</div>
+      <div class="topbar-title">Pemantauan Tenaga Elektrik USMKK</div>
       <div class="topbar-sub">Universiti Sains Malaysia — Kampus & HPUSM</div>
     </div>
   </div>
@@ -335,8 +335,8 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
 <!-- TAB NAV -->
 <div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> Tenaga JPPF</button>
-  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
+  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
+  <button class="tab-btn" id="tab-" onclick="switchTab('')"><i class="ti ti-leaf"></i> EPC Chiller</button>
 </div>
 
 <div class="container">
@@ -420,7 +420,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 30;
+const REFRESH_SECONDS    = 1800;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -1769,6 +1769,8 @@ function buildJppfTable(rows){
 function toggleJppfMgmt(){
   const body=document.getElementById('jppf-mgmt-body');
   const chev=document.getElementById('jppf-chevron');
+  const body=document.getElementById('epc-mgmt-body');
+  const chev=document.getElementById('epc-chevron');
   if(!body||!chev) return;
   const isOpen=chev.classList.contains('open');
   body.style.display=isOpen?'none':'block';
@@ -1780,6 +1782,9 @@ function filterJppfTable(){
   const t=document.getElementById('jppf-tbl-tahun')?.value||'';
   const b=document.getElementById('jppf-tbl-bulan')?.value||'';
   const rows=document.querySelectorAll('#jppf-tbl-body tr');
+  const t=document.getElementById('epc-tbl-tahun')?.value||'';
+  const b=document.getElementById('epc-tbl-bulan')?.value||'';
+  const rows=document.querySelectorAll('#jppf-tbl-body tr');
   let visible=0;
   rows.forEach(row=>{
     const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
@@ -1788,6 +1793,7 @@ function filterJppfTable(){
     if(show) visible++;
   });
   const cnt=document.getElementById('jppf-tbl-count');
+  const cnt=document.getElementById('epc-tbl-count');
   if(cnt) cnt.textContent=visible+' rekod';
 }
 
@@ -1798,10 +1804,10 @@ function clearJppfFilter(){
   filterJppfTable();
 }
 
-function buildEpcTable(rows){
+function buildTable(rows){
   if(!rows||!rows.length) return '';
   const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data EPC</div>
+  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data </div>
   ${buildAdminStrip()}
   <div class="data-table-wrap"><table class="data-table"><thead><tr>
     <th>Bulan</th><th>Tahun</th><th>Trauma kWh</th><th>General OT kWh</th><th>Total kWh</th>
@@ -1814,15 +1820,15 @@ function buildEpcTable(rows){
       <td>${fmt(r.chillerTrauma)}</td><td>${fmt(r.chillerGeneral)}</td><td>${fmt(r.totalKwh)}</td>
       <td>${r.tahunBaseline||'—'}</td><td>${fmt(r.baselineTrauma)}</td><td>${fmt(r.baselineGeneral)}</td>
       <td class="edit-action-col" style="display:none">
-        <button class="btn-edit" onclick="openEditModal('epc',epcRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
-        <button class="btn-del"  onclick="openDelModal('epc','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+        <button class="btn-edit" onclick="openEditModal('',Rows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-del"  onclick="openDelModal('','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   });
   return h+'</tbody></table></div>';
 }
 
-// Inject data tables after renderShell and renderEPC are called
+// Inject data tables after renderShell and render are called
 const _origRenderShell = window.renderShell;
 window.renderShell = function(){
   _origRenderShell && _origRenderShell();
@@ -1837,14 +1843,14 @@ window.renderShell = function(){
   },150);
 };
 
-const _origRenderEPC = window.renderEPC;
-window.renderEPC = function(){
-  _origRenderEPC && _origRenderEPC();
+const _origRender = window.render;
+window.render = function(){
+  _origRender && _origRender();
   setTimeout(()=>{
-    const hr=document.getElementById('epc-health');
-    if(hr&&!document.getElementById('epc-data-table')){
-      const div=document.createElement('div');div.id='epc-data-table';
-      div.innerHTML=buildEpcTable(epcRows);
+    const hr=document.getElementById('-health');
+    if(hr&&!document.getElementById('-data-table')){
+      const div=document.createElement('div');div.id='-data-table';
+      div.innerHTML=buildTable(Rows);
       hr.parentElement.appendChild(div);
     }
   },150);
