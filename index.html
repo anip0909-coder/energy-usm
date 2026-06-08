@@ -172,6 +172,25 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .tab-btn:hover{color:#1a3a5c}
 .tab-btn.active{color:#1a3a5c;border-bottom-color:#1a3a5c}
 
+/* ── JPPF DATA MANAGEMENT — no print ── */
+.jppf-mgmt{margin-bottom:22px}
+.jppf-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;user-select:none;transition:background .15s}
+body.dark .jppf-mgmt-header{background:#1e293b;border-color:#334155}
+.jppf-mgmt-header:hover{background:#f8fafc}
+body.dark .jppf-mgmt-header:hover{background:#0f172a}
+.jppf-mgmt-title{font-size:14px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px}
+body.dark .jppf-mgmt-title{color:#e2e8f0}
+.jppf-mgmt-chevron{font-size:18px;color:#888;transition:transform .25s}
+.jppf-mgmt-chevron.open{transform:rotate(180deg)}
+.jppf-mgmt-body{margin-top:10px}
+.jppf-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed}
+body.dark .jppf-tbl-filter{background:#1e293b;border-color:#334155}
+.jppf-tbl-filter label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.jppf-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer}
+body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.jppf-tbl-count{font-size:12px;color:#aaa;margin-left:auto}
+@media print{.jppf-mgmt{display:none!important}}
+
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
@@ -1667,17 +1686,17 @@ function buildAdminStrip(){
 
 function buildJppfTable(rows){
   if(!rows||!rows.length) return '';
+  // Build unique year and month lists from data
+  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+
+  // Build rows HTML (all rows stored, filtering done in JS)
   const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  let h=`<div class="sec-title" style="margin-top:22px"><i class="ti ti-table"></i> Pengurusan Data JPPF</div>
-  ${buildAdminStrip()}
-  <div class="data-table-wrap"><table class="data-table"><thead><tr>
-    <th>Bulan</th><th>Tahun</th><th>SS-A kWh</th><th>SS-D kWh</th><th>Solar kWh</th>
-    <th>Bil SS-A</th><th>Bil SS-D</th><th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
-    <th class="edit-action-col" style="display:none">Tindakan</th>
-  </tr></thead><tbody>`;
+
+  let rowsHtml='';
   sorted.forEach(r=>{
-    const rs=JSON.stringify(r).replace(/'/g,"\\'");
-    h+=`<tr>
+    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
       <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt(r.solarKwh)}</td>
       <td>${fmtRM(r.ssaRm)}</td><td>${fmtRM(r.ssdRm)}</td>
@@ -1688,7 +1707,83 @@ function buildJppfTable(rows){
       </td>
     </tr>`;
   });
-  return h+'</tbody></table></div>';
+
+  return `<div class="jppf-mgmt" id="jppf-mgmt-wrap">
+    <!-- HEADER — klik untuk minimize -->
+    <div class="jppf-mgmt-header" onclick="toggleJppfMgmt()">
+      <div class="jppf-mgmt-title">
+        <i class="ti ti-table" style="color:#1a3a5c"></i>
+        Pengurusan Data JPPF
+        <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
+      </div>
+      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="jppf-chevron"></i>
+    </div>
+
+    <!-- BODY — collapsible -->
+    <div class="jppf-mgmt-body" id="jppf-mgmt-body">
+      ${buildAdminStrip()}
+
+      <!-- FILTER BAR -->
+      <div class="jppf-tbl-filter">
+        <label><i class="ti ti-filter"></i> Filter:</label>
+        <select id="jppf-tbl-tahun" onchange="filterJppfTable()">
+          ${yearOpts}
+        </select>
+        <select id="jppf-tbl-bulan" onchange="filterJppfTable()">
+          ${monthOpts}
+        </select>
+        <button onclick="clearJppfFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
+        <span class="jppf-tbl-count" id="jppf-tbl-count">${sorted.length} rekod</span>
+      </div>
+
+      <!-- TABLE -->
+      <div class="data-table-wrap">
+        <table class="data-table" id="jppf-data-tbl">
+          <thead><tr>
+            <th>Bulan</th><th>Tahun</th>
+            <th>SS-A kWh</th><th>SS-D kWh</th><th>Solar kWh</th>
+            <th>Bil SS-A</th><th>Bil SS-D</th>
+            <th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
+            <th class="edit-action-col" style="display:none">Tindakan</th>
+          </tr></thead>
+          <tbody id="jppf-tbl-body">${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Minimize toggle ──
+function toggleJppfMgmt(){
+  const body=document.getElementById('jppf-mgmt-body');
+  const chev=document.getElementById('jppf-chevron');
+  if(!body||!chev) return;
+  const isOpen=chev.classList.contains('open');
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
+}
+
+// ── Filter table ──
+function filterJppfTable(){
+  const t=document.getElementById('jppf-tbl-tahun')?.value||'';
+  const b=document.getElementById('jppf-tbl-bulan')?.value||'';
+  const rows=document.querySelectorAll('#jppf-tbl-body tr');
+  let visible=0;
+  rows.forEach(row=>{
+    const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
+    const show=(!t||rt===t)&&(!b||rb===b);
+    row.style.display=show?'':'none';
+    if(show) visible++;
+  });
+  const cnt=document.getElementById('jppf-tbl-count');
+  if(cnt) cnt.textContent=visible+' rekod';
+}
+
+function clearJppfFilter(){
+  const st=document.getElementById('jppf-tbl-tahun');
+  const sb=document.getElementById('jppf-tbl-bulan');
+  if(st) st.value=''; if(sb) sb.value='';
+  filterJppfTable();
 }
 
 function buildEpcTable(rows){
