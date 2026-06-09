@@ -454,7 +454,9 @@ const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt',
 
 function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);const m={jan:'Januari',feb:'Februari',mar:'Mac',mac:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};return m[s]||String(v).trim()}
 function fmt(n){return(!n||isNaN(n))?'—':Math.round(n).toLocaleString('ms-MY')}
+function fmt2d(n){return(!n||isNaN(n))?'—':Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString('ms-MY')}
+function fmtRM2d(n){return(!n||isNaN(n))?'—':'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 
 // ── PRINT PDF ──
 function printPDF(){
@@ -672,15 +674,15 @@ function updateDisplay(){
   document.getElementById('metrics-grid').innerHTML=`
     <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
-    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>
+    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(d.totalKwh)}</div><div class="card-unit">${label}</div></div>
-    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
-    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan Sebenar USM</div><div class="card-value">${fmtRM(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
+    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
+    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
+    <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
+    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan Sebenar USM</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
     <div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
-    <div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
+    <div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>
+    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
 
   renderCharts(filtered,d);
   renderHealth(d);
@@ -847,22 +849,22 @@ function renderHealth(d){
       <div class="hhead"><div class="hname"><i class="ti ti-building" style="color:#1a5fa8"></i> SS-A (Kampus)</div><span class="badge b-${sSSA}">${sSSA==='ok'?'NORMAL':'PERHATIAN'}</span></div>
       <div class="hstat">Nisbah beban<span>${lSSA}%</span></div>
       <div class="hstat">Jumlah kWh<span>${fmt(d.ssaKwh)}</span></div>
-      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssaRm)}</span></div>
+      <div class="hstat">Jumlah Bil<span>${fmtRM2d(d.ssaRm)}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${lSSA}%;background:${sSSA==='ok'?'#1e7e34':'#e8a020'}"></div></div>
     </div>
     <div class="hcard">
       <div class="hhead"><div class="hname"><i class="ti ti-building-hospital" style="color:#1e7e34"></i> SS-D (HPUSM)</div><span class="badge b-${sSSD}">${sSSD==='ok'?'NORMAL':'PERHATIAN'}</span></div>
       <div class="hstat">Nisbah beban<span>${lSSD}%</span></div>
       <div class="hstat">Jumlah kWh<span>${fmt(d.ssdKwh)}</span></div>
-      <div class="hstat">Jumlah Bil<span>${fmtRM(d.ssdRm)}</span></div>
+      <div class="hstat">Jumlah Bil<span>${fmtRM2d(d.ssdRm)}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${lSSD}%;background:${sSSD==='ok'?'#1e7e34':'#e8a020'}"></div></div>
     </div>
     <div class="hcard">
       <div class="hhead"><div class="hname"><i class="ti ti-solar-panel" style="color:#e8a020"></i> Solar & Penjimatan</div><span class="badge b-ok">${d.solarKwh>0?'AKTIF':'TIADA DATA'}</span></div>
-      <div class="hstat">Janaan Solar<span>${fmt(d.solarKwh)} kWh</span></div>
+      <div class="hstat">Janaan Solar<span>${fmt2d(d.solarKwh)} kWh</span></div>
       <div class="hstat">Eksport kWh<span>${fmt(d.eksportKwh)} kWh</span></div>
-      <div class="hstat">Amaun Eksport<span>${fmtRM(d.eksportRm)}</span></div>
-      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM(d.penjimatan)}</span></div>
+      <div class="hstat">Amaun Eksport<span>${fmtRM2d(d.eksportRm)}</span></div>
+      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM2d(d.penjimatan)}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div>
     </div>`;
 }
@@ -937,7 +939,7 @@ function getRowsInRange(year){
 
 function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
 function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
-function fmtRM2(n){return 'RM '+Math.round(n).toLocaleString('ms-MY')}
+function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
 
 function renderYoY(){
@@ -1726,9 +1728,9 @@ function buildJppfTable(rows){
   sorted.forEach(r=>{
     rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-      <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt(r.solarKwh)}</td>
-      <td>${fmtRM(r.ssaRm)}</td><td>${fmtRM(r.ssdRm)}</td>
-      <td>${fmt(r.eksportKwh)}</td><td>${fmtRM(r.eksportRm)}</td><td>${fmtRM(r.penjimatan)}</td><td>${fmtRM(r.bilPvSolar)}</td>
+      <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt2d(r.solarKwh)}</td>
+      <td>${fmtRM2d(r.ssaRm)}</td><td>${fmtRM2d(r.ssdRm)}</td>
+      <td>${fmt(r.eksportKwh)}</td><td>${fmtRM2d(r.eksportRm)}</td><td>${fmtRM2d(r.penjimatan)}</td><td>${fmtRM2d(r.bilPvSolar)}</td>
       <td class="edit-action-col" style="display:none">
         <button class="btn-edit" onclick="openEditModal('jppf',allRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
         <button class="btn-del"  onclick="openDelModal('jppf','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
