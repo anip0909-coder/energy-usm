@@ -231,6 +231,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 @media print{
   body{background:white!important}
   .topbar{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
   .container{padding:0!important;max-width:100%!important}
   .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
@@ -538,7 +539,7 @@ function detectColumns(lines){
       // NEW: Amaun Eksport (RM) — checked before eksport kwh
       else if((h.includes('eksport')||h.includes('export'))&&h.includes('rm'))m.eksportRm=idx;
       else if((h.includes('amaun'))&&(h.includes('eksport')||h.includes('export')))m.eksportRm=idx;
-      // Penjimatan USM (Kampus + HPUSM)
+      // Penjimatan Sebenar USM
       else if(h.includes('penjimatan'))m.penjimatan=idx;
       else if(h.includes('saving')&&h.includes('usm'))m.penjimatan=idx;
       // eksport kWh (must come after eksport RM check)
