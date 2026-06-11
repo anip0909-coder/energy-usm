@@ -1697,7 +1697,7 @@ async function submitEdit(){
   const url=localStorage.getItem('usm_gas_url')||'';
   if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
-  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
@@ -2074,9 +2074,72 @@ function renderKH(){
       </div>
     </div>
     <div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan Kampus & HPUSM</div>
-    <div class="health-row" id="kh-health"></div>`;
+    <div class="health-row" id="kh-health"></div>
+
+    <!-- YOY SECTION -->
+    <div class="yoy-section" style="margin-top:8px">
+      <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
+      <div class="yoy-top">
+        <label>Tahun Semasa:</label><select id="kh-yoy-curr"></select>
+        <label style="margin-left:6px">Berbanding:</label><select id="kh-yoy-prev"></select>
+      </div>
+      <div class="range-box">
+        <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
+        <div class="month-pills" id="kh-month-pills">${BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="kh-mpill-${i}">${b}</span>`).join('')}</div>
+        <div class="range-info">Skop: <strong id="kh-range-label">Januari — Disember (12 bulan)</strong>
+          <button class="range-reset" onclick="resetKhRange()"><i class="ti ti-refresh"></i> Reset</button>
+        </div>
+      </div>
+      <div id="kh-yoy-summary"></div>
+      <div class="yoy-charts">
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — Kampus</div>
+          <div class="chart-sub" id="kh-yoy-kwh-kampus-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
+          </div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-kampus-chart"></canvas></div>
+        </div>
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — HPUSM</div>
+          <div class="chart-sub" id="kh-yoy-kwh-hpusm-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
+          </div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-hpusm-chart"></canvas></div>
+        </div>
+      </div>
+      <div class="yoy-charts" style="margin-top:16px">
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Kampus</div>
+          <div class="chart-sub" id="kh-yoy-rm-kampus-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
+          </div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-kampus-chart"></canvas></div>
+        </div>
+        <div class="yoy-chart-box">
+          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Hospital</div>
+          <div class="chart-sub" id="kh-yoy-rm-hospital-sub">—</div>
+          <div class="legend" style="margin-bottom:8px">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
+          </div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-hospital-chart"></canvas></div>
+        </div>
+      </div>
+      <div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-table"></div></div>
+    </div>
+
+    <!-- PENGURUSAN DATA KH -->
+    <div id="kh-mgmt-wrap"></div>`;
 
   updateKH();
+  // init YoY after render
+  setTimeout(()=>initKhYoY(),100);
 }
 
 function updateKH(){
@@ -2200,6 +2263,298 @@ function updateKH(){
       <div class="hstat">Hospital<span style="color:#1e7e34">${hPctRm}% (${fmtRM2d(d.hospitalRm)})</span></div>
       <div class="hstat">Jumlah<span style="font-weight:700">${fmtRM2d(d.totalRm)}</span></div>
     </div>`;
+
+  // rebuild data table
+  const mgmt=document.getElementById('kh-mgmt-wrap');
+  if(mgmt) mgmt.innerHTML=buildKhTable(khRows);
+}
+
+// ══════════════════════════════════════════════
+// KH YOY
+// ══════════════════════════════════════════════
+let khRangeStart=0, khRangeEnd=11, khYoySelecting=false;
+let khYoyKampusKwh=null,khYoyHpusmKwh=null,khYoyKampusRm=null,khYoyHospitalRm=null;
+
+window.resetKhRange=function(){khRangeStart=0;khRangeEnd=11;khYoySelecting=false;updateKhPills();renderKhYoY();};
+
+function initKhYoY(){
+  const years=[...new Set(khRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  const curr=document.getElementById('kh-yoy-curr');
+  const prev=document.getElementById('kh-yoy-prev');
+  if(!curr||!prev) return;
+  curr.innerHTML=''; prev.innerHTML='';
+  years.forEach((y,i)=>{
+    const oc=document.createElement('option');oc.value=y;oc.textContent=y;if(i===0)oc.selected=true;curr.appendChild(oc);
+    const op=document.createElement('option');op.value=y;op.textContent=y;if(i===1)op.selected=true;prev.appendChild(op);
+  });
+  curr.addEventListener('change',renderKhYoY);
+  prev.addEventListener('change',renderKhYoY);
+
+  const pp=document.getElementById('kh-month-pills');
+  if(pp) pp.addEventListener('click',e=>{
+    const pill=e.target.closest('.mpill');if(!pill)return;
+    const idx=parseInt(pill.dataset.idx);
+    if(!khYoySelecting){khRangeStart=idx;khRangeEnd=idx;khYoySelecting=true;}
+    else{if(idx<khRangeStart)khRangeStart=idx;else khRangeEnd=idx;khYoySelecting=false;}
+    updateKhPills();renderKhYoY();
+  });
+  updateKhPills();
+  renderKhYoY();
+}
+
+function updateKhPills(){
+  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
+  BULAN_SHORT.forEach((_,i)=>{
+    const p=document.getElementById('kh-mpill-'+i);if(!p)return;
+    p.className='mpill';
+    if(i===s) p.classList.add('range-start');
+    if(i===e&&e!==s) p.classList.add('range-end');
+    if(i>s&&i<e) p.classList.add('in-range');
+  });
+  const lb=document.getElementById('kh-range-label');
+  if(lb){const s2=Math.min(khRangeStart,khRangeEnd),e2=Math.max(khRangeStart,khRangeEnd);lb.textContent=s2===e2?BULAN_ORDER[s2]+' sahaja':BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+(e2-s2+1)+' bulan)';}
+}
+
+function getKhInRange(year){
+  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
+  return khRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
+}
+function sumKh(rows){return rows.reduce((a,r)=>({kampusKwh:a.kampusKwh+r.kampusKwh,hpusmKwh:a.hpusmKwh+r.hpusmKwh,totalKwh:a.totalKwh+r.totalKwh,kampusRm:a.kampusRm+r.kampusRm,hospitalRm:a.hospitalRm+r.hospitalRm,totalRm:a.totalRm+r.totalRm}),{kampusKwh:0,hpusmKwh:0,totalKwh:0,kampusRm:0,hospitalRm:0,totalRm:0});}
+function dlt(cv,pv){if(!pv)return{pct:'—',cls:'flat',arrow:'→'};const p=(cv-pv)/pv*100;return{pct:(p>=0?'+':'')+p.toFixed(1)+'%',cls:p>0.05?'up':p<-0.05?'down':'flat',arrow:p>0.05?'↑':p<-0.05?'↓':'→'};}
+
+function renderKhYoY(){
+  const currY=document.getElementById('kh-yoy-curr')?.value;
+  const prevY=document.getElementById('kh-yoy-prev')?.value;
+  if(!currY||!prevY) return;
+  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
+  const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
+  const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
+
+  const cRows=getKhInRange(currY),pRows=getKhInRange(prevY);
+  const c=sumKh(cRows),p=sumKh(pRows);
+  const dKwh=dlt(c.totalKwh,p.totalKwh),dRm=dlt(c.totalRm,p.totalRm);
+  const dKK=dlt(c.kampusKwh,p.kampusKwh),dHK=dlt(c.hpusmKwh,p.hpusmKwh);
+  const dKR=dlt(c.kampusRm,p.kampusRm),dHR=dlt(c.hospitalRm,p.hospitalRm);
+
+  // Summary cards
+  document.getElementById('kh-yoy-summary').innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
+    <div class="yoy-card kwh-card">
+      <div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct}</div>
+    </div>
+    <div class="yoy-card kwh-card">
+      <div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.kampusKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.kampusKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dKK.cls}">${dKK.arrow} ${dKK.pct}</div>
+    </div>
+    <div class="yoy-card kwh-card">
+      <div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.hpusmKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.hpusmKwh)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dHK.cls}">${dHK.arrow} ${dHK.pct}</div>
+    </div>
+    <div class="yoy-card bil-card">
+      <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dRm.cls}">${dRm.arrow} ${dRm.pct}</div>
+    </div>
+    <div class="yoy-card bil-card">
+      <div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-receipt"></i> Kampus RM</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtRM2(c.kampusRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.kampusRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dKR.cls}">${dKR.arrow} ${dKR.pct}</div>
+    </div>
+    <div class="yoy-card bil-card">
+      <div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-receipt"></i> Hospital RM</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtRM2(c.hospitalRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.hospitalRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dHR.cls}">${dHR.arrow} ${dHR.pct}</div>
+    </div>
+  </div>`;
+
+  const getCurr=b=>cRows.find(r=>r.bulan===b);
+  const getPrev=b=>pRows.find(r=>r.bulan===b);
+
+  ['kh-yoy-kwh-kampus-sub','kh-yoy-kwh-hpusm-sub','kh-yoy-rm-kampus-sub','kh-yoy-rm-hospital-sub'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent=`${rangeStr} | ${currY} vs ${prevY}`;
+  });
+
+  const tck={color:'#999',font:{size:10}};
+  const hideDL=shortDlm.length>12;
+  const mkDL=(isRM)=>hideDL?{display:false}:{
+    display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,
+    formatter:v=>fmtDL(v,isRM),color:'#333',font:{size:9,weight:'700'},
+    anchor:'end',align:'end',offset:4,rotation:-90,clip:false
+  };
+  const mkOpts=(isRM)=>({
+    responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},
+    plugins:{legend:{display:false},datalabels:mkDL(isRM)},
+    scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},
+            y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}
+  });
+
+  const rebuildChart=(id,curr,prev,currColor,prevColor,isRM)=>{
+    const ex=Chart.getChart(id);if(ex)ex.destroy();
+    return new Chart(document.getElementById(id),{type:'bar',data:{labels:shortDlm,datasets:[
+      {label:currY,data:curr,backgroundColor:currColor,borderRadius:3,borderSkipped:false},
+      {label:prevY,data:prev,backgroundColor:prevColor, borderRadius:3,borderSkipped:false}
+    ]},options:mkOpts(isRM)});
+  };
+
+  khYoyKampusKwh = rebuildChart('kh-yoy-kwh-kampus-chart',
+    bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),
+    bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),
+    'rgba(26,95,168,.85)','rgba(147,197,253,.7)',false);
+
+  khYoyHpusmKwh = rebuildChart('kh-yoy-kwh-hpusm-chart',
+    bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),
+    bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),
+    'rgba(30,126,52,.85)','rgba(110,231,183,.7)',false);
+
+  khYoyKampusRm = rebuildChart('kh-yoy-rm-kampus-chart',
+    bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),
+    bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),
+    'rgba(26,95,168,.85)','rgba(147,197,253,.7)',true);
+
+  khYoyHospitalRm = rebuildChart('kh-yoy-rm-hospital-chart',
+    bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),
+    bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),
+    'rgba(30,126,52,.85)','rgba(110,231,183,.7)',true);
+
+  // YoY table
+  let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
+  <table class="yoy-table"><thead><tr>
+    <th>Bulan</th>
+    <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Kampus RM ${currY}</th><th class="td-num">Kampus RM ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Hospital RM ${currY}</th><th class="td-num">Hospital RM ${prevY}</th><th class="td-num">Δ</th>
+  </tr></thead><tbody>`;
+  let tCkwh=0,tPkwh=0,tChkwh=0,tPhkwh=0,tCkrm=0,tPkrm=0,tChrm=0,tPhrm=0;
+  bulanDlm.forEach((b,i)=>{
+    const cr=getCurr(b),pr=getPrev(b);
+    const dkk=dlt(cr?cr.kampusKwh:0,pr?pr.kampusKwh:0);
+    const dhk=dlt(cr?cr.hpusmKwh:0,pr?pr.hpusmKwh:0);
+    const dkr=dlt(cr?cr.kampusRm:0,pr?pr.kampusRm:0);
+    const dhr=dlt(cr?cr.hospitalRm:0,pr?pr.hospitalRm:0);
+    if(cr){tCkwh+=cr.kampusKwh;tChkwh+=cr.hpusmKwh;tCkrm+=cr.kampusRm;tChrm+=cr.hospitalRm;}
+    if(pr){tPkwh+=pr.kampusKwh;tPhkwh+=pr.hpusmKwh;tPkrm+=pr.kampusRm;tPhrm+=pr.hospitalRm;}
+    th+=`<tr>
+      <td><strong>${shortDlm[i]}</strong></td>
+      <td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td>
+      <td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>
+      <td class="td-num" style="color:#1e7e34">${cr?fmtN(cr.hpusmKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.hpusmKwh):'—'}</td>
+      <td class="td-num td-${dhk.cls}">${(cr&&pr)?dhk.pct:'—'}</td>
+      <td class="td-num" style="color:#1a5fa8">${cr?fmtRM2(cr.kampusRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.kampusRm):'—'}</td>
+      <td class="td-num td-${dkr.cls}">${(cr&&pr)?dkr.pct:'—'}</td>
+      <td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td>
+      <td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>
+    </tr>`;
+  });
+  const dTkwh=dlt(tCkwh,tPkwh),dThkwh=dlt(tChkwh,tPhkwh),dTkrm=dlt(tCkrm,tPkrm),dThrm=dlt(tChrm,tPhrm);
+  th+=`<tr class="td-total">
+    <td><strong>JUMLAH</strong></td>
+    <td class="td-num">${fmtN(tCkwh)}</td><td class="td-num" style="color:#aaa">${fmtN(tPkwh)}</td><td class="td-num td-${dTkwh.cls}">${dTkwh.pct}</td>
+    <td class="td-num">${fmtN(tChkwh)}</td><td class="td-num" style="color:#aaa">${fmtN(tPhkwh)}</td><td class="td-num td-${dThkwh.cls}">${dThkwh.pct}</td>
+    <td class="td-num">${fmtRM2(tCkrm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(tPkrm)}</td><td class="td-num td-${dTkrm.cls}">${dTkrm.pct}</td>
+    <td class="td-num">${fmtRM2(tChrm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(tPhrm)}</td><td class="td-num td-${dThrm.cls}">${dThrm.pct}</td>
+  </tr></tbody></table>`;
+  document.getElementById('kh-yoy-table').innerHTML=th;
+}
+
+// ══════════════════════════════════════════════
+// KH DATA MANAGEMENT TABLE
+// ══════════════════════════════════════════════
+const KH_EDIT_FIELDS=[
+  {key:'kampusKwh', label:'Kampus kWh'},
+  {key:'hpusmKwh',  label:'HPUSM kWh'},
+  {key:'totalKwh',  label:'Total kWh'},
+  {key:'kampusRm',  label:'Kampus RM'},
+  {key:'hospitalRm',label:'Hospital RM'},
+  {key:'totalRm',   label:'Total RM'},
+];
+
+function buildKhTable(rows){
+  if(!rows||!rows.length) return '';
+  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  let rowsHtml='';
+  sorted.forEach(r=>{
+    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
+      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
+      <td>${fmt(r.kampusKwh)}</td><td>${fmt(r.hpusmKwh)}</td><td>${fmt(r.totalKwh)}</td>
+      <td>${fmtRM2d(r.kampusRm)}</td><td>${fmtRM2d(r.hospitalRm)}</td><td>${fmtRM2d(r.totalRm)}</td>
+      <td class="edit-action-col" style="display:none">
+        <button class="btn-edit" onclick="openEditModal('kh',khRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-del"  onclick="openDelModal('kh','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+  return `<div class="jppf-mgmt" id="kh-mgmt-inner">
+    <div class="jppf-mgmt-header" onclick="toggleKhMgmt()">
+      <div class="jppf-mgmt-title">
+        <i class="ti ti-table" style="color:#1a3a5c"></i>
+        Pengurusan Data Kampus+HPUSM
+        <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
+      </div>
+      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="kh-chevron"></i>
+    </div>
+    <div class="jppf-mgmt-body" id="kh-mgmt-body">
+      ${buildAdminStrip()}
+      <div class="jppf-tbl-filter">
+        <label><i class="ti ti-filter"></i> Filter:</label>
+        <select id="kh-tbl-tahun" onchange="filterKhTable()">${yearOpts}</select>
+        <select id="kh-tbl-bulan" onchange="filterKhTable()">${monthOpts}</select>
+        <button onclick="clearKhFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
+        <span class="jppf-tbl-count" id="kh-tbl-count">${sorted.length} rekod</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table" id="kh-data-tbl">
+          <thead><tr>
+            <th>Bulan</th><th>Tahun</th>
+            <th>Kampus kWh</th><th>HPUSM kWh</th><th>Total kWh</th>
+            <th>Kampus RM</th><th>Hospital RM</th><th>Total RM</th>
+            <th class="edit-action-col" style="display:none">Tindakan</th>
+          </tr></thead>
+          <tbody id="kh-tbl-body">${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleKhMgmt(){
+  const body=document.getElementById('kh-mgmt-body');
+  const chev=document.getElementById('kh-chevron');
+  if(!body||!chev) return;
+  const isOpen=chev.classList.contains('open');
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
+}
+function filterKhTable(){
+  const t=document.getElementById('kh-tbl-tahun')?.value||'';
+  const b=document.getElementById('kh-tbl-bulan')?.value||'';
+  const rows=document.querySelectorAll('#kh-tbl-body tr');
+  let v=0;
+  rows.forEach(row=>{
+    const show=(!t||row.dataset.tahun===t)&&(!b||row.dataset.bulan===b);
+    row.style.display=show?'':'none';if(show)v++;
+  });
+  const cnt=document.getElementById('kh-tbl-count');if(cnt)cnt.textContent=v+' rekod';
+}
+function clearKhFilter(){
+  const st=document.getElementById('kh-tbl-tahun'),sb=document.getElementById('kh-tbl-bulan');
+  if(st)st.value='';if(sb)sb.value='';filterKhTable();
 }
 
 
