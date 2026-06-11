@@ -2,7 +2,7 @@
 // SERVICE WORKER — Pemantauan Tenaga USM
 // Versi cache — tukar nombor ini bila ada update fail
 // ════════════════════════════════════════════════════════════
-const CACHE_NAME = 'tenaga-usm-v2';
+const CACHE_NAME = 'tenaga-usm-v3';
 
 // Guna path relatif supaya berfungsi dalam mana-mana subfolder
 const CACHE_URLS = [
