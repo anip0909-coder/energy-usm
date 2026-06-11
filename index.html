@@ -372,6 +372,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 <div class="tab-nav">
   <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
   <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
+  <button class="tab-btn" id="tab-kh" onclick="switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</button>
 </div>
 
 <div class="container">
@@ -416,6 +417,13 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div id="panel-epc" style="display:none">
     <div id="epc-content">
       <div class="loading-state"><i class="ti ti-loader"></i>Memuat data EPC...</div>
+    </div>
+  </div>
+
+  <!-- KAMPUS+HPUSM TAB PANEL -->
+  <div id="panel-kh" style="display:none">
+    <div id="kh-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>
     </div>
   </div>
 </div>
@@ -1177,9 +1185,12 @@ function switchTab(tab){
   activeTab = tab;
   document.getElementById('panel-jppf').style.display = tab==='jppf' ? 'block' : 'none';
   document.getElementById('panel-epc').style.display  = tab==='epc'  ? 'block' : 'none';
+  document.getElementById('panel-kh').style.display   = tab==='kh'   ? 'block' : 'none';
   document.getElementById('tab-jppf').classList.toggle('active', tab==='jppf');
   document.getElementById('tab-epc').classList.toggle('active',  tab==='epc');
+  document.getElementById('tab-kh').classList.toggle('active',   tab==='kh');
   if(tab==='epc' && epcRows.length===0) loadEPC();
+  if(tab==='kh'  && khRows.length===0)  loadKH();
 }
 
 // ══════════════════════════════════════════════
@@ -1954,6 +1965,243 @@ window.renderEPC = function(){
     }
   },150);
 };
+
+// ══════════════════════════════════════════════
+// KAMPUS+HPUSM MODULE
+// ══════════════════════════════════════════════
+const KH_SHEET_GID = '1853842562';
+let khRows=[], khChartKwh=null, khChartBilBar=null, khChartBilPie=null;
+
+async function loadKH(){
+  const el=document.getElementById('kh-content');
+  el.innerHTML='<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>';
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${KH_SHEET_GID}&t=${Date.now()}`;
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv=await res.text();
+    khRows=parseKH(csv);
+    if(!khRows.length) throw new Error('Tiada data dijumpai. Semak nama tab dan GID.');
+    renderKH();
+  }catch(err){
+    el.innerHTML=`<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Kampus+HPUSM</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul (GID: ${KH_SHEET_GID})</div>`;
+  }
+}
+
+function parseKH(csv){
+  const lines=csv.split('\n').map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(const ch of line){if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=ch;}
+    cols.push(cur.trim());return cols.map(c=>c.replace(/"/g,'').trim());
+  });
+  let hi=-1,m={};
+  for(let i=0;i<Math.min(lines.length,15);i++){
+    const row=lines[i].map(c=>c.toLowerCase());
+    if(!row.some(c=>c.includes('bulan'))) continue;
+    hi=i;
+    row.forEach((h,idx)=>{
+      if(h.includes('bulan'))                                                  m.bulan=idx;
+      else if(h.includes('tahun'))                                             m.tahun=idx;
+      else if(h.includes('kampus')&&h.includes('kwh'))                        m.kampusKwh=idx;
+      else if((h.includes('hpusm')||h.includes('hospital'))&&h.includes('kwh')) m.hpusmKwh=idx;
+      else if(h.includes('total')&&h.includes('kwh'))                         m.totalKwh=idx;
+      else if(h.includes('kampus')&&h.includes('rm'))                         m.kampusRm=idx;
+      else if(h.includes('hospital')&&h.includes('rm'))                       m.hospitalRm=idx;
+      else if(h.includes('total')&&h.includes('rm'))                          m.totalRm=idx;
+    });
+    break;
+  }
+  if(hi<0) return [];
+  const rows=[];
+  for(let i=hi+1;i<lines.length;i++){
+    const row=lines[i];
+    const bRaw=row[m.bulan];
+    if(!bRaw||bRaw==='') continue;
+    const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    rows.push({
+      bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
+      kampusKwh:n('kampusKwh'), hpusmKwh:n('hpusmKwh'), totalKwh:n('totalKwh'),
+      kampusRm:n('kampusRm'), hospitalRm:n('hospitalRm'), totalRm:n('totalRm')
+    });
+  }
+  return rows;
+}
+
+function renderKH(){
+  const el=document.getElementById('kh-content');
+  const years=[...new Set(khRows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+
+  el.innerHTML=`
+    <div class="filter-row" style="margin-top:18px">
+      <label><i class="ti ti-filter"></i> Tapis:</label>
+      <select id="kh-sel-tahun" onchange="updateKH()">${yearOpts}</select>
+      <select id="kh-sel-bulan" onchange="updateKH()">${monthOpts}</select>
+      <button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>
+    </div>
+    <div class="metrics" id="kh-metrics"></div>
+    <div class="charts" style="margin-bottom:22px">
+      <div class="chart-box">
+        <div class="chart-title">Penggunaan kWh — Kampus vs HPUSM</div>
+        <div class="chart-sub" id="kh-kwh-sub">—</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus</span>
+          <span><span class="leg-dot" style="background:#1e7e34"></span>HPUSM</span>
+        </div>
+        <div style="position:relative;width:100%;height:260px"><canvas id="kh-kwh-chart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Bil (RM) — Kampus vs Hospital</div>
+        <div class="chart-sub" id="kh-bil-sub">—</div>
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus RM</span>
+          <span><span class="leg-dot" style="background:#1e7e34"></span>Hospital RM</span>
+        </div>
+        <div style="position:relative;width:100%;height:260px"><canvas id="kh-bil-bar-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="charts" style="margin-bottom:22px">
+      <div class="chart-box">
+        <div class="chart-title">Carta Pai — Bahagian Bil (RM)</div>
+        <div class="chart-sub" id="kh-pie-sub">Peratusan bil Kampus vs Hospital</div>
+        <div style="position:relative;width:100%;height:300px"><canvas id="kh-bil-pie-chart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Carta Pai — Bahagian kWh</div>
+        <div class="chart-sub">Peratusan penggunaan kWh Kampus vs HPUSM</div>
+        <div style="position:relative;width:100%;height:300px"><canvas id="kh-kwh-pie-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan Kampus & HPUSM</div>
+    <div class="health-row" id="kh-health"></div>`;
+
+  updateKH();
+}
+
+function updateKH(){
+  const t=document.getElementById('kh-sel-tahun')?.value||'';
+  const b=document.getElementById('kh-sel-bulan')?.value||'';
+  let rows=khRows;
+  if(t) rows=rows.filter(r=>r.tahun===t);
+  if(b) rows=rows.filter(r=>r.bulan===b);
+  if(!rows.length){document.getElementById('kh-metrics').innerHTML='<div class="empty-state" style="grid-column:1/-1">Tiada data untuk pilihan ini</div>';return;}
+
+  const d=rows.reduce((a,r)=>({
+    kampusKwh:a.kampusKwh+r.kampusKwh, hpusmKwh:a.hpusmKwh+r.hpusmKwh, totalKwh:a.totalKwh+r.totalKwh,
+    kampusRm:a.kampusRm+r.kampusRm, hospitalRm:a.hospitalRm+r.hospitalRm, totalRm:a.totalRm+r.totalRm
+  }),{kampusKwh:0,hpusmKwh:0,totalKwh:0,kampusRm:0,hospitalRm:0,totalRm:0});
+
+  const label=rows.length===1?(rows[0].bulan+' '+rows[0].tahun):rows.length+' rekod';
+  const kPctKwh=d.totalKwh>0?(d.kampusKwh/d.totalKwh*100).toFixed(1):'0';
+  const hPctKwh=d.totalKwh>0?(d.hpusmKwh/d.totalKwh*100).toFixed(1):'0';
+  const kPctRm=d.totalRm>0?(d.kampusRm/d.totalRm*100).toFixed(1):'0';
+  const hPctRm=d.totalRm>0?(d.hospitalRm/d.totalRm*100).toFixed(1):'0';
+
+  document.getElementById('kh-metrics').innerHTML=`
+    <div class="card kampus">
+      <div class="card-icon" style="color:#1a5fa8"><i class="ti ti-building"></i></div>
+      <div class="card-label" style="color:#1a5fa8">Kampus kWh</div>
+      <div class="card-value" style="color:#1a5fa8">${fmt(d.kampusKwh)}</div>
+      <div class="card-unit">kWh · ${kPctKwh}%</div>
+    </div>
+    <div class="card hospital">
+      <div class="card-icon" style="color:#1e7e34"><i class="ti ti-building-hospital"></i></div>
+      <div class="card-label" style="color:#1e7e34">HPUSM kWh</div>
+      <div class="card-value" style="color:#1e7e34">${fmt(d.hpusmKwh)}</div>
+      <div class="card-unit">kWh · ${hPctKwh}%</div>
+    </div>
+    <div class="card total">
+      <div class="card-icon"><i class="ti ti-plug"></i></div>
+      <div class="card-label">Jumlah kWh</div>
+      <div class="card-value">${fmt(d.totalKwh)}</div>
+      <div class="card-unit">${label}</div>
+    </div>
+    <div class="card kampus">
+      <div class="card-icon" style="color:#1a5fa8"><i class="ti ti-receipt"></i></div>
+      <div class="card-label" style="color:#1a5fa8">Kampus RM</div>
+      <div class="card-value" style="color:#1a5fa8">${fmtRM2d(d.kampusRm)}</div>
+      <div class="card-unit">Ringgit · ${kPctRm}%</div>
+    </div>
+    <div class="card hospital">
+      <div class="card-icon" style="color:#1e7e34"><i class="ti ti-receipt"></i></div>
+      <div class="card-label" style="color:#1e7e34">Hospital RM</div>
+      <div class="card-value" style="color:#1e7e34">${fmtRM2d(d.hospitalRm)}</div>
+      <div class="card-unit">Ringgit · ${hPctRm}%</div>
+    </div>
+    <div class="card total">
+      <div class="card-icon"><i class="ti ti-cash"></i></div>
+      <div class="card-label">Jumlah Bil</div>
+      <div class="card-value">${fmtRM2d(d.totalRm)}</div>
+      <div class="card-unit">${label}</div>
+    </div>`;
+
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
+  const subTxt=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
+  document.getElementById('kh-kwh-sub').textContent=subTxt;
+  document.getElementById('kh-bil-sub').textContent=subTxt;
+  document.getElementById('kh-pie-sub').textContent='Tempoh: '+subTxt;
+
+  const tck={color:'#999',font:{size:10}};
+  const hideDL=sorted.length>12;
+  const dlV={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
+  const dlVrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
+  const baseBar=(isRM)=>({
+    responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},
+    plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlVrm:dlV)},
+    scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}
+  });
+  const pieDL={display:true,formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(1)+'%':'';},color:'white',font:{size:13,weight:'700'}};
+  const pieOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:12},boxWidth:12,padding:16}},datalabels:pieDL}};
+
+  if(khChartKwh) khChartKwh.destroy();
+  khChartKwh=new Chart(document.getElementById('kh-kwh-chart'),{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Kampus',data:sorted.map(r=>r.kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:'HPUSM', data:sorted.map(r=>r.hpusmKwh), backgroundColor:'rgba(30,126,52,.85)', borderRadius:3,borderSkipped:false}
+  ]},options:baseBar(false)});
+
+  if(khChartBilBar) khChartBilBar.destroy();
+  khChartBilBar=new Chart(document.getElementById('kh-bil-bar-chart'),{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Kampus RM',  data:sorted.map(r=>r.kampusRm),  backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Hospital RM',data:sorted.map(r=>r.hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}
+  ]},options:baseBar(true)});
+
+  if(khChartBilPie) khChartBilPie.destroy();
+  khChartBilPie=new Chart(document.getElementById('kh-bil-pie-chart'),{type:'pie',data:{
+    labels:['Kampus RM','Hospital RM'],
+    datasets:[{data:[d.kampusRm,d.hospitalRm],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]
+  },options:pieOpts});
+
+  const existPieKwh=Chart.getChart('kh-kwh-pie-chart');if(existPieKwh)existPieKwh.destroy();
+  new Chart(document.getElementById('kh-kwh-pie-chart'),{type:'pie',data:{
+    labels:['Kampus kWh','HPUSM kWh'],
+    datasets:[{data:[d.kampusKwh,d.hpusmKwh],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]
+  },options:pieOpts});
+
+  document.getElementById('kh-health').innerHTML=`
+    <div class="hcard">
+      <div class="hhead"><div class="hname" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus</div></div>
+      <div class="hstat">Penggunaan<span>${fmt(d.kampusKwh)} kWh</span></div>
+      <div class="hstat">Bil<span>${fmtRM2d(d.kampusRm)}</span></div>
+      <div class="hstat">% kWh<span>${kPctKwh}%</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${kPctKwh}%;background:#1a5fa8"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead"><div class="hname" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM</div></div>
+      <div class="hstat">Penggunaan<span>${fmt(d.hpusmKwh)} kWh</span></div>
+      <div class="hstat">Bil<span>${fmtRM2d(d.hospitalRm)}</span></div>
+      <div class="hstat">% kWh<span>${hPctKwh}%</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${hPctKwh}%;background:#1e7e34"></div></div>
+    </div>
+    <div class="hcard">
+      <div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Nisbah Bil</div></div>
+      <div class="hstat">Kampus<span style="color:#1a5fa8">${kPctRm}% (${fmtRM2d(d.kampusRm)})</span></div>
+      <div class="hstat">Hospital<span style="color:#1e7e34">${hPctRm}% (${fmtRM2d(d.hospitalRm)})</span></div>
+      <div class="hstat">Jumlah<span style="font-weight:700">${fmtRM2d(d.totalRm)}</span></div>
+    </div>`;
+}
+
 
 loadData();
 </script>
