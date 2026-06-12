@@ -1632,9 +1632,11 @@ function unlockAdmin(pw,gasUrl){
   adminUnlocked=true;
   if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
   localStorage.setItem('usm_admin_pw',pw);
-  // show edit/delete columns in all tables
+  // show edit/delete columns in all tables (termasuk KH)
   document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
   document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+  // Auto-test connection after unlock
+  setTimeout(testGasConnection, 300);
 }
 
 // ══════════════════════════════════════════════
@@ -2138,8 +2140,8 @@ function renderKH(){
     <div id="kh-mgmt-wrap"></div>`;
 
   updateKH();
-  // init YoY after render
-  setTimeout(()=>initKhYoY(),100);
+  // init YoY selepas DOM render sepenuhnya
+  setTimeout(()=>initKhYoY(), 300);
 }
 
 function updateKH(){
@@ -2264,9 +2266,16 @@ function updateKH(){
       <div class="hstat">Jumlah<span style="font-weight:700">${fmtRM2d(d.totalRm)}</span></div>
     </div>`;
 
-  // rebuild data table
+  // rebuild data table dan apply semula admin state
   const mgmt=document.getElementById('kh-mgmt-wrap');
-  if(mgmt) mgmt.innerHTML=buildKhTable(khRows);
+  if(mgmt){
+    mgmt.innerHTML=buildKhTable(khRows);
+    // Re-apply admin unlock state jika sudah unlock
+    if(adminUnlocked){
+      mgmt.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
+      mgmt.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+    }
+  }
 }
 
 // ══════════════════════════════════════════════
