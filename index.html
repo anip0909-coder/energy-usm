@@ -2035,113 +2035,115 @@ function renderKH(){
   const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
   const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
 
-  el.innerHTML=`
-    <div class="filter-row" style="margin-top:18px">
-      <label><i class="ti ti-filter"></i> Tapis:</label>
-      <select id="kh-sel-tahun" onchange="updateKH()">${yearOpts}</select>
-      <select id="kh-sel-bulan" onchange="updateKH()">${monthOpts}</select>
-      <button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>
-    </div>
-    <div class="metrics" id="kh-metrics"></div>
-    <div class="charts" style="margin-bottom:22px">
-      <div class="chart-box">
-        <div class="chart-title">Penggunaan kWh — Kampus vs HPUSM</div>
-        <div class="chart-sub" id="kh-kwh-sub">—</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus</span>
-          <span><span class="leg-dot" style="background:#1e7e34"></span>HPUSM</span>
-        </div>
-        <div style="position:relative;width:100%;height:260px"><canvas id="kh-kwh-chart"></canvas></div>
-      </div>
-      <div class="chart-box">
-        <div class="chart-title">Bil (RM) — Kampus vs Hospital</div>
-        <div class="chart-sub" id="kh-bil-sub">—</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus RM</span>
-          <span><span class="leg-dot" style="background:#1e7e34"></span>Hospital RM</span>
-        </div>
-        <div style="position:relative;width:100%;height:260px"><canvas id="kh-bil-bar-chart"></canvas></div>
-      </div>
-    </div>
-    <div class="charts" style="margin-bottom:22px">
-      <div class="chart-box">
-        <div class="chart-title">Carta Pai — Bahagian Bil (RM)</div>
-        <div class="chart-sub" id="kh-pie-sub">Peratusan bil Kampus vs Hospital</div>
-        <div style="position:relative;width:100%;height:300px"><canvas id="kh-bil-pie-chart"></canvas></div>
-      </div>
-      <div class="chart-box">
-        <div class="chart-title">Carta Pai — Bahagian kWh</div>
-        <div class="chart-sub">Peratusan penggunaan kWh Kampus vs HPUSM</div>
-        <div style="position:relative;width:100%;height:300px"><canvas id="kh-kwh-pie-chart"></canvas></div>
-      </div>
-    </div>
-    <div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan Kampus & HPUSM</div>
-    <div class="health-row" id="kh-health"></div>
+  // Pre-compute pills HTML — avoid nested template literals
+  const pillsHtml = BULAN_SHORT.map((b,i)=>'<span class="mpill" data-idx="'+i+'" id="kh-mpill-'+i+'">'+b+'</span>').join('');
 
-    <!-- YOY SECTION -->
-    <div class="yoy-section" style="margin-top:8px">
-      <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
-      <div class="yoy-top">
-        <label>Tahun Semasa:</label><select id="kh-yoy-curr"></select>
-        <label style="margin-left:6px">Berbanding:</label><select id="kh-yoy-prev"></select>
-      </div>
-      <div class="range-box">
-        <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
-        <div class="month-pills" id="kh-month-pills">${BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="kh-mpill-${i}">${b}</span>`).join('')}</div>
-        <div class="range-info">Skop: <strong id="kh-range-label">Januari — Disember (12 bulan)</strong>
-          <button class="range-reset" onclick="resetKhRange()"><i class="ti ti-refresh"></i> Reset</button>
-        </div>
-      </div>
-      <div id="kh-yoy-summary"></div>
-      <div class="yoy-charts">
-        <div class="yoy-chart-box">
-          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — Kampus</div>
-          <div class="chart-sub" id="kh-yoy-kwh-kampus-sub">—</div>
-          <div class="legend" style="margin-bottom:8px">
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
-          </div>
-          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-kampus-chart"></canvas></div>
-        </div>
-        <div class="yoy-chart-box">
-          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — HPUSM</div>
-          <div class="chart-sub" id="kh-yoy-kwh-hpusm-sub">—</div>
-          <div class="legend" style="margin-bottom:8px">
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
-          </div>
-          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-hpusm-chart"></canvas></div>
-        </div>
-      </div>
-      <div class="yoy-charts" style="margin-top:16px">
-        <div class="yoy-chart-box">
-          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Kampus</div>
-          <div class="chart-sub" id="kh-yoy-rm-kampus-sub">—</div>
-          <div class="legend" style="margin-bottom:8px">
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
-          </div>
-          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-kampus-chart"></canvas></div>
-        </div>
-        <div class="yoy-chart-box">
-          <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Hospital</div>
-          <div class="chart-sub" id="kh-yoy-rm-hospital-sub">—</div>
-          <div class="legend" style="margin-bottom:8px">
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
-          </div>
-          <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-hospital-chart"></canvas></div>
-        </div>
-      </div>
-      <div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-table"></div></div>
-    </div>
+  el.innerHTML=
+    '<div class="filter-row" style="margin-top:18px">'+
+      '<label><i class="ti ti-filter"></i> Tapis:</label>'+
+      '<select id="kh-sel-tahun" onchange="updateKH()">'+yearOpts+'</select>'+
+      '<select id="kh-sel-bulan" onchange="updateKH()">'+monthOpts+'</select>'+
+      '<button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>'+
+    '</div>'+
+    '<div class="metrics" id="kh-metrics"></div>'+
+    '<div class="charts" style="margin-bottom:22px">'+
+      '<div class="chart-box">'+
+        '<div class="chart-title">Penggunaan kWh — Kampus vs HPUSM</div>'+
+        '<div class="chart-sub" id="kh-kwh-sub">—</div>'+
+        '<div class="legend">'+
+          '<span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus</span>'+
+          '<span><span class="leg-dot" style="background:#1e7e34"></span>HPUSM</span>'+
+        '</div>'+
+        '<div style="position:relative;width:100%;height:260px"><canvas id="kh-kwh-chart"></canvas></div>'+
+      '</div>'+
+      '<div class="chart-box">'+
+        '<div class="chart-title">Bil (RM) — Kampus vs Hospital</div>'+
+        '<div class="chart-sub" id="kh-bil-sub">—</div>'+
+        '<div class="legend">'+
+          '<span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus RM</span>'+
+          '<span><span class="leg-dot" style="background:#1e7e34"></span>Hospital RM</span>'+
+        '</div>'+
+        '<div style="position:relative;width:100%;height:260px"><canvas id="kh-bil-bar-chart"></canvas></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="charts" style="margin-bottom:22px">'+
+      '<div class="chart-box">'+
+        '<div class="chart-title">Carta Pai — Bahagian Bil (RM)</div>'+
+        '<div class="chart-sub" id="kh-pie-sub">Peratusan bil Kampus vs Hospital</div>'+
+        '<div style="position:relative;width:100%;height:300px"><canvas id="kh-bil-pie-chart"></canvas></div>'+
+      '</div>'+
+      '<div class="chart-box">'+
+        '<div class="chart-title">Carta Pai — Bahagian kWh</div>'+
+        '<div class="chart-sub">Peratusan penggunaan kWh Kampus vs HPUSM</div>'+
+        '<div style="position:relative;width:100%;height:300px"><canvas id="kh-kwh-pie-chart"></canvas></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan Kampus & HPUSM</div>'+
+    '<div class="health-row" id="kh-health"></div>'+
 
-    <!-- PENGURUSAN DATA KH -->
-    <div id="kh-mgmt-wrap"></div>`;
+    // ── YOY SECTION ──
+    '<div class="yoy-section" style="margin-top:22px">'+
+      '<div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>'+
+      '<div class="yoy-top">'+
+        '<label>Tahun Semasa:</label><select id="kh-yoy-curr"></select>'+
+        '<label style="margin-left:6px">Berbanding:</label><select id="kh-yoy-prev"></select>'+
+      '</div>'+
+      '<div class="range-box">'+
+        '<div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>'+
+        '<div class="month-pills" id="kh-month-pills">'+pillsHtml+'</div>'+
+        '<div class="range-info">Skop: <strong id="kh-range-label">Januari — Disember (12 bulan)</strong>'+
+          '<button class="range-reset" onclick="resetKhRange()"><i class="ti ti-refresh"></i> Reset</button>'+
+        '</div>'+
+      '</div>'+
+      '<div id="kh-yoy-summary"></div>'+
+      '<div class="yoy-charts">'+
+        '<div class="yoy-chart-box">'+
+          '<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — Kampus</div>'+
+          '<div class="chart-sub" id="kh-yoy-kwh-kampus-sub">—</div>'+
+          '<div class="legend" style="margin-bottom:8px">'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>'+
+          '</div>'+
+          '<div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-kampus-chart"></canvas></div>'+
+        '</div>'+
+        '<div class="yoy-chart-box">'+
+          '<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan kWh — HPUSM</div>'+
+          '<div class="chart-sub" id="kh-yoy-kwh-hpusm-sub">—</div>'+
+          '<div class="legend" style="margin-bottom:8px">'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>'+
+          '</div>'+
+          '<div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-kwh-hpusm-chart"></canvas></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="yoy-charts" style="margin-top:16px">'+
+        '<div class="yoy-chart-box">'+
+          '<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Kampus</div>'+
+          '<div class="chart-sub" id="kh-yoy-rm-kampus-sub">—</div>'+
+          '<div class="legend" style="margin-bottom:8px">'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>'+
+          '</div>'+
+          '<div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-kampus-chart"></canvas></div>'+
+        '</div>'+
+        '<div class="yoy-chart-box">'+
+          '<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Perbandingan Bil (RM) — Hospital</div>'+
+          '<div class="chart-sub" id="kh-yoy-rm-hospital-sub">—</div>'+
+          '<div class="legend" style="margin-bottom:8px">'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>'+
+            '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>'+
+          '</div>'+
+          '<div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-rm-hospital-chart"></canvas></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-table"></div></div>'+
+    '</div>'+
+
+    // ── PENGURUSAN DATA KH ──
+    '<div id="kh-mgmt-wrap"></div>';
 
   updateKH();
-  // init YoY selepas DOM render sepenuhnya
-  setTimeout(()=>initKhYoY(), 300);
+  initKhYoY();
 }
 
 function updateKH(){
@@ -2266,11 +2268,10 @@ function updateKH(){
       <div class="hstat">Jumlah<span style="font-weight:700">${fmtRM2d(d.totalRm)}</span></div>
     </div>`;
 
-  // rebuild data table dan apply semula admin state
+  // rebuild data table dan apply semula admin state (hanya bila perlu)
   const mgmt=document.getElementById('kh-mgmt-wrap');
-  if(mgmt){
+  if(mgmt && !document.getElementById('kh-mgmt-inner')){
     mgmt.innerHTML=buildKhTable(khRows);
-    // Re-apply admin unlock state jika sudah unlock
     if(adminUnlocked){
       mgmt.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
       mgmt.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
@@ -2287,26 +2288,42 @@ let khYoyKampusKwh=null,khYoyHpusmKwh=null,khYoyKampusRm=null,khYoyHospitalRm=nu
 window.resetKhRange=function(){khRangeStart=0;khRangeEnd=11;khYoySelecting=false;updateKhPills();renderKhYoY();};
 
 function initKhYoY(){
+function initKhYoY(){
   const years=[...new Set(khRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
   const curr=document.getElementById('kh-yoy-curr');
   const prev=document.getElementById('kh-yoy-prev');
   if(!curr||!prev) return;
-  curr.innerHTML=''; prev.innerHTML='';
-  years.forEach((y,i)=>{
-    const oc=document.createElement('option');oc.value=y;oc.textContent=y;if(i===0)oc.selected=true;curr.appendChild(oc);
-    const op=document.createElement('option');op.value=y;op.textContent=y;if(i===1)op.selected=true;prev.appendChild(op);
-  });
-  curr.addEventListener('change',renderKhYoY);
-  prev.addEventListener('change',renderKhYoY);
 
-  const pp=document.getElementById('kh-month-pills');
-  if(pp) pp.addEventListener('click',e=>{
-    const pill=e.target.closest('.mpill');if(!pill)return;
-    const idx=parseInt(pill.dataset.idx);
-    if(!khYoySelecting){khRangeStart=idx;khRangeEnd=idx;khYoySelecting=true;}
-    else{if(idx<khRangeStart)khRangeStart=idx;else khRangeEnd=idx;khYoySelecting=false;}
-    updateKhPills();renderKhYoY();
+  // Populate curr dropdown
+  curr.innerHTML='';
+  years.forEach((y,i)=>{
+    const o=document.createElement('option');o.value=y;o.textContent=y;if(i===0)o.selected=true;curr.appendChild(o);
   });
+
+  // Populate prev dropdown
+  prev.innerHTML='';
+  years.forEach((y,i)=>{
+    const o=document.createElement('option');o.value=y;o.textContent=y;if(i===(years.length>1?1:0))o.selected=true;prev.appendChild(o);
+  });
+
+  // Remove old listeners by replacing elements
+  const newCurr=curr.cloneNode(true);const newPrev=prev.cloneNode(true);
+  curr.parentNode.replaceChild(newCurr,curr);prev.parentNode.replaceChild(newPrev,prev);
+  newCurr.addEventListener('change',renderKhYoY);
+  newPrev.addEventListener('change',renderKhYoY);
+
+  // Month pills
+  const pp=document.getElementById('kh-month-pills');
+  if(pp){
+    const newPp=pp.cloneNode(true);pp.parentNode.replaceChild(newPp,pp);
+    newPp.addEventListener('click',e=>{
+      const pill=e.target.closest('.mpill');if(!pill)return;
+      const idx=parseInt(pill.dataset.idx);
+      if(!khYoySelecting){khRangeStart=idx;khRangeEnd=idx;khYoySelecting=true;}
+      else{if(idx<khRangeStart)khRangeStart=idx;else khRangeEnd=idx;khYoySelecting=false;}
+      updateKhPills();renderKhYoY();
+    });
+  }
   updateKhPills();
   renderKhYoY();
 }
@@ -2540,6 +2557,17 @@ function buildKhTable(rows){
       </div>
     </div>
   </div>`;
+}
+
+function rebuildKhMgmt(){
+  const mgmt=document.getElementById('kh-mgmt-wrap');
+  if(mgmt){
+    mgmt.innerHTML=buildKhTable(khRows);
+    if(adminUnlocked){
+      mgmt.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
+      mgmt.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+    }
+  }
 }
 
 function toggleKhMgmt(){
