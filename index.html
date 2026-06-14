@@ -25,7 +25,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
@@ -608,7 +607,12 @@ async function loadData(isManual=false){
   }
 }
 
-function manualRefresh(){clearInterval(countdownTimer);loadData(true)}
+function manualRefresh(){
+  clearInterval(countdownTimer);
+  if (activeTab === 'jppf') loadData(true);
+  else if (activeTab === 'epc') loadEPC();
+  else if (activeTab === 'kh') loadKH();
+}
 
 function resetCountdown(){
   secondsLeft=REFRESH_SECONDS;clearInterval(countdownTimer);
@@ -616,7 +620,10 @@ function resetCountdown(){
     secondsLeft--;
     const m=Math.floor(secondsLeft/60),s=secondsLeft%60;
     document.getElementById('countdown-label').textContent=m>0?`${m}m ${s}s`:`${s}s`;
-    if(secondsLeft<=0){clearInterval(countdownTimer);loadData();}
+    if(secondsLeft<=0){
+        clearInterval(countdownTimer);
+        manualRefresh(); // automatically refreshes the active tab
+    }
   },1000);
 }
 
@@ -1635,12 +1642,8 @@ function unlockAdmin(pw,gasUrl){
   // show edit/delete columns in all tables (termasuk KH)
   document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
   document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
-  // Rebuild KH table to show action cols if KH tab loaded
-  if(khRows.length) renderKHTableRows();
-  // Auto-test connection after unlock
-  setTimeout(testGasConnection, 300);
   // rebuild KH table to show edit buttons if on KH tab
-  khBuildTableRows();
+  if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
 }
 
 // ══════════════════════════════════════════════
@@ -1673,7 +1676,7 @@ function closeDelModal(){document.getElementById('del-modal').classList.remove('
 function openEditModal(tab,row){
   if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
   editRow={tab,...row};
-  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:EPC_EDIT_FIELDS;
+  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS;
   document.getElementById('edit-modal-title').textContent=`Kemaskini — ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-modal-sub').textContent=`Tab: ${tab.toUpperCase()} | ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-msg').style.display='none';
@@ -1707,7 +1710,16 @@ async function submitEdit(){
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
-    if(data.ok){showEditMsg(data.message,'ok');setTimeout(()=>{closeEditModal();manualRefresh();},1500);}
+    if(data.ok){
+        showEditMsg(data.message,'ok');
+        setTimeout(()=>{
+            closeEditModal();
+            // Muat semula data spesifik tab selepas diedit
+            if (editRow.tab === 'jppf') loadData(true);
+            else if (editRow.tab === 'epc') loadEPC();
+            else if (editRow.tab === 'kh') loadKH();
+        },1500);
+    }
     else showEditMsg('⚠ '+data.error,'err');
   }catch(e){showEditMsg('⚠ '+e.message,'err');}
   finally{btn.textContent='Simpan ke Google Sheets';btn.disabled=false;}
@@ -1728,7 +1740,16 @@ async function submitDelete(){
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
-    if(data.ok){showDelMsg(data.message,'ok');setTimeout(()=>{closeDelModal();manualRefresh();},1500);}
+    if(data.ok){
+        showDelMsg(data.message,'ok');
+        setTimeout(()=>{
+            closeDelModal();
+            // Muat semula data spesifik tab selepas dipadam
+            if (delRow.tab === 'jppf') loadData(true);
+            else if (delRow.tab === 'epc') loadEPC();
+            else if (delRow.tab === 'kh') loadKH();
+        },1500);
+    }
     else showDelMsg('⚠ '+data.error,'err');
   }catch(e){showDelMsg('⚠ '+e.message,'err');}
   finally{btn.textContent='Ya, Padam';btn.disabled=false;}
@@ -1973,7 +1994,7 @@ window.renderEPC = function(){
 };
 
 // ══════════════════════════════════════════════
-// KAMPUS+HPUSM MODULE — v3 bersih
+// KAMPUS+HPUSM MODULE — Dikemaskini
 // ══════════════════════════════════════════════
 const KH_SHEET_GID = '1853842562';
 let khRows=[];
