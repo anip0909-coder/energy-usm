@@ -465,6 +465,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
 const REFRESH_SECONDS    = 1800;
+const GAS_API_URL        = 'https://script.google.com/macros/s/AKfycbzhNTjCursIX83gf1xVgbonvXZV_IBvSlmWmbgyFmJ1IgImr_1tTW1YMx_iDkoShdVt/exec';
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -1652,16 +1653,32 @@ if(localStorage.getItem('usm_dark')==='1'){
 // ADMIN UNLOCK
 // ══════════════════════════════════════════════
 let adminUnlocked=false;
-function unlockAdmin(pw,gasUrl){
+async function unlockAdmin(pw, btnElement){
   if(!pw){alert('Sila masukkan password admin.');return;}
-  adminUnlocked=true;
-  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
-  localStorage.setItem('usm_admin_pw',pw);
-  // show edit/delete columns in all tables (termasuk KH)
-  document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
-  document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
-  // rebuild KH table to show edit buttons if on KH tab
-  if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
+  
+  const origText = btnElement.innerHTML;
+  btnElement.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Mengesahkan...';
+  btnElement.disabled = true;
+
+  try {
+    const data = await gasRequest({ action: 'verify', password: pw });
+    if (data.ok) {
+      adminUnlocked=true;
+      localStorage.setItem('usm_admin_pw',pw);
+      // show edit/delete columns in all tables (termasuk KH)
+      document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
+      document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+      // rebuild KH table to show edit buttons if on KH tab
+      if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
+    } else {
+      alert('Pengesahan gagal: ' + (data.error || 'Password salah.'));
+    }
+  } catch (e) {
+    alert('Pengesahan gagal. Sila semak sambungan rangkaian atau URL script.');
+  } finally {
+    btnElement.innerHTML = origText;
+    btnElement.disabled = false;
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1707,9 +1724,7 @@ function openEditModal(tab,row){
 
 async function gasRequest(payload){
   // Apps Script requires Content-Type text/plain to avoid CORS preflight
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
-  const res=await fetch(url,{
+  const res=await fetch(GAS_API_URL,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload)
@@ -1721,8 +1736,6 @@ async function gasRequest(payload){
 
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
@@ -1753,8 +1766,6 @@ function openDelModal(tab,bulan,tahun){
 }
 async function submitDelete(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
@@ -1779,10 +1790,8 @@ function buildAdminStrip(){
   return `<div class="admin-strip">
     <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
     <label>Password:</label>
-    <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
-    <label>Apps Script URL:</label>
-    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
-    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
+    <input type="password" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}" style="flex:1;max-width:250px" onkeydown="if(event.key==='Enter') unlockAdmin(this.value, this.nextElementSibling)">
+    <button onclick="unlockAdmin(this.previousElementSibling.value, this)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
     <span class="lock-status locked">🔒 Terkunci</span>
   </div>`;
 }
