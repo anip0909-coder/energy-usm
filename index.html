@@ -180,7 +180,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .toggle-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid #c0cdd8;background:white;color:#888;cursor:pointer;font-weight:600;transition:all .2s}
 .toggle-btn.active.ssa{background:#1a5fa8;border-color:#1a5fa8;color:white}
 .toggle-btn.active.ssd{background:#1e7e34;border-color:#1e7e34;color:white}
-.toggle-btn.active:not(.ssa):not(.ssd){background:#1a3a5c;border-color:#1a3a5c;color:white}
+.toggle-btn.active.solar{background:#e8a020;border-color:#e8a020;color:white}
+.toggle-btn.active:not(.ssa):not(.ssd):not(.solar){background:#1a3a5c;border-color:#1a3a5c;color:white}
 .toggle-btn:hover:not(.active){border-color:#1a3a5c;color:#1a3a5c}
 
 /* ── TAB NAV ── */
@@ -398,8 +399,9 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="filter-divider"></div>
     <label><i class="ti ti-building"></i> Paparan:</label>
     <div class="toggle-group">
-      <button class="toggle-btn active" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
-      <button class="toggle-btn active" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
+      <button class="toggle-btn active ssa" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
+      <button class="toggle-btn active ssd" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
+      <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
     </div>
   </div>
 
@@ -724,26 +726,36 @@ function updateDisplay(){
 }
 
 // ── SS FILTER STATE ──
-let showSSA=true, showSSD=true;
+let showSSA=true, showSSD=true, showSolar=true;
 function toggleSS(which){
   if(which==='ssa'){
     showSSA=!showSSA;
     const b=document.getElementById('tog-ssa');
     b.classList.toggle('active',showSSA);
     b.classList.toggle('ssa',showSSA);
-  } else {
+  } else if(which==='ssd') {
     showSSD=!showSSD;
     const b=document.getElementById('tog-ssd');
     b.classList.toggle('active',showSSD);
     b.classList.toggle('ssd',showSSD);
+  } else if(which==='solar') {
+    showSolar=!showSolar;
+    const b=document.getElementById('tog-solar');
+    b.classList.toggle('active',showSolar);
+    b.classList.toggle('solar',showSolar);
   }
   // must keep at least one
-  if(!showSSA&&!showSSD){showSSA=true;const b=document.getElementById('tog-ssa');b.classList.add('active','ssa');}
+  if(!showSSA && !showSSD && !showSolar){
+    showSSA=true;
+    const b=document.getElementById('tog-ssa');
+    b.classList.add('active','ssa');
+  }
   updateDisplay();
 }
 // init toggle colours on load
 document.getElementById('tog-ssa').classList.add('ssa');
 document.getElementById('tog-ssd').classList.add('ssd');
+if(document.getElementById('tog-solar')) document.getElementById('tog-solar').classList.add('solar');
 
 // ── DATALABEL HELPERS ──
 Chart.register(ChartDataLabels);
@@ -805,16 +817,18 @@ function renderCharts(filtered,d){
     const kwhDatasets=[];
     if(showSSA) kwhDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) kwhDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
-    kwhDatasets.push({label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false});
+    if(showSolar) kwhDatasets.push({label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false});
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:kwhDatasets},options:baseOpts(false)});
 
     // ── Bil chart — respect SS filter ──
     const bilDatasets=[];
     if(showSSA) bilDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
-    bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
-    bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
-    bilDatasets.push({label:'PV Solar',data:sorted.map(r=>r.bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false});
+    if(showSolar) {
+      bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
+      bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
+      bilDatasets.push({label:'PV Solar',data:sorted.map(r=>r.bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false});
+    }
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
 
     // ── Trend line — Total kWh & Total RM ──
@@ -857,12 +871,16 @@ function renderCharts(filtered,d){
     const kwhLbls=[],kwhVals=[],kwhClr=[];
     if(showSSA){kwhLbls.push('SS-A (Kampus)');kwhVals.push(d.ssaKwh);kwhClr.push('#1a5fa8');}
     if(showSSD){kwhLbls.push('SS-D (HPUSM)');kwhVals.push(d.ssdKwh);kwhClr.push('#1e7e34');}
-    kwhLbls.push('Solar');kwhVals.push(d.solarKwh);kwhClr.push('#e8a020');
+    if(showSolar){kwhLbls.push('Solar');kwhVals.push(d.solarKwh);kwhClr.push('#e8a020');}
 
     const bilLbls=[],bilVals=[],bilClr=[];
     if(showSSA){bilLbls.push('Bil SS-A');bilVals.push(d.ssaRm);bilClr.push('#1a5fa8');}
     if(showSSD){bilLbls.push('Bil SS-D');bilVals.push(d.ssdRm);bilClr.push('#1e7e34');}
-    bilLbls.push('Eksport (RM)','Penjimatan','PV Solar');bilVals.push(d.eksportRm,d.penjimatan,d.bilPvSolar);bilClr.push('#0891b2','#7c3aed','#be185d');
+    if(showSolar){
+      bilLbls.push('Eksport (RM)','Penjimatan','PV Solar');
+      bilVals.push(d.eksportRm,d.penjimatan,d.bilPvSolar);
+      bilClr.push('#0891b2','#7c3aed','#be185d');
+    }
 
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:kwhLbls,datasets:[{data:kwhVals,backgroundColor:kwhClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
