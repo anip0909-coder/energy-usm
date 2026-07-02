@@ -706,6 +706,10 @@ function renderShell(){
     <div class="trend-box">
       <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
+      <div class="legend" id="trend-legend" style="display:none">
+        <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
+        <span><span class="leg-dot" style="background:none;width:18px;height:0;border-top:2.5px dashed #e8a020;border-radius:0"></span>Total RM</span>
+      </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
@@ -853,6 +857,8 @@ function renderCharts(filtered,d){
 
     // ── Trend line — Total kWh & Total RM ──
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
+    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='flex';
+    
     const trendDLshow = !hideDL;
     const dlTrendKwh = trendDLshow ? {
       display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
@@ -876,7 +882,7 @@ function renderCharts(filtered,d){
         layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
+          legend:{display:false},
           datalabels:{} // controlled per-dataset
         },
         scales:{
@@ -906,6 +912,7 @@ function renderCharts(filtered,d){
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
 
     document.getElementById('trend-sub').textContent='Pilih lebih dari 1 bulan untuk paparan trend';
+    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='none';
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',
       data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],
         datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},
