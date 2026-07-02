@@ -589,13 +589,13 @@ function buildRows(lines,headerIdx,colMap){
   }
 
   // 2. KIRAAN AUTOMATIK: Penjimatan USM (RM) 
-  // Formula: SS-A (RM) + SS-D (RM) + Bil PV Hi-Tech Solar (RM) - Total RM tahun sebelum
+  // Formula: Total RM tahun sebelum - (SS-A (RM) + SS-D (RM) + Bil PV Hi-Tech Solar (RM))
   rows.forEach(r => {
     const prevYear = String(parseInt(r.tahun) - 1);
     const prevRow = rows.find(x => x.bulan === r.bulan && x.tahun === prevYear);
     
     if (prevRow) {
-      r.penjimatan = (r.ssaRm + r.ssdRm + r.bilPvSolar) - prevRow.totalRm;
+      r.penjimatan = prevRow.totalRm - (r.ssaRm + r.ssdRm + r.bilPvSolar);
     }
   });
 
