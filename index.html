@@ -594,7 +594,8 @@ function buildRows(lines,headerIdx,colMap){
     const prevYear = String(parseInt(r.tahun) - 1);
     const prevRow = rows.find(x => x.bulan === r.bulan && x.tahun === prevYear);
     
-    if (prevRow) {
+    // Hanya kira jika bulan tersebut telah dikemaskini dengan nilai bil yang sah (bukan bulan kosong)
+    if (prevRow && (r.ssaRm > 0 || r.ssdRm > 0 || r.bilPvSolar > 0)) {
       r.penjimatan = prevRow.totalRm - (r.ssaRm + r.ssdRm + r.bilPvSolar);
     }
   });
@@ -1755,6 +1756,38 @@ async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+  
+  // KIRAAN AUTOMATIK SEBELUM HANTAR KE GOOGLE SHEETS
+  const getVal = (key) => {
+    let v = fields[key] !== undefined ? fields[key] : editRow[key];
+    let p = parseFloat(v);
+    return isNaN(p) ? 0 : p;
+  };
+
+  if (editRow.tab === 'jppf') {
+    const ssaRm = getVal('ssaRm');
+    const ssdRm = getVal('ssdRm');
+    const bilPv = getVal('bilPvSolar');
+    
+    // Auto kira Total RM & Total kWh
+    fields.totalRm = ssaRm + ssdRm;
+    fields.totalKwh = getVal('ssaKwh') + getVal('ssdKwh');
+
+    // Auto kira Penjimatan USM berdasarkan Total RM Tahun Lepas
+    const prevYear = String(parseInt(editRow.tahun) - 1);
+    const prevRow = allRows.find(x => x.bulan === editRow.bulan && x.tahun === prevYear);
+    
+    // Hanya kira jika ada input kemas kini nilai bagi bil bulan semasa
+    if (prevRow && (ssaRm > 0 || ssdRm > 0 || bilPv > 0)) {
+      fields.penjimatan = prevRow.totalRm - (ssaRm + ssdRm + bilPv);
+    }
+  } else if (editRow.tab === 'kh') {
+    fields.totalRm = getVal('kampusRm') + getVal('hospitalRm');
+    fields.totalKwh = getVal('kampusKwh') + getVal('hpusmKwh');
+  } else if (editRow.tab === 'epc') {
+    fields.totalKwh = getVal('chillerTrauma') + getVal('chillerGeneral');
+  }
+
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
