@@ -570,17 +570,35 @@ function buildRows(lines,headerIdx,colMap){
     const bRaw=row[colMap.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    
+    // 1. KIRAAN AUTOMATIK: Total RM = SS-A (RM) + SS-D (RM)
+    let ssaRm = n('ssaRm');
+    let ssdRm = n('ssdRm');
+    let totalRm = ssaRm + ssdRm;
+
     rows.push({
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
-      ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
+      ssaRm:ssaRm, ssdRm:ssdRm, totalRm:totalRm,
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
       penjimatan:n('penjimatan'),
       bilPvSolar:n('bilPvSolar')
     });
   }
+
+  // 2. KIRAAN AUTOMATIK: Penjimatan USM (RM) 
+  // Formula: SS-A (RM) + SS-D (RM) + Bil PV Hi-Tech Solar (RM) - Total RM tahun sebelum
+  rows.forEach(r => {
+    const prevYear = String(parseInt(r.tahun) - 1);
+    const prevRow = rows.find(x => x.bulan === r.bulan && x.tahun === prevYear);
+    
+    if (prevRow) {
+      r.penjimatan = (r.ssaRm + r.ssdRm + r.bilPvSolar) - prevRow.totalRm;
+    }
+  });
+
   return rows;
 }
 
@@ -1692,7 +1710,6 @@ const JPPF_EDIT_FIELDS=[
   {key:'ssdRm',    label:'Bil SS-D (RM)'},
   {key:'eksportKwh',label:'Tenaga Eksport kWh'},
   {key:'eksportRm', label:'Amaun Eksport (RM)'},
-  {key:'penjimatan',label:'Penjimatan USM (RM)'},
   {key:'bilPvSolar',label:'Bil PV Hi-Tech Solar (RM)'},
 ];
 const EPC_EDIT_FIELDS=[
@@ -2076,10 +2093,16 @@ function parseKH(csv){
     const bRaw=row[m.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    
+    // KIRAAN AUTOMATIK (Tab KH): Total RM
+    let kRm = n('kampusRm');
+    let hRm = n('hospitalRm');
+    let tRm = kRm + hRm;
+
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
       kampusKwh:n('kampusKwh'),hpusmKwh:n('hpusmKwh'),totalKwh:n('totalKwh'),
-      kampusRm:n('kampusRm'),hospitalRm:n('hospitalRm'),totalRm:n('totalRm')
+      kampusRm:kRm,hospitalRm:hRm,totalRm:tRm
     });
   }
   return rows;
@@ -2461,7 +2484,6 @@ const KH_EDIT_FIELDS=[
   {key:'totalKwh',  label:'Total kWh'},
   {key:'kampusRm',  label:'Kampus RM'},
   {key:'hospitalRm',label:'Hospital RM'},
-  {key:'totalRm',   label:'Total RM'},
 ];
 
 loadData();
