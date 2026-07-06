@@ -331,14 +331,6 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 .lock-status.locked{color:#c0392b}
 .lock-status.unlocked{color:#1e7e34}
 
-.kh-yoy-table-compact {width:100%;border-collapse:collapse;font-size:11px}
-.kh-yoy-table-compact th{background:#f1f5f9;padding:6px 4px!important;text-align:center;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.2px;border:1px solid #e2e8f0;white-space:nowrap}
-.kh-yoy-table-compact td{padding:5px 6px!important;border-bottom:1px solid #e2e8f0;color:#333;white-space:nowrap}
-.kh-yoy-table-compact tr:hover td{background:#f8fafc}
-body.dark .kh-yoy-table-compact th{background:#0f172a;color:#94a3b8;border-color:#334155}
-body.dark .kh-yoy-table-compact td{border-color:#334155;color:#e2e8f0}
-body.dark .kh-yoy-table-compact tr:hover td{background:#0f172a}
-
 </style>
 </head>
 <body>
@@ -473,7 +465,6 @@ body.dark .kh-yoy-table-compact tr:hover td{background:#0f172a}
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
 const REFRESH_SECONDS    = 1800;
-const GAS_API_URL        = 'https://script.google.com/macros/s/AKfycbzhNTjCursIX83gf1xVgbonvXZV_IBvSlmWmbgyFmJ1IgImr_1tTW1YMx_iDkoShdVt/exec';
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -578,36 +569,17 @@ function buildRows(lines,headerIdx,colMap){
     const bRaw=row[colMap.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
-    
-    // 1. KIRAAN AUTOMATIK: Total RM = SS-A (RM) + SS-D (RM)
-    let ssaRm = n('ssaRm');
-    let ssdRm = n('ssdRm');
-    let totalRm = ssaRm + ssdRm;
-
     rows.push({
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
-      ssaRm:ssaRm, ssdRm:ssdRm, totalRm:totalRm,
+      ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
       penjimatan:n('penjimatan'),
       bilPvSolar:n('bilPvSolar')
     });
   }
-
-  // 2. KIRAAN AUTOMATIK: Penjimatan USM (RM) 
-  // Formula: Total RM tahun sebelum - (SS-A (RM) + SS-D (RM) + Bil PV Hi-Tech Solar (RM))
-  rows.forEach(r => {
-    const prevYear = String(parseInt(r.tahun) - 1);
-    const prevRow = rows.find(x => x.bulan === r.bulan && x.tahun === prevYear);
-    
-    // Hanya kira jika bulan tersebut telah dikemaskini dengan nilai bil yang sah (bukan bulan kosong)
-    if (prevRow && (r.ssaRm > 0 || r.ssdRm > 0 || r.bilPvSolar > 0)) {
-      r.penjimatan = prevRow.totalRm - (r.ssaRm + r.ssdRm + r.bilPvSolar);
-    }
-  });
-
   return rows;
 }
 
@@ -714,10 +686,6 @@ function renderShell(){
     <div class="trend-box">
       <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
-      <div class="legend" id="trend-legend" style="display:none">
-        <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
-        <span><span class="leg-dot" style="background:none;width:18px;height:0;border-top:2.5px dashed #e8a020;border-radius:0"></span>Total RM</span>
-      </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
@@ -865,8 +833,6 @@ function renderCharts(filtered,d){
 
     // ── Trend line — Total kWh & Total RM ──
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
-    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='flex';
-    
     const trendDLshow = !hideDL;
     const dlTrendKwh = trendDLshow ? {
       display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
@@ -890,7 +856,7 @@ function renderCharts(filtered,d){
         layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:false},
+          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
           datalabels:{} // controlled per-dataset
         },
         scales:{
@@ -920,7 +886,6 @@ function renderCharts(filtered,d){
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
 
     document.getElementById('trend-sub').textContent='Pilih lebih dari 1 bulan untuk paparan trend';
-    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='none';
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',
       data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],
         datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},
@@ -965,19 +930,11 @@ function buildYoY(){
   const el=document.getElementById('yoy-section');
   if(!el)return;
   const pillsHTML=BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="mpill-${i}">${b}</span>`).join('');
-  
   el.innerHTML=`
     <div class="yoy-title" style="margin-top:8px"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
     <div class="yoy-top">
       <label>Tahun Semasa:</label><select id="yoy-curr"></select>
       <label style="margin-left:6px">Berbanding:</label><select id="yoy-prev"></select>
-      <div class="filter-divider"></div>
-      <label><i class="ti ti-filter"></i> Saluran:</label>
-      <select id="yoy-filter-source" onchange="renderYoY()">
-        <option value="semua">Semua (SS-A + SS-D)</option>
-        <option value="ssa">SS-A (Kampus)</option>
-        <option value="ssd">SS-D (HPUSM)</option>
-      </select>
     </div>
     <div class="range-box">
       <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan — Klik mula, klik akhir</div>
@@ -1042,41 +999,28 @@ function renderYoY(){
   const prevY=document.getElementById('yoy-prev')?.value;
   const el=document.getElementById('yoy-content');
   if(!el||!currY||!prevY)return;
-  
-  const source=document.getElementById('yoy-filter-source')?.value || 'semua';
   const s=Math.min(rangeStart,rangeEnd),e=Math.max(rangeStart,rangeEnd);
   const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
   const currRows=getRowsInRange(currY),prevRows=getRowsInRange(prevY);
   if(!currRows.length&&!prevRows.length){el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk pilihan ini</div>';return;}
   const c=sumR(currRows),p=sumR(prevRows);
   const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
-  
-  // Calculate selected channel values
-  const cKwh = source === 'ssa' ? c.ssaKwh : (source === 'ssd' ? c.ssdKwh : c.totalKwh);
-  const pKwh = source === 'ssa' ? p.ssaKwh : (source === 'ssd' ? p.ssdKwh : p.totalKwh);
-  const cRm = source === 'ssa' ? c.ssaRm : (source === 'ssd' ? c.ssdRm : c.totalRm);
-  const pRm = source === 'ssa' ? p.ssaRm : (source === 'ssd' ? p.ssdRm : p.totalRm);
-
-  const dK=delta(cKwh,pKwh),dB=delta(cRm,pRm);
+  const dK=delta(c.totalKwh,p.totalKwh),dB=delta(c.totalRm,p.totalRm);
   const dSSAk=delta(c.ssaKwh,p.ssaKwh),dSSDk=delta(c.ssdKwh,p.ssdKwh);
   const dSSAr=delta(c.ssaRm,p.ssaRm),dSSDr=delta(c.ssdRm,p.ssdRm);
   const dSol=delta(c.solarKwh,p.solarKwh),dExp=delta(c.eksportRm,p.eksportRm),dJim=delta(c.penjimatan,p.penjimatan),dPvSolar=delta(c.bilPvSolar,p.bilPvSolar);
 
-  // Adapt names based on selected source
-  const kwhLabel = source === 'ssa' ? 'SS-A kWh (Kampus)' : (source === 'ssd' ? 'SS-D kWh (HPUSM)' : 'Jumlah kWh');
-  const bilLabel = source === 'ssa' ? 'Bil SS-A (Kampus)' : (source === 'ssd' ? 'Bil SS-D (HPUSM)' : 'Jumlah Bil (RM)');
-
   let html=`<div class="yoy-summary">
     <div class="yoy-card kwh-card">
-      <div class="yoy-card-label"><i class="ti ti-plug"></i> ${kwhLabel}</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(cKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(pKwh)}</span></div>
+      <div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dK.cls}">${dK.arrow} ${dK.pct}</div>
     </div>
     <div class="yoy-card bil-card">
-      <div class="yoy-card-label"><i class="ti ti-cash"></i> ${bilLabel}</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(cRm)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(pRm)}</span></div>
+      <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dB.cls}">${dB.arrow} ${dB.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
@@ -1163,32 +1107,27 @@ function renderYoY(){
     </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
-    const crKwh = cr ? (source === 'ssa' ? cr.ssaKwh : (source === 'ssd' ? cr.ssdKwh : cr.totalKwh)) : 0;
-    const prKwh = pr ? (source === 'ssa' ? pr.ssaKwh : (source === 'ssd' ? pr.ssdKwh : pr.totalKwh)) : 0;
-    const crRm = cr ? (source === 'ssa' ? cr.ssaRm : (source === 'ssd' ? cr.ssdRm : cr.totalRm)) : 0;
-    const prRm = pr ? (source === 'ssa' ? pr.ssaRm : (source === 'ssd' ? pr.ssdRm : pr.totalRm)) : 0;
-
-    const dKr=delta(crKwh,prKwh);
-    const dBr=delta(crRm,prRm);
+    const dKr=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
+    const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
     html+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num">${cr?fmtN(crKwh):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtN(prKwh):'—'}</td>
+      <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
       <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
-      <td class="td-num">${cr?fmtRM2(crRm):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtRM2(prRm):'—'}</td>
+      <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
       <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
-  const dKT=delta(cKwh,pKwh),dBT=delta(cRm,pRm);
+  const dKT=delta(c.totalKwh,p.totalKwh),dBT=delta(c.totalRm,p.totalRm);
   html+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
-    <td class="td-num">${fmtN(cKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(pKwh)}</td>
+    <td class="td-num">${fmtN(c.totalKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
-    <td class="td-num">${fmtRM2(cRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(pRm)}</td>
+    <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
     <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
@@ -1216,34 +1155,15 @@ function renderYoY(){
       y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
     }
   });
-  
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:bulanDlm.map(b=>{
-      const r = getCurr(b);
-      if(!r) return 0;
-      return source === 'ssa' ? r.ssaKwh : (source === 'ssd' ? r.ssdKwh : r.totalKwh);
-    }),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:bulanDlm.map(b=>{
-      const r = getPrev(b);
-      if(!r) return 0;
-      return source === 'ssa' ? r.ssaKwh : (source === 'ssd' ? r.ssdKwh : r.totalKwh);
-    }),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
+    {label:currY,data:bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
-  
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'RM '+currY,data:bulanDlm.map(b=>{
-      const r = getCurr(b);
-      if(!r) return 0;
-      return source === 'ssa' ? r.ssaRm : (source === 'ssd' ? r.ssdRm : r.totalRm);
-    }),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'RM '+prevY,data:bulanDlm.map(b=>{
-      const r = getPrev(b);
-      if(!r) return 0;
-      return source === 'ssa' ? r.ssaRm : (source === 'ssd' ? r.ssdRm : r.totalRm);
-    }),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false}
-  ].concat(source === 'semua' ? [{
-    label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false
-  }] : [])},options:yoyBase(true)});
+    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
+    {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
+  ]},options:yoyBase(true)});
 }
 
 // ── INIT ──
@@ -1732,32 +1652,16 @@ if(localStorage.getItem('usm_dark')==='1'){
 // ADMIN UNLOCK
 // ══════════════════════════════════════════════
 let adminUnlocked=false;
-async function unlockAdmin(pw, btnElement){
+function unlockAdmin(pw,gasUrl){
   if(!pw){alert('Sila masukkan password admin.');return;}
-  
-  const origText = btnElement.innerHTML;
-  btnElement.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Mengesahkan...';
-  btnElement.disabled = true;
-
-  try {
-    const data = await gasRequest({ action: 'verify', password: pw });
-    if (data.ok) {
-      adminUnlocked=true;
-      localStorage.setItem('usm_admin_pw',pw);
-      // show edit/delete columns in all tables (termasuk KH)
-      document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
-      document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
-      // rebuild KH table to show edit buttons if on KH tab
-      if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
-    } else {
-      alert('Pengesahan gagal: ' + (data.error || 'Password salah.'));
-    }
-  } catch (e) {
-    alert('Pengesahan gagal. Sila semak sambungan rangkaian atau URL script.');
-  } finally {
-    btnElement.innerHTML = origText;
-    btnElement.disabled = false;
-  }
+  adminUnlocked=true;
+  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
+  localStorage.setItem('usm_admin_pw',pw);
+  // show edit/delete columns in all tables (termasuk KH)
+  document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
+  document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+  // rebuild KH table to show edit buttons if on KH tab
+  if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
 }
 
 // ══════════════════════════════════════════════
@@ -1771,6 +1675,7 @@ const JPPF_EDIT_FIELDS=[
   {key:'ssdRm',    label:'Bil SS-D (RM)'},
   {key:'eksportKwh',label:'Tenaga Eksport kWh'},
   {key:'eksportRm', label:'Amaun Eksport (RM)'},
+  {key:'penjimatan',label:'Penjimatan USM (RM)'},
   {key:'bilPvSolar',label:'Bil PV Hi-Tech Solar (RM)'},
 ];
 const EPC_EDIT_FIELDS=[
@@ -1802,7 +1707,9 @@ function openEditModal(tab,row){
 
 async function gasRequest(payload){
   // Apps Script requires Content-Type text/plain to avoid CORS preflight
-  const res=await fetch(GAS_API_URL,{
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
+  const res=await fetch(url,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload)
@@ -1814,40 +1721,10 @@ async function gasRequest(payload){
 
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
-  
-  // KIRAAN AUTOMATIK SEBELUM HANTAR KE GOOGLE SHEETS
-  const getVal = (key) => {
-    let v = fields[key] !== undefined ? fields[key] : editRow[key];
-    let p = parseFloat(v);
-    return isNaN(p) ? 0 : p;
-  };
-
-  if (editRow.tab === 'jppf') {
-    const ssaRm = getVal('ssaRm');
-    const ssdRm = getVal('ssdRm');
-    const bilPv = getVal('bilPvSolar');
-    
-    // Auto kira Total RM & Total kWh
-    fields.totalRm = ssaRm + ssdRm;
-    fields.totalKwh = getVal('ssaKwh') + getVal('ssdKwh');
-
-    // Auto kira Penjimatan USM berdasarkan Total RM Tahun Lepas
-    const prevYear = String(parseInt(editRow.tahun) - 1);
-    const prevRow = allRows.find(x => x.bulan === editRow.bulan && x.tahun === prevYear);
-    
-    // Hanya kira jika ada input kemas kini nilai bagi bil bulan semasa
-    if (prevRow && (ssaRm > 0 || ssdRm > 0 || bilPv > 0)) {
-      fields.penjimatan = prevRow.totalRm - (ssaRm + ssdRm + bilPv);
-    }
-  } else if (editRow.tab === 'kh') {
-    fields.totalRm = getVal('kampusRm') + getVal('hospitalRm');
-    fields.totalKwh = getVal('kampusKwh') + getVal('hpusmKwh');
-  } else if (editRow.tab === 'epc') {
-    fields.totalKwh = getVal('chillerTrauma') + getVal('chillerGeneral');
-  }
-
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
@@ -1876,6 +1753,8 @@ function openDelModal(tab,bulan,tahun){
 }
 async function submitDelete(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
@@ -1900,8 +1779,10 @@ function buildAdminStrip(){
   return `<div class="admin-strip">
     <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
     <label>Password:</label>
-    <input type="password" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}" style="flex:1;max-width:250px" onkeydown="if(event.key==='Enter') unlockAdmin(this.value, this.nextElementSibling)">
-    <button onclick="unlockAdmin(this.previousElementSibling.value, this)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
+    <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
+    <label>Apps Script URL:</label>
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
+    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
     <span class="lock-status locked">🔒 Terkunci</span>
   </div>`;
 }
@@ -2186,16 +2067,10 @@ function parseKH(csv){
     const bRaw=row[m.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
-    
-    // KIRAAN AUTOMATIK (Tab KH): Total RM
-    let kRm = n('kampusRm');
-    let hRm = n('hospitalRm');
-    let tRm = kRm + hRm;
-
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
       kampusKwh:n('kampusKwh'),hpusmKwh:n('hpusmKwh'),totalKwh:n('totalKwh'),
-      kampusRm:kRm,hospitalRm:hRm,totalRm:tRm
+      kampusRm:n('kampusRm'),hospitalRm:n('hospitalRm'),totalRm:n('totalRm')
     });
   }
   return rows;
@@ -2500,61 +2375,23 @@ function khRenderYoY(){
   if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
   if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
   if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
-  if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+  if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
 
-  // Jadual - Grouped columns & compact table to fit display properly
+  // Jadual
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
-  <table class="kh-yoy-table-compact">
-    <thead>
-      <tr>
-        <th rowspan="2" style="vertical-align:middle; text-align:center; background:#f1f5f9;">Bulan</th>
-        <th colspan="3" style="text-align:center; background:#e0f2fe; color:#0369a1;">Kampus (kWh)</th>
-        <th colspan="3" style="text-align:center; background:#dcfce7; color:#15803d;">HPUSM (kWh)</th>
-        <th colspan="3" style="text-align:center; background:#f0f9ff; color:#0369a1;">Kampus (RM)</th>
-        <th colspan="3" style="text-align:center; background:#f0fdf4; color:#15803d;">Hospital (RM)</th>
-      </tr>
-      <tr>
-        <!-- Kampus kWh -->
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">${currY}</th>
-        <th class="td-num" style="background:#f8fafc; color:#94a3b8;">${prevY}</th>
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">Δ</th>
-        <!-- HPUSM kWh -->
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">${currY}</th>
-        <th class="td-num" style="background:#f8fafc; color:#94a3b8;">${prevY}</th>
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">Δ</th>
-        <!-- Kampus RM -->
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">${currY}</th>
-        <th class="td-num" style="background:#f8fafc; color:#94a3b8;">${prevY}</th>
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">Δ</th>
-        <!-- Hospital RM -->
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">${currY}</th>
-        <th class="td-num" style="background:#f8fafc; color:#94a3b8;">${prevY}</th>
-        <th class="td-num" style="background:#f8fafc; font-weight:700;">Δ</th>
-      </tr>
-    </thead>
-    <tbody>`;
-  
-  let totCK=0,totPK=0,totCH=0,totPH=0,totCR=0,totPR=0,totCHR=0,totPHR=0;
+  <table class="yoy-table"><thead><tr>
+    <th>Bulan</th>
+    <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Kampus RM ${currY}</th><th class="td-num">Kampus RM ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Hospital RM ${currY}</th><th class="td-num">Hospital RM ${prevY}</th><th class="td-num">Δ</th>
+  </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
     const dkk=khDlt(cr?cr.kampusKwh:0,pr?pr.kampusKwh:0);
     const dhk=khDlt(cr?cr.hpusmKwh:0,pr?pr.hpusmKwh:0);
     const dkr=khDlt(cr?cr.kampusRm:0,pr?pr.kampusRm:0);
     const dhr=khDlt(cr?cr.hospitalRm:0,pr?pr.hospitalRm:0);
-    
-    if(cr){
-      totCK+=cr.kampusKwh;
-      totCH+=cr.hpusmKwh;
-      totCR+=cr.kampusRm;
-      totCHR+=cr.hospitalRm;
-    }
-    if(pr){
-      totPK+=pr.kampusKwh;
-      totPH+=pr.hpusmKwh;
-      totPR+=pr.kampusRm;
-      totPHR+=pr.hospitalRm;
-    }
-
     th+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
       <td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td><td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>
@@ -2563,30 +2400,6 @@ function khRenderYoY(){
       <td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td><td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>
     </tr>`;
   });
-
-  const dTotKK = khDlt(totCK, totPK);
-  const dTotHK = khDlt(totCH, totPH);
-  const dTotKR = khDlt(totCR, totPR);
-  const dTotHR = khDlt(totCHR, totPHR);
-
-  th+=`<tr class="td-total" style="background:#f1f5f9; font-weight:700;">
-    <td><strong>JUMLAH</strong></td>
-    <td class="td-num" style="color:#1a5fa8">${fmtN(totCK)}</td>
-    <td class="td-num" style="color:#aaa">${fmtN(totPK)}</td>
-    <td class="td-num td-${dTotKK.cls}">${dTotKK.pct}</td>
-    
-    <td class="td-num" style="color:#1e7e34">${fmtN(totCH)}</td>
-    <td class="td-num" style="color:#aaa">${fmtN(totPH)}</td>
-    <td class="td-num td-${dTotHK.cls}">${dTotHK.pct}</td>
-    
-    <td class="td-num" style="color:#1a5fa8">${fmtRM2(totCR)}</td>
-    <td class="td-num" style="color:#aaa">${fmtRM2(totPR)}</td>
-    <td class="td-num td-${dTotKR.cls}">${dTotKR.pct}</td>
-    
-    <td class="td-num" style="color:#1e7e34">${fmtRM2(totCHR)}</td>
-    <td class="td-num" style="color:#aaa">${fmtRM2(totPHR)}</td>
-    <td class="td-num td-${dTotHR.cls}">${dTotHR.pct}</td>
-  </tr>`;
   th+=`</tbody></table>`;
   const tblEl=document.getElementById('kh-yoy-tbl');if(tblEl)tblEl.innerHTML=th;
 }
@@ -2639,6 +2452,7 @@ const KH_EDIT_FIELDS=[
   {key:'totalKwh',  label:'Total kWh'},
   {key:'kampusRm',  label:'Kampus RM'},
   {key:'hospitalRm',label:'Hospital RM'},
+  {key:'totalRm',   label:'Total RM'},
 ];
 
 loadData();
