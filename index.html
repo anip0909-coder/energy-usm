@@ -157,6 +157,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
 .yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
+/* Jadual YoY Kampus+HPUSM — paparan penuh tanpa scroll mendatar */
+.kh-yoy-table-box{overflow-x:visible!important;padding:14px 10px}
+.kh-yoy-table{table-layout:fixed;width:100%}
+.kh-yoy-table th,.kh-yoy-table td{white-space:normal!important;word-break:break-word;font-size:9.5px;padding:6px 3px;text-align:center;line-height:1.3}
+.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left;width:42px}
+body.dark .kh-yoy-table th{background:#0f172a}
 .yoy-table{width:100%;border-collapse:collapse;font-size:12px}
 .yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
 .yoy-table td{padding:8px 10px;border-bottom:1px solid #f4f6f9;color:#333;white-space:nowrap}
@@ -935,6 +941,11 @@ function buildYoY(){
     <div class="yoy-top">
       <label>Tahun Semasa:</label><select id="yoy-curr"></select>
       <label style="margin-left:6px">Berbanding:</label><select id="yoy-prev"></select>
+      <label style="margin-left:10px">Paparan kWh:</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active ssa" id="yoy-tog-ssa" onclick="yoyToggleSS('ssa')">SS-A</button>
+        <button class="toggle-btn active ssd" id="yoy-tog-ssd" onclick="yoyToggleSS('ssd')">SS-D</button>
+      </div>
     </div>
     <div class="range-box">
       <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan — Klik mula, klik akhir</div>
@@ -993,6 +1004,41 @@ function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:
 function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
+
+// ── Filter SS-A/SS-D khas untuk bahagian Analisis Perbandingan Tahun (YoY) ──
+// Default: kedua-dua aktif = kekalkan paparan Total kWh asal (tiada perubahan fungsi sedia ada)
+let yoyShowSSA=true, yoyShowSSD=true;
+function yoyToggleSS(which){
+  if(which==='ssa'){
+    yoyShowSSA=!yoyShowSSA;
+    const b=document.getElementById('yoy-tog-ssa');
+    b.classList.toggle('active',yoyShowSSA);
+  }else{
+    yoyShowSSD=!yoyShowSSD;
+    const b=document.getElementById('yoy-tog-ssd');
+    b.classList.toggle('active',yoyShowSSD);
+  }
+  if(!yoyShowSSA&&!yoyShowSSD){
+    yoyShowSSA=true;
+    const b=document.getElementById('yoy-tog-ssa');
+    if(b) b.classList.add('active');
+  }
+  renderYoY();
+}
+// helper: nilai kWh mengikut filter — kedua-dua aktif = Total kWh (asal)
+function yoyKwhVal(row){
+  if(!row) return 0;
+  if(yoyShowSSA&&yoyShowSSD) return row.totalKwh;
+  if(yoyShowSSA) return row.ssaKwh;
+  if(yoyShowSSD) return row.ssdKwh;
+  return row.totalKwh;
+}
+function yoyKwhLabel(){
+  if(yoyShowSSA&&yoyShowSSD) return 'kWh';
+  if(yoyShowSSA) return 'SS-A kWh';
+  if(yoyShowSSD) return 'SS-D kWh';
+  return 'kWh';
+}
 
 function renderYoY(){
   const currY=document.getElementById('yoy-curr')?.value;
@@ -1076,7 +1122,7 @@ function renderYoY(){
   const getPrev=b=>prevRows.find(r=>r.bulan===b);
   html+=`<div class="yoy-charts">
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">${yoyKwhLabel()} — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
@@ -1101,18 +1147,18 @@ function renderYoY(){
     <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
     <table class="yoy-table"><thead><tr>
       <th>Bulan</th>
-      <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
+      <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
       <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
       <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
-    const dKr=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
+    const dKr=delta(cr?yoyKwhVal(cr):0,pr?yoyKwhVal(pr):0);
     const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
     html+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
+      <td class="td-num">${cr?fmtN(yoyKwhVal(cr)):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(yoyKwhVal(pr)):'—'}</td>
       <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
       <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
       <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
@@ -1122,10 +1168,12 @@ function renderYoY(){
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
-  const dKT=delta(c.totalKwh,p.totalKwh),dBT=delta(c.totalRm,p.totalRm);
+  const jKC=yoyShowSSA&&yoyShowSSD?c.totalKwh:(yoyShowSSA?c.ssaKwh:c.ssdKwh);
+  const jKP=yoyShowSSA&&yoyShowSSD?p.totalKwh:(yoyShowSSA?p.ssaKwh:p.ssdKwh);
+  const dKT=delta(jKC,jKP),dBT=delta(c.totalRm,p.totalRm);
   html+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
-    <td class="td-num">${fmtN(c.totalKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
+    <td class="td-num">${fmtN(jKC)}</td><td class="td-num" style="color:#aaa">${fmtN(jKP)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
     <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
@@ -1156,8 +1204,8 @@ function renderYoY(){
     }
   });
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
+    {label:currY,data:bulanDlm.map(b=>yoyKwhVal(getCurr(b))),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:bulanDlm.map(b=>yoyKwhVal(getPrev(b))),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
     {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
@@ -2209,7 +2257,7 @@ function buildKHPage(){
     </div>
 
     <!-- Jadual YoY -->
-    <div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
+    <div class="yoy-table-box kh-yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
   </div>
 
   <!-- ══ PENGURUSAN DATA ══ -->
@@ -2379,7 +2427,7 @@ function khRenderYoY(){
 
   // Jadual
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
-  <table class="yoy-table"><thead><tr>
+  <table class="yoy-table kh-yoy-table"><thead><tr>
     <th>Bulan</th>
     <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
     <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
