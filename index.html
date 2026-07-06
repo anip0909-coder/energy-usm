@@ -157,12 +157,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
 .yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
-/* Jadual YoY Kampus+HPUSM — paparan penuh tanpa scroll mendatar */
-.kh-yoy-table-box{overflow-x:visible!important;padding:14px 10px}
-.kh-yoy-table{table-layout:fixed;width:100%}
-.kh-yoy-table th,.kh-yoy-table td{white-space:normal!important;word-break:break-word;font-size:9.5px;padding:6px 3px;text-align:center;line-height:1.3}
-.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left;width:42px}
-body.dark .kh-yoy-table th{background:#0f172a}
 .yoy-table{width:100%;border-collapse:collapse;font-size:12px}
 .yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
 .yoy-table td{padding:8px 10px;border-bottom:1px solid #f4f6f9;color:#333;white-space:nowrap}
@@ -337,6 +331,14 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 .lock-status.locked{color:#c0392b}
 .lock-status.unlocked{color:#1e7e34}
 
+.kh-yoy-table-compact {width:100%;border-collapse:collapse;font-size:11px}
+.kh-yoy-table-compact th{background:#f1f5f9;padding:6px 4px!important;text-align:center;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.2px;border:1px solid #e2e8f0;white-space:nowrap}
+.kh-yoy-table-compact td{padding:5px 6px!important;border-bottom:1px solid #e2e8f0;color:#333;white-space:nowrap}
+.kh-yoy-table-compact tr:hover td{background:#f8fafc}
+body.dark .kh-yoy-table-compact th{background:#0f172a;color:#94a3b8;border-color:#334155}
+body.dark .kh-yoy-table-compact td{border-color:#334155;color:#e2e8f0}
+body.dark .kh-yoy-table-compact tr:hover td{background:#0f172a}
+
 </style>
 </head>
 <body>
@@ -348,7 +350,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <h2><i class="ti ti-shield-lock" style="color:#1a3a5c"></i> Tetapan Admin</h2>
     <p>Hanya admin yang perlu mengubah tetapan ini.</p>
     <label>Google Sheets ID:</label>
-    <input type="text" id="input-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    <input type="text" id="input-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUptlbs74OgVE2upms">
     <label>Nama Tab Sheet:</label>
     <input type="text" id="input-sheet-name" placeholder="JPPF">
     <div class="modal-err" id="modal-err">⚠ Sila isi kedua-dua ruangan</div>
@@ -389,6 +391,16 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <p id="print-scope" style="font-size:13px;color:#1a3a5c;font-weight:600;margin-top:4px"></p>
   </div>
 
+  <!-- PREVIEW ALERT BANNER -->
+  <div id="preview-alert-banner" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; padding:14px 20px; border-radius:12px; margin-bottom:16px; justify-content:space-between; align-items:center; font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.05); gap:12px; flex-wrap:wrap;">
+    <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-alert-triangle" style="font-size:18px; color:#e8a020;"></i> Mod Pratinjau (Preview) Aktif: Memaparkan hasil perubahan sementara secara lokal. Data belum disimpan ke Google Sheets.</span>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button onclick="resumeEdit()" style="padding:6px 12px; background:#1a3a5c; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:4px;"><i class="ti ti-edit"></i> Edit Semula</button>
+      <button onclick="saveFromPreview()" style="padding:6px 12px; background:#1e7e34; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:4px;"><i class="ti ti-device-floppy"></i> Simpan Kekal</button>
+      <button onclick="cancelPreview()" style="padding:6px 12px; background:white; border:1px solid #c0cdd8; color:#333; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:4px;"><i class="ti ti-x"></i> Batal</button>
+    </div>
+  </div>
+
   <div class="status-bar">
     <div class="status-left"><i class="ti ti-database"></i><span id="status-label">Memuat data...</span></div>
     <div class="btn-group">
@@ -413,12 +425,10 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
   <!-- JPPF TAB PANEL -->
   <div id="panel-jppf">
-
-  <div id="main-content">
-    <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
+    <div id="main-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
+    </div>
   </div>
-
-  </div><!-- end panel-jppf -->
 
   <!-- EPC TAB PANEL -->
   <div id="panel-epc" style="display:none">
@@ -444,6 +454,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="edit-grid" id="edit-fields"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditModal()">Batal</button>
+      <button class="btn-cancel" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;" onclick="triggerPreview()"><i class="ti ti-eye"></i> Pratinjau</button>
       <button class="btn-save" onclick="submitEdit()"><i class="ti ti-device-floppy"></i> Simpan ke Google Sheets</button>
     </div>
   </div>
@@ -466,31 +477,61 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
 <script>
 // ══════════════════════════════════════════════
-// KONFIGURASI — ADMIN SAHAJA
+// PENGISYTIHARAN PEMBOLEH UBAH GLOBAL
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
 const REFRESH_SECONDS    = 1800;
-// ══════════════════════════════════════════════
-
-document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
-document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
+const GAS_API_URL        = 'https://script.google.com/macros/s/AKfycbzhNTjCursIX83gf1xVgbonvXZV_IBvSlmWmbgyFmJ1IgImr_1tTW1YMx_iDkoShdVt/exec';
+const EPC_SHEET_GID      = '2029914262';
+const KH_SHEET_GID       = '1853842562';
 
 function getConfig(){
   try{ const s=localStorage.getItem('usm_admin_config'); if(s)return JSON.parse(s); }catch(e){}
   return {sheetId:DEFAULT_SHEET_ID,sheetName:DEFAULT_SHEET_NAME};
 }
+
 let CONFIG=getConfig();
 let allRows=[],chartKwh,chartBil,chartTrend,countdownTimer,secondsLeft=REFRESH_SECONDS;
+let originalRowBackup=null;
+
+let epcRows = [], epcChartTrauma=null, epcChartGeneral=null, epcChartYoyTrauma=null, epcChartYoyGeneral=null;
+let epcRangeStart=0, epcRangeEnd=11, epcYoySelecting=false;
+
+let khRows=[];
+let khChart1=null,khChart2=null,khChart3=null,khChart4=null;
+let khYoy1=null,khYoy2=null,khYoy3=null,khYoy4=null;
+let khRangeStart=0,khRangeEnd=11,khYoySelecting=false;
+
+let activeTab = 'jppf';
+let adminUnlocked=false;
 
 const BULAN_ORDER=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
 const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
 
+document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
+document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
+
+// ── UTILITIES ──
 function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);const m={jan:'Januari',feb:'Februari',mar:'Mac',mac:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};return m[s]||String(v).trim()}
 function fmt(n){return(!n||isNaN(n))?'—':Math.round(n).toLocaleString('ms-MY')}
 function fmt2d(n){return(!n||isNaN(n))?'—':Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2d(n){return(!n||isNaN(n))?'—':'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+Chart.register(ChartDataLabels);
+function fmtLbl(v, isRM=false){
+  if(!v||v===0) return '';
+  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString('ms-MY');
+}
+function fmtDL(v,isRM){
+  if(!v||v===0) return '';
+  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString();
+}
 
 // ── PRINT PDF ──
 function printPDF(){
@@ -520,7 +561,7 @@ function saveAdmin(){
   closeAdmin();allRows=[];loadData();
 }
 
-// ── FETCH ──
+// ── FETCH JPPF ──
 async function fetchData(){
   const url=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.sheetName)}&t=${Date.now()}`;
   const res=await fetch(url,{cache:'no-store'});
@@ -551,13 +592,10 @@ function detectColumns(lines){
       else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('rm'))m.ssdRm=idx;
       else if(h.includes('total')&&h.includes('rm'))m.totalRm=idx;
       else if(h.includes('solar')&&h.includes('kwh'))m.solarKwh=idx;
-      // NEW: Amaun Eksport (RM) — checked before eksport kwh
       else if((h.includes('eksport')||h.includes('export'))&&h.includes('rm'))m.eksportRm=idx;
       else if((h.includes('amaun'))&&(h.includes('eksport')||h.includes('export')))m.eksportRm=idx;
-      // Penjimatan Sebenar USM
       else if(h.includes('penjimatan'))m.penjimatan=idx;
       else if(h.includes('saving')&&h.includes('usm'))m.penjimatan=idx;
-      // eksport kWh (must come after eksport RM check)
       else if((h.includes('eksport')||h.includes('export'))&&!h.includes('rm'))m.eksportKwh=idx;
       else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
       else if(h.includes('pv')&&h.includes('solar')&&h.includes('rm'))m.bilPvSolar=idx;
@@ -575,17 +613,31 @@ function buildRows(lines,headerIdx,colMap){
     const bRaw=row[colMap.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    
+    let ssaRm = n('ssaRm');
+    let ssdRm = n('ssdRm');
+    let totalRm = ssaRm + ssdRm;
+
     rows.push({
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
-      ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
+      ssaRm:ssaRm, ssdRm:ssdRm, totalRm:totalRm,
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
       penjimatan:n('penjimatan'),
       bilPvSolar:n('bilPvSolar')
     });
   }
+
+  rows.forEach(r => {
+    const prevYear = String(parseInt(r.tahun) - 1);
+    const prevRow = rows.find(x => x.bulan === r.bulan && x.tahun === prevYear);
+    if (prevRow && (r.ssaRm > 0 || r.ssdRm > 0 || r.bilPvSolar > 0)) {
+      r.penjimatan = prevRow.totalRm - (r.ssaRm + r.ssdRm + r.bilPvSolar);
+    }
+  });
+
   return rows;
 }
 
@@ -593,7 +645,13 @@ async function loadData(isManual=false){
   const btn=document.getElementById('refresh-btn');
   if(isManual)btn.classList.add('spinning');
   document.getElementById('status-label').textContent='Memuat data...';
-  try{
+  
+  if (document.getElementById('preview-alert-banner')) {
+    document.getElementById('preview-alert-banner').style.display = 'none';
+  }
+  originalRowBackup = null;
+
+  try {
     const csv=await fetchData();
     const lines=parseCSV(csv);
     const detected=detectColumns(lines);
@@ -630,7 +688,7 @@ function resetCountdown(){
     document.getElementById('countdown-label').textContent=m>0?`${m}m ${s}s`:`${s}s`;
     if(secondsLeft<=0){
         clearInterval(countdownTimer);
-        manualRefresh(); // automatically refreshes the active tab
+        manualRefresh();
     }
   },1000);
 }
@@ -643,6 +701,154 @@ function buildDropdowns(){
   const selB=document.getElementById('sel-bulan');const pB=selB.value;
   selB.innerHTML='<option>-- Semua Bulan --</option>';
   BULAN_ORDER.forEach(b=>{const o=document.createElement('option');o.textContent=b;if(b===pB)o.selected=true;selB.appendChild(o);});
+}
+
+// ── PRATINJAU (PREVIEW) LOGIK TEMPATAN ──
+function triggerPreview() {
+  if(!editRow) return;
+  
+  const getVal = (key) => {
+    const el = document.getElementById('ef-' + key);
+    if (!el) return editRow[key] !== undefined ? editRow[key] : 0;
+    const p = parseFloat(el.value);
+    return isNaN(p) ? 0 : p;
+  };
+
+  if (!originalRowBackup) {
+    let originalRow = null;
+    let index = -1;
+    if (editRow.tab === 'jppf') {
+      index = allRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+      if (index !== -1) originalRow = allRows[index];
+    } else if (editRow.tab === 'kh') {
+      index = khRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+      if (index !== -1) originalRow = khRows[index];
+    } else if (editRow.tab === 'epc') {
+      index = epcRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+      if (index !== -1) originalRow = epcRows[index];
+    }
+    if (originalRow) {
+      originalRowBackup = {
+        tab: editRow.tab,
+        index: index,
+        data: JSON.parse(JSON.stringify(originalRow))
+      };
+    }
+  }
+
+  if (editRow.tab === 'jppf') {
+    const idx = allRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+    if (idx !== -1) {
+      const ssaRm = getVal('ssaRm');
+      const ssdRm = getVal('ssdRm');
+      const bilPv = getVal('bilPvSolar');
+      
+      allRows[idx].ssaKwh = getVal('ssaKwh');
+      allRows[idx].ssdKwh = getVal('ssdKwh');
+      allRows[idx].solarKwh = getVal('solarKwh');
+      allRows[idx].ssaRm = ssaRm;
+      allRows[idx].ssdRm = ssdRm;
+      allRows[idx].totalRm = ssaRm + ssdRm;
+      allRows[idx].totalKwh = getVal('ssaKwh') + getVal('ssdKwh');
+      allRows[idx].eksportKwh = getVal('eksportKwh');
+      allRows[idx].eksportRm = getVal('eksportRm');
+      allRows[idx].bilPvSolar = bilPv;
+
+      const prevYear = String(parseInt(editRow.tahun) - 1);
+      const prevRow = allRows.find(x => x.bulan === editRow.bulan && x.tahun === prevYear);
+      if (prevRow && (ssaRm > 0 || ssdRm > 0 || bilPv > 0)) {
+        allRows[idx].penjimatan = prevRow.totalRm - (ssaRm + ssdRm + bilPv);
+      } else {
+        allRows[idx].penjimatan = 0;
+      }
+    }
+    updateDisplay();
+    const jppfTableWrap = document.getElementById('jppf-data-table');
+    if (jppfTableWrap) {
+      jppfTableWrap.innerHTML = buildJppfTable(allRows);
+      if (adminUnlocked) jppfTableWrap.querySelectorAll('.edit-action-col').forEach(el => el.style.display = '');
+    }
+  } else if (editRow.tab === 'kh') {
+    const idx = khRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+    if (idx !== -1) {
+      const kampusRm = getVal('kampusRm');
+      const hospitalRm = getVal('hospitalRm');
+      khRows[idx].kampusKwh = getVal('kampusKwh');
+      khRows[idx].hpusmKwh = getVal('hpusmKwh');
+      khRows[idx].totalKwh = getVal('kampusKwh') + getVal('hpusmKwh');
+      khRows[idx].kampusRm = kampusRm;
+      khRows[idx].hospitalRm = hospitalRm;
+      khRows[idx].totalRm = kampusRm + hospitalRm;
+    }
+    khUpdateMain();
+    khBuildTableRows();
+  } else if (editRow.tab === 'epc') {
+    const idx = epcRows.findIndex(x => x.bulan === editRow.bulan && x.tahun === editRow.tahun);
+    if (idx !== -1) {
+      epcRows[idx].chillerTrauma = getVal('chillerTrauma');
+      epcRows[idx].chillerGeneral = getVal('chillerGeneral');
+      epcRows[idx].totalKwh = getVal('chillerTrauma') + getVal('chillerGeneral');
+      epcRows[idx].tahunBaseline = getVal('tahunBaseline');
+      epcRows[idx].baselineTrauma = getVal('baselineTrauma');
+      epcRows[idx].baselineGeneral = getVal('baselineGeneral');
+    }
+    updateEPC();
+    const epcTableWrap = document.getElementById('epc-data-table');
+    if (epcTableWrap) {
+      epcTableWrap.innerHTML = buildEpcTable(epcRows);
+      if (adminUnlocked) epcTableWrap.querySelectorAll('.edit-action-col').forEach(el => el.style.display = '');
+    }
+  }
+
+  document.getElementById('edit-modal').classList.remove('show');
+  const banner = document.getElementById('preview-alert-banner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function resumeEdit() {
+  document.getElementById('edit-modal').classList.add('show');
+  const banner = document.getElementById('preview-alert-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+function saveFromPreview() {
+  submitEdit();
+  const banner = document.getElementById('preview-alert-banner');
+  if (banner) banner.style.display = 'none';
+  originalRowBackup = null;
+}
+
+function cancelPreview() {
+  if (originalRowBackup) {
+    const tab = originalRowBackup.tab;
+    const index = originalRowBackup.index;
+    const data = originalRowBackup.data;
+
+    if (tab === 'jppf' && index !== -1) {
+      allRows[index] = data;
+      updateDisplay();
+      const jppfTableWrap = document.getElementById('jppf-data-table');
+      if (jppfTableWrap) {
+        jppfTableWrap.innerHTML = buildJppfTable(allRows);
+        if (adminUnlocked) jppfTableWrap.querySelectorAll('.edit-action-col').forEach(el => el.style.display = '');
+      }
+    } else if (tab === 'kh' && index !== -1) {
+      khRows[index] = data;
+      khUpdateMain();
+      khBuildTableRows();
+    } else if (tab === 'epc' && index !== -1) {
+      epcRows[index] = data;
+      updateEPC();
+      const epcTableWrap = document.getElementById('epc-data-table');
+      if (epcTableWrap) {
+        epcTableWrap.innerHTML = buildEpcTable(epcRows);
+        if (adminUnlocked) epcTableWrap.querySelectorAll('.edit-action-col').forEach(el => el.style.display = '');
+      }
+    }
+  }
+  const banner = document.getElementById('preview-alert-banner');
+  if (banner) banner.style.display = 'none';
+  originalRowBackup = null;
 }
 
 function getFiltered(){
@@ -692,6 +898,10 @@ function renderShell(){
     <div class="trend-box">
       <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
+      <div class="legend" id="trend-legend" style="display:none">
+        <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
+        <span><span class="leg-dot" style="background:none;width:18px;height:0;border-top:2.5px dashed #e8a020;border-radius:0"></span>Total RM</span>
+      </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
@@ -712,7 +922,6 @@ function updateDisplay(){
   const solarPct=d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
   const label=filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
 
-  // ── 10 METRIC CARDS ──
   document.getElementById('metrics-grid').innerHTML=`
     <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
@@ -731,7 +940,6 @@ function updateDisplay(){
   if(window._refreshYoYDropdowns) window._refreshYoYDropdowns();
 }
 
-// ── SS FILTER STATE ──
 let showSSA=true, showSSD=true, showSolar=true;
 function toggleSS(which){
   if(which==='ssa'){
@@ -750,7 +958,6 @@ function toggleSS(which){
     b.classList.toggle('active',showSolar);
     b.classList.toggle('solar',showSolar);
   }
-  // must keep at least one
   if(!showSSA && !showSSD && !showSolar){
     showSSA=true;
     const b=document.getElementById('tog-ssa');
@@ -758,37 +965,12 @@ function toggleSS(which){
   }
   updateDisplay();
 }
-// init toggle colours on load
-document.getElementById('tog-ssa').classList.add('ssa');
-document.getElementById('tog-ssd').classList.add('ssd');
-if(document.getElementById('tog-solar')) document.getElementById('tog-solar').classList.add('solar');
 
-// ── DATALABEL HELPERS ──
-Chart.register(ChartDataLabels);
-function fmtDL(v,isRM){
-  if(!v||v===0) return '';
-  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
-  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
-  return (isRM?'RM ':'')+Math.round(v).toLocaleString();
-}
-// bar chart data labels — vertical, outside end of bar
 function dlBar(isRM){
   return {
     display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
     formatter: (v) => fmtDL(v, isRM),
     color:'#333', font:{size:9,weight:'700'},
-    anchor:'end', align:'end', offset:4,
-    rotation:-90,
-    clip:false
-  };
-}
-// line chart data labels — vertical outside point
-function dlLine(isRM){
-  return {
-    display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-    formatter: (v) => fmtDL(v, isRM),
-    color: ctx => ctx.dataset.borderColor,
-    font:{size:9,weight:'700'},
     anchor:'end', align:'end', offset:4,
     rotation:-90,
     clip:false
@@ -802,7 +984,6 @@ function renderCharts(filtered,d){
   if(chartKwh)chartKwh.destroy();if(chartBil)chartBil.destroy();if(chartTrend)chartTrend.destroy();
 
   const tck={color:'#999',font:{size:10}};
-  // hide datalabels when many bars (>12) to avoid clutter
   const hideDL = multi && sorted.length > 12;
 
   const baseOpts=(isRM)=>({
@@ -814,19 +995,17 @@ function renderCharts(filtered,d){
     },
     scales:{
       x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},
-      y:{ticks:{...tck,callback:v=>isRM?('RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
+      y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
     }
   });
 
   if(multi){
-    // ── kWh chart — respect SS filter ──
     const kwhDatasets=[];
     if(showSSA) kwhDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) kwhDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
     if(showSolar) kwhDatasets.push({label:'Solar',data:sorted.map(r=>r.solarKwh),backgroundColor:'rgba(232,160,32,.85)',borderRadius:3,borderSkipped:false});
     chartKwh=new Chart(document.getElementById('chartKwh'),{type:'bar',data:{labels:lbl,datasets:kwhDatasets},options:baseOpts(false)});
 
-    // ── Bil chart — respect SS filter ──
     const bilDatasets=[];
     if(showSSA) bilDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
@@ -837,8 +1016,9 @@ function renderCharts(filtered,d){
     }
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
 
-    // ── Trend line — Total kWh & Total RM ──
     document.getElementById('trend-sub').textContent=sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun;
+    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='flex';
+    
     const trendDLshow = !hideDL;
     const dlTrendKwh = trendDLshow ? {
       display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
@@ -862,8 +1042,8 @@ function renderCharts(filtered,d){
         layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
-          datalabels:{} // controlled per-dataset
+          legend:{display:false},
+          datalabels:{}
         },
         scales:{
           x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},
@@ -873,7 +1053,6 @@ function renderCharts(filtered,d){
       }
     });
   } else {
-    // ── Single month / single bar ──
     const kwhLbls=[],kwhVals=[],kwhClr=[];
     if(showSSA){kwhLbls.push('SS-A (Kampus)');kwhVals.push(d.ssaKwh);kwhClr.push('#1a5fa8');}
     if(showSSD){kwhLbls.push('SS-D (HPUSM)');kwhVals.push(d.ssdKwh);kwhClr.push('#1e7e34');}
@@ -892,6 +1071,7 @@ function renderCharts(filtered,d){
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:bilLbls,datasets:[{data:bilVals,backgroundColor:bilClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(true)});
 
     document.getElementById('trend-sub').textContent='Pilih lebih dari 1 bulan untuk paparan trend';
+    if(document.getElementById('trend-legend')) document.getElementById('trend-legend').style.display='none';
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'bar',
       data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],
         datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},
@@ -927,25 +1107,24 @@ function renderHealth(d){
     </div>`;
 }
 
-// ══════════════════════════════════════════════
-// YoY SECTION
-// ══════════════════════════════════════════════
-let rangeStart=0,rangeEnd=11,yoySelecting=false,yoyKwhChart,yoyBilChart;
-
+// ── YoY SECTION ──
 function buildYoY(){
   const el=document.getElementById('yoy-section');
   if(!el)return;
   const pillsHTML=BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="mpill-${i}">${b}</span>`).join('');
+  
   el.innerHTML=`
     <div class="yoy-title" style="margin-top:8px"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
     <div class="yoy-top">
       <label>Tahun Semasa:</label><select id="yoy-curr"></select>
       <label style="margin-left:6px">Berbanding:</label><select id="yoy-prev"></select>
-      <label style="margin-left:10px">Paparan kWh:</label>
-      <div class="toggle-group">
-        <button class="toggle-btn active ssa" id="yoy-tog-ssa" onclick="yoyToggleSS('ssa')">SS-A</button>
-        <button class="toggle-btn active ssd" id="yoy-tog-ssd" onclick="yoyToggleSS('ssd')">SS-D</button>
-      </div>
+      <div class="filter-divider"></div>
+      <label><i class="ti ti-filter"></i> Saluran:</label>
+      <select id="yoy-filter-source" onchange="renderYoY()">
+        <option value="semua">Semua (SS-A + SS-D)</option>
+        <option value="ssa">SS-A (Kampus)</option>
+        <option value="ssd">SS-D (HPUSM)</option>
+      </select>
     </div>
     <div class="range-box">
       <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan — Klik mula, klik akhir</div>
@@ -1001,72 +1180,46 @@ function getRowsInRange(year){
 }
 
 function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
-function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
-function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
-
-// ── Filter SS-A/SS-D khas untuk bahagian Analisis Perbandingan Tahun (YoY) ──
-// Default: kedua-dua aktif = kekalkan paparan Total kWh asal (tiada perubahan fungsi sedia ada)
-let yoyShowSSA=true, yoyShowSSD=true;
-function yoyToggleSS(which){
-  if(which==='ssa'){
-    yoyShowSSA=!yoyShowSSA;
-    const b=document.getElementById('yoy-tog-ssa');
-    b.classList.toggle('active',yoyShowSSA);
-  }else{
-    yoyShowSSD=!yoyShowSSD;
-    const b=document.getElementById('yoy-tog-ssd');
-    b.classList.toggle('active',yoyShowSSD);
-  }
-  if(!yoyShowSSA&&!yoyShowSSD){
-    yoyShowSSA=true;
-    const b=document.getElementById('yoy-tog-ssa');
-    if(b) b.classList.add('active');
-  }
-  renderYoY();
-}
-// helper: nilai kWh mengikut filter — kedua-dua aktif = Total kWh (asal)
-function yoyKwhVal(row){
-  if(!row) return 0;
-  if(yoyShowSSA&&yoyShowSSD) return row.totalKwh;
-  if(yoyShowSSA) return row.ssaKwh;
-  if(yoyShowSSD) return row.ssdKwh;
-  return row.totalKwh;
-}
-function yoyKwhLabel(){
-  if(yoyShowSSA&&yoyShowSSD) return 'kWh';
-  if(yoyShowSSA) return 'SS-A kWh';
-  if(yoyShowSSD) return 'SS-D kWh';
-  return 'kWh';
-}
 
 function renderYoY(){
   const currY=document.getElementById('yoy-curr')?.value;
   const prevY=document.getElementById('yoy-prev')?.value;
   const el=document.getElementById('yoy-content');
   if(!el||!currY||!prevY)return;
+  
+  const source=document.getElementById('yoy-filter-source')?.value || 'semua';
   const s=Math.min(rangeStart,rangeEnd),e=Math.max(rangeStart,rangeEnd);
   const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
   const currRows=getRowsInRange(currY),prevRows=getRowsInRange(prevY);
   if(!currRows.length&&!prevRows.length){el.innerHTML='<div class="yoy-no-data"><i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px"></i>Tiada data untuk pilihan ini</div>';return;}
   const c=sumR(currRows),p=sumR(prevRows);
   const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
-  const dK=delta(c.totalKwh,p.totalKwh),dB=delta(c.totalRm,p.totalRm);
+  
+  const cKwh = source === 'ssa' ? c.ssaKwh : (source === 'ssd' ? c.ssdKwh : c.totalKwh);
+  const pKwh = source === 'ssa' ? p.ssaKwh : (source === 'ssd' ? p.ssdKwh : p.totalKwh);
+  const cRm = source === 'ssa' ? c.ssaRm : (source === 'ssd' ? c.ssdRm : c.totalRm);
+  const pRm = source === 'ssa' ? p.ssaRm : (source === 'ssd' ? p.ssdRm : p.totalRm);
+
+  const dK=delta(cKwh,pKwh),dB=delta(cRm,pRm);
   const dSSAk=delta(c.ssaKwh,p.ssaKwh),dSSDk=delta(c.ssdKwh,p.ssdKwh);
   const dSSAr=delta(c.ssaRm,p.ssaRm),dSSDr=delta(c.ssdRm,p.ssdRm);
   const dSol=delta(c.solarKwh,p.solarKwh),dExp=delta(c.eksportRm,p.eksportRm),dJim=delta(c.penjimatan,p.penjimatan),dPvSolar=delta(c.bilPvSolar,p.bilPvSolar);
 
+  const kwhLabel = source === 'ssa' ? 'SS-A kWh (Kampus)' : (source === 'ssd' ? 'SS-D kWh (HPUSM)' : 'Jumlah kWh');
+  const bilLabel = source === 'ssa' ? 'Bil SS-A (Kampus)' : (source === 'ssd' ? 'Bil SS-D (HPUSM)' : 'Jumlah Bil (RM)');
+
   let html=`<div class="yoy-summary">
     <div class="yoy-card kwh-card">
-      <div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div>
+      <div class="yoy-card-label"><i class="ti ti-plug"></i> ${kwhLabel}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(cKwh)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(pKwh)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dK.cls}">${dK.arrow} ${dK.pct}</div>
     </div>
     <div class="yoy-card bil-card">
-      <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
+      <div class="yoy-card-label"><i class="ti ti-cash"></i> ${bilLabel}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(cRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(pRm)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dB.cls}">${dB.arrow} ${dB.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
@@ -1117,12 +1270,9 @@ function renderYoY(){
     </div>
   </div>`;
 
-  // charts
-  const getCurr=b=>currRows.find(r=>r.bulan===b);
-  const getPrev=b=>prevRows.find(r=>r.bulan===b);
   html+=`<div class="yoy-charts">
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">${yoyKwhLabel()} — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
@@ -1142,40 +1292,41 @@ function renderYoY(){
     </div>
   </div>`;
 
-  // table
-  html+=`<div class="yoy-table-box">
-    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
-    <table class="yoy-table"><thead><tr>
-      <th>Bulan</th>
-      <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
-      <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
-      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
-    </tr></thead><tbody>`;
+  let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
+  <table class="yoy-table"><thead><tr>
+    <th>Bulan</th>
+    <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
+    <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
+    <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
+  </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
-    const dKr=delta(cr?yoyKwhVal(cr):0,pr?yoyKwhVal(pr):0);
-    const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
-    html+=`<tr>
+    const crKwh = cr ? (source === 'ssa' ? cr.ssaKwh : (source === 'ssd' ? cr.ssdKwh : cr.totalKwh)) : 0;
+    const prKwh = pr ? (source === 'ssa' ? pr.ssaKwh : (source === 'ssd' ? pr.ssdKwh : pr.totalKwh)) : 0;
+    const crRm = cr ? (source === 'ssa' ? cr.ssaRm : (source === 'ssd' ? cr.ssdRm : cr.totalRm)) : 0;
+    const prRm = pr ? (source === 'ssa' ? pr.ssaRm : (source === 'ssd' ? pr.ssdRm : pr.totalRm)) : 0;
+
+    const dKr=delta(crKwh,prKwh);
+    const dBr=delta(crRm,prRm);
+    th+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num">${cr?fmtN(yoyKwhVal(cr)):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtN(yoyKwhVal(pr)):'—'}</td>
+      <td class="td-num">${cr?fmtN(crKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(prKwh):'—'}</td>
       <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
-      <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
+      <td class="td-num">${cr?fmtRM2(crRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(prRm):'—'}</td>
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
       <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
-  const jKC=yoyShowSSA&&yoyShowSSD?c.totalKwh:(yoyShowSSA?c.ssaKwh:c.ssdKwh);
-  const jKP=yoyShowSSA&&yoyShowSSD?p.totalKwh:(yoyShowSSA?p.ssaKwh:p.ssdKwh);
-  const dKT=delta(jKC,jKP),dBT=delta(c.totalRm,p.totalRm);
-  html+=`<tr class="td-total">
+  const dKT=delta(cKwh,pKwh),dBT=delta(cRm,pRm);
+  th+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
-    <td class="td-num">${fmtN(jKC)}</td><td class="td-num" style="color:#aaa">${fmtN(jKP)}</td>
+    <td class="td-num">${fmtN(cKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(pKwh)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
-    <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
+    <td class="td-num">${fmtRM2(cRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(pRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
     <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
@@ -1203,57 +1354,36 @@ function renderYoY(){
       y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}
     }
   });
+  
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:bulanDlm.map(b=>yoyKwhVal(getCurr(b))),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:bulanDlm.map(b=>yoyKwhVal(getPrev(b))),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
+    {label:currY,data:bulanDlm.map(b=>{
+      const r = getCurr(b);
+      if(!r) return 0;
+      return source === 'ssa' ? r.ssaKwh : (source === 'ssd' ? r.ssdKwh : r.totalKwh);
+    }),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:bulanDlm.map(b=>{
+      const r = getPrev(b);
+      if(!r) return 0;
+      return source === 'ssa' ? r.ssaKwh : (source === 'ssd' ? r.ssdKwh : r.totalKwh);
+    }),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
+  
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
-    {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
-    {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
-  ]},options:yoyBase(true)});
+    {label:'RM '+currY,data:bulanDlm.map(b=>{
+      const r = getCurr(b);
+      if(!r) return 0;
+      return source === 'ssa' ? r.ssaRm : (source === 'ssd' ? r.ssdRm : r.totalRm);
+    }),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
+    {label:'RM '+prevY,data:bulanDlm.map(b=>{
+      const r = getPrev(b);
+      if(!r) return 0;
+      return source === 'ssa' ? r.ssaRm : (source === 'ssd' ? r.ssdRm : r.totalRm);
+    }),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false}
+  ].concat(source === 'semua' ? [{
+    label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false
+  }] : [])},options:yoyBase(true)});
 }
 
-// ── INIT ──
-// Register datalabels plugin globally
-Chart.register(ChartDataLabels);
-
-// Helper: format label value compactly
-function fmtLbl(v, isRM=false){
-  if(!v||v===0) return '';
-  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
-  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
-  return (isRM?'RM ':'')+Math.round(v).toLocaleString('ms-MY');
-}
-
-// Shared datalabels config for BAR charts (show on top of bar)
-function barDL(isRM=false, color='#333'){
-  return {
-    anchor:'end', align:'end', offset:2,
-    font:{size:9, weight:'600'},
-    color: color,
-    rotation:0,
-    formatter:(v)=>fmtLbl(v, isRM),
-    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
-  };
-}
-
-// For multi-dataset bars — hide label if value is 0
-function barDLmulti(isRM=false){
-  return {
-    anchor:'end', align:'end', offset:1,
-    font:{size:8, weight:'600'},
-    color:'#444',
-    clamp:true,
-    formatter:(v)=>fmtLbl(v, isRM),
-    display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
-  };
-}
-
-// ══════════════════════════════════════════════
-// TAB SWITCHING
-// ══════════════════════════════════════════════
-let activeTab = 'jppf';
 function switchTab(tab){
   activeTab = tab;
   document.getElementById('panel-jppf').style.display = tab==='jppf' ? 'block' : 'none';
@@ -1265,12 +1395,6 @@ function switchTab(tab){
   if(tab==='epc' && epcRows.length===0) loadEPC();
   if(tab==='kh'  && khRows.length===0)  loadKH();
 }
-
-// ══════════════════════════════════════════════
-// EPC MODULE
-// ══════════════════════════════════════════════
-const EPC_SHEET_GID = '2029914262';
-let epcRows = [], epcChartKwh=null, epcChartYoy=null;
 
 async function loadEPC(){
   const el = document.getElementById('epc-content');
@@ -1303,12 +1427,9 @@ function parseEPC(csv){
       if(h.includes('bulan'))                                         m.bulan=idx;
       else if(h.includes('tahun')&&h.includes('baseline'))           m.tahunBaseline=idx;
       else if(h.includes('tahun'))                                    m.tahun=idx;
-      // Baseline columns — check BEFORE chiller columns
       else if(h.includes('baseline')&&(h.includes('trauma')||h.includes('ppsg')))  m.baselineTrauma=idx;
       else if(h.includes('baseline')&&(h.includes('general')||h.includes('ot')))   m.baselineGeneral=idx;
-      // Total kWh — check BEFORE individual chillers
       else if(h.includes('total')&&h.includes('kwh'))                m.totalKwh=idx;
-      // Individual chiller columns
       else if(h.includes('trauma')||h.includes('ppsg'))              m.chillerTrauma=idx;
       else if(h.includes('general')||h.includes('ot'))               m.chillerGeneral=idx;
     });
@@ -1351,7 +1472,6 @@ function renderEPC(){
     <div class="metrics" id="epc-metrics" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"></div>
 
     <!-- 3 Carta -->
-    <!-- Carta 1: Trauma & PPSG -->
     <div class="chart-box" style="margin-bottom:18px">
       <div class="chart-title">kWh Chiller — Trauma & PPSG</div>
       <div class="chart-sub" id="epc-sub-trauma">—</div>
@@ -1361,8 +1481,6 @@ function renderEPC(){
       </div>
       <div style="position:relative;width:100%;height:260px"><canvas id="epc-trauma-chart"></canvas></div>
     </div>
-
-    <!-- Carta 2: General OT -->
     <div class="chart-box" style="margin-bottom:18px">
       <div class="chart-title">kWh Chiller — General OT</div>
       <div class="chart-sub" id="epc-sub-general">—</div>
@@ -1373,7 +1491,6 @@ function renderEPC(){
       <div style="position:relative;width:100%;height:260px"><canvas id="epc-general-chart"></canvas></div>
     </div>
 
-    <!-- Carta 3: Analisis YoY -->
     <div class="yoy-section">
       <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#0e7490"></i> Analisis Perbandingan Tahun ke Tahun (YoY)</div>
       <div class="yoy-top">
@@ -1387,9 +1504,7 @@ function renderEPC(){
           <button class="range-reset" onclick="resetEpcRange()"><i class="ti ti-refresh"></i> Reset</button>
         </div>
       </div>
-      <!-- YoY summary cards -->
       <div id="epc-yoy-summary"></div>
-      <!-- 2 carta YoY berasingan -->
       <div class="yoy-charts">
         <div class="yoy-chart-box">
           <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Trauma & PPSG — YoY vs Baseline</div>
@@ -1412,14 +1527,12 @@ function renderEPC(){
           <div style="position:relative;width:100%;height:260px"><canvas id="epc-yoy-general-chart"></canvas></div>
         </div>
       </div>
-      <!-- Jadual YoY -->
       <div class="yoy-table-box"><div id="epc-yoy-table"></div></div>
     </div>
 
     <div class="sec-title" style="margin-top:8px"><i class="ti ti-leaf"></i> Ringkasan Penjimatan EPC</div>
     <div class="health-row" id="epc-health"></div>`;
 
-  // YoY year dropdowns
   const epcYears=[...new Set(epcRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
   const curr=document.getElementById('epc-yoy-curr'),prev=document.getElementById('epc-yoy-prev');
   curr.innerHTML='';prev.innerHTML='';
@@ -1430,7 +1543,6 @@ function renderEPC(){
   curr.addEventListener('change',renderEpcYoY);
   prev.addEventListener('change',renderEpcYoY);
 
-  // Month pills
   document.getElementById('epc-month-pills').addEventListener('click',e=>{
     const pill=e.target.closest('.mpill');if(!pill)return;
     const idx=parseInt(pill.dataset.idx);
@@ -1442,10 +1554,6 @@ function renderEPC(){
   updateEPC();
   renderEpcYoY();
 }
-
-// EPC range state
-let epcRangeStart=0,epcRangeEnd=11,epcYoySelecting=false;
-let epcChartTrauma=null,epcChartGeneral=null,epcChartYoyTrauma=null,epcChartYoyGeneral=null;
 
 window.resetEpcRange=function(){epcRangeStart=0;epcRangeEnd=11;epcYoySelecting=false;updateEpcPills();renderEpcYoY();};
 
@@ -1484,7 +1592,6 @@ function updateEPC(){
   const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
   const sub=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
 
-  // ── 3 KAD METRIK ──
   document.getElementById('epc-metrics').innerHTML=`
     <div class="card" style="border-top:3px solid #0e7490">
       <div class="card-icon" style="color:#0e7490"><i class="ti ti-building-hospital"></i></div>
@@ -1509,7 +1616,6 @@ function updateEPC(){
   const hideDL=sorted.length>12;
   const dlBar={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
 
-  // ── CARTA 1: Trauma + line baseline trauma ──
   document.getElementById('epc-sub-trauma').textContent=sub;
   if(epcChartTrauma)epcChartTrauma.destroy();
   epcChartTrauma=new Chart(document.getElementById('epc-trauma-chart'),{
@@ -1520,7 +1626,6 @@ function updateEPC(){
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });
 
-  // ── CARTA 2: General OT + line baseline general ──
   document.getElementById('epc-sub-general').textContent=sub;
   if(epcChartGeneral)epcChartGeneral.destroy();
   epcChartGeneral=new Chart(document.getElementById('epc-general-chart'),{
@@ -1531,7 +1636,6 @@ function updateEPC(){
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });
 
-  // health
   const savT=d.baselineTrauma-d.chillerTrauma, savG=d.baselineGeneral-d.chillerGeneral;
   const pT=d.baselineTrauma>0?(savT/d.baselineTrauma*100).toFixed(1):'0';
   const pG=d.baselineGeneral>0?(savG/d.baselineGeneral*100).toFixed(1):'0';
@@ -1570,7 +1674,6 @@ function renderEpcYoY(){
   const savTc=c.baselineTrauma-c.chillerTrauma,savGc=c.baselineGeneral-c.chillerGeneral;
   const savTp=p.baselineTrauma-p.chillerTrauma,savGp=p.baselineGeneral-p.chillerGeneral;
 
-  // summary cards
   document.getElementById('epc-yoy-summary').innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
     <div class="yoy-card" style="border-top:3px solid #0e7490">
       <div class="yoy-card-label" style="color:#0e7490"><i class="ti ti-building-hospital"></i> Trauma & PPSG kWh</div>
@@ -1602,8 +1705,6 @@ function renderEpcYoY(){
     </div>
   </div>`;
 
-  const getCurr=b=>cRows.find(r=>r.bulan===b);
-  const getPrev=b=>pRows.find(r=>r.bulan===b);
   document.getElementById('epc-yoy-trauma-sub').textContent=`${rangeStr} | ${currY} vs ${prevY} vs Baseline`;
   document.getElementById('epc-yoy-general-sub').textContent=`${rangeStr} | ${currY} vs ${prevY} vs Baseline`;
 
@@ -1632,7 +1733,6 @@ function renderEpcYoY(){
     options:yBase
   });
 
-  // Jadual YoY
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY EPC — ${rangeStr} | ${currY} vs ${prevY}</div>
   <table class="yoy-table"><thead><tr>
     <th>Bulan</th>
@@ -1680,394 +1780,8 @@ function renderEpcYoY(){
 }
 
 // ══════════════════════════════════════════════
-// DARK MODE
-// ══════════════════════════════════════════════
-function toggleDarkMode(){
-  const isDark=document.body.classList.toggle('dark');
-  const ic=document.getElementById('dm-icon'); if(ic) ic.className=isDark?'ti ti-sun':'ti ti-moon';
-  const lb=document.getElementById('dm-label'); if(lb) lb.textContent=isDark?'Cerah':'Gelap';
-  localStorage.setItem('usm_dark',isDark?'1':'0');
-}
-if(localStorage.getItem('usm_dark')==='1'){
-  document.body.classList.add('dark');
-  document.addEventListener('DOMContentLoaded',()=>{
-    const ic=document.getElementById('dm-icon'); if(ic) ic.className='ti ti-sun';
-    const lb=document.getElementById('dm-label'); if(lb) lb.textContent='Cerah';
-  });
-}
-
-// ══════════════════════════════════════════════
-// ADMIN UNLOCK
-// ══════════════════════════════════════════════
-let adminUnlocked=false;
-function unlockAdmin(pw,gasUrl){
-  if(!pw){alert('Sila masukkan password admin.');return;}
-  adminUnlocked=true;
-  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
-  localStorage.setItem('usm_admin_pw',pw);
-  // show edit/delete columns in all tables (termasuk KH)
-  document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
-  document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
-  // rebuild KH table to show edit buttons if on KH tab
-  if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
-}
-
-// ══════════════════════════════════════════════
-// EDIT / DELETE
-// ══════════════════════════════════════════════
-const JPPF_EDIT_FIELDS=[
-  {key:'ssaKwh',   label:'SS-A kWh'},
-  {key:'ssdKwh',   label:'SS-D kWh'},
-  {key:'solarKwh', label:'Janaan Solar kWh'},
-  {key:'ssaRm',    label:'Bil SS-A (RM)'},
-  {key:'ssdRm',    label:'Bil SS-D (RM)'},
-  {key:'eksportKwh',label:'Tenaga Eksport kWh'},
-  {key:'eksportRm', label:'Amaun Eksport (RM)'},
-  {key:'penjimatan',label:'Penjimatan USM (RM)'},
-  {key:'bilPvSolar',label:'Bil PV Hi-Tech Solar (RM)'},
-];
-const EPC_EDIT_FIELDS=[
-  {key:'chillerTrauma',  label:'Chiller Trauma & PPSG kWh'},
-  {key:'chillerGeneral', label:'Chiller General OT kWh'},
-  {key:'totalKwh',       label:'Total kWh'},
-  {key:'tahunBaseline',  label:'Tahun Baseline'},
-  {key:'baselineTrauma', label:'Baseline Trauma kWh'},
-  {key:'baselineGeneral',label:'Baseline General OT kWh'},
-];
-
-let editRow=null, delRow=null;
-function closeEditModal(){document.getElementById('edit-modal').classList.remove('show');}
-function closeDelModal(){document.getElementById('del-modal').classList.remove('show');}
-
-function openEditModal(tab,row){
-  if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
-  editRow={tab,...row};
-  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS;
-  document.getElementById('edit-modal-title').textContent=`Kemaskini — ${row.bulan} ${row.tahun}`;
-  document.getElementById('edit-modal-sub').textContent=`Tab: ${tab.toUpperCase()} | ${row.bulan} ${row.tahun}`;
-  document.getElementById('edit-msg').style.display='none';
-  let html=`<div class="edit-field"><label>Bulan</label><input readonly value="${row.bulan}"></div>
-             <div class="edit-field"><label>Tahun</label><input readonly value="${row.tahun}"></div>`;
-  fields.forEach(f=>{ html+=`<div class="edit-field"><label>${f.label}</label><input type="number" id="ef-${f.key}" value="${row[f.key]!==undefined?row[f.key]:''}" step="any"></div>`; });
-  document.getElementById('edit-fields').innerHTML=html;
-  document.getElementById('edit-modal').classList.add('show');
-}
-
-async function gasRequest(payload){
-  // Apps Script requires Content-Type text/plain to avoid CORS preflight
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
-  const res=await fetch(url,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  });
-  const text=await res.text();
-  try{ return JSON.parse(text); }
-  catch(e){ throw new Error('Respons tidak sah. Semak URL deployment Apps Script.'); }
-}
-
-async function submitEdit(){
-  const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
-  const fields={bulan:editRow.bulan,tahun:editRow.tahun};
-  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
-  const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
-  try{
-    const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
-    if(data.ok){
-        showEditMsg(data.message,'ok');
-        setTimeout(()=>{
-            closeEditModal();
-            // Muat semula data spesifik tab selepas diedit
-            if (editRow.tab === 'jppf') loadData(true);
-            else if (editRow.tab === 'epc') loadEPC();
-            else if (editRow.tab === 'kh') loadKH();
-        },1500);
-    }
-    else showEditMsg('⚠ '+data.error,'err');
-  }catch(e){showEditMsg('⚠ '+e.message,'err');}
-  finally{btn.textContent='Simpan ke Google Sheets';btn.disabled=false;}
-}
-function showEditMsg(msg,type){const el=document.getElementById('edit-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
-
-function openDelModal(tab,bulan,tahun){
-  if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
-  delRow={tab,bulan,tahun};
-  document.getElementById('del-modal-sub').textContent=`Padam rekod: ${bulan} ${tahun} dari tab ${tab.toUpperCase()}? Tindakan ini tidak boleh dibatalkan.`;
-  document.getElementById('del-msg').style.display='none';
-  document.getElementById('del-modal').classList.add('show');
-}
-async function submitDelete(){
-  const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
-  const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
-  try{
-    const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
-    if(data.ok){
-        showDelMsg(data.message,'ok');
-        setTimeout(()=>{
-            closeDelModal();
-            // Muat semula data spesifik tab selepas dipadam
-            if (delRow.tab === 'jppf') loadData(true);
-            else if (delRow.tab === 'epc') loadEPC();
-            else if (delRow.tab === 'kh') loadKH();
-        },1500);
-    }
-    else showDelMsg('⚠ '+data.error,'err');
-  }catch(e){showDelMsg('⚠ '+e.message,'err');}
-  finally{btn.textContent='Ya, Padam';btn.disabled=false;}
-}
-function showDelMsg(msg,type){const el=document.getElementById('del-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
-
-// ── Admin strip + data tables ──
-function buildAdminStrip(){
-  return `<div class="admin-strip">
-    <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
-    <label>Password:</label>
-    <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
-    <label>Apps Script URL:</label>
-    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
-    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
-    <span class="lock-status locked">🔒 Terkunci</span>
-  </div>`;
-}
-
-function buildJppfTable(rows){
-  if(!rows||!rows.length) return '';
-  // Build unique year and month lists from data
-  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
-  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
-  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
-
-  // Build rows HTML (all rows stored, filtering done in JS)
-  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-
-  let rowsHtml='';
-  sorted.forEach(r=>{
-    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
-      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-      <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt2d(r.solarKwh)}</td>
-      <td>${fmtRM2d(r.ssaRm)}</td><td>${fmtRM2d(r.ssdRm)}</td>
-      <td>${fmt(r.eksportKwh)}</td><td>${fmtRM2d(r.eksportRm)}</td><td>${fmtRM2d(r.penjimatan)}</td><td>${fmtRM2d(r.bilPvSolar)}</td>
-      <td class="edit-action-col" style="display:none">
-        <button class="btn-edit" onclick="openEditModal('jppf',allRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
-        <button class="btn-del"  onclick="openDelModal('jppf','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
-      </td>
-    </tr>`;
-  });
-
-  return `<div class="jppf-mgmt" id="jppf-mgmt-wrap">
-    <!-- HEADER — klik untuk minimize -->
-    <div class="jppf-mgmt-header" onclick="toggleJppfMgmt()">
-      <div class="jppf-mgmt-title">
-        <i class="ti ti-table" style="color:#1a3a5c"></i>
-        Pengurusan Data JPPF
-        <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
-      </div>
-      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="jppf-chevron"></i>
-    </div>
-
-    <!-- BODY — collapsible -->
-    <div class="jppf-mgmt-body" id="jppf-mgmt-body">
-      ${buildAdminStrip()}
-
-      <!-- FILTER BAR -->
-      <div class="jppf-tbl-filter">
-        <label><i class="ti ti-filter"></i> Filter:</label>
-        <select id="jppf-tbl-tahun" onchange="filterJppfTable()">
-          ${yearOpts}
-        </select>
-        <select id="jppf-tbl-bulan" onchange="filterJppfTable()">
-          ${monthOpts}
-        </select>
-        <button onclick="clearJppfFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
-        <span class="jppf-tbl-count" id="jppf-tbl-count">${sorted.length} rekod</span>
-      </div>
-
-      <!-- TABLE -->
-      <div class="data-table-wrap">
-        <table class="data-table" id="jppf-data-tbl">
-          <thead><tr>
-            <th>Bulan</th><th>Tahun</th>
-            <th>SS-A kWh</th><th>SS-D kWh</th><th>Solar kWh</th>
-            <th>Bil SS-A</th><th>Bil SS-D</th>
-            <th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
-            <th class="edit-action-col" style="display:none">Tindakan</th>
-          </tr></thead>
-          <tbody id="jppf-tbl-body">${rowsHtml}</tbody>
-        </table>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── Minimize toggle ──
-function toggleJppfMgmt(){
-  const body=document.getElementById('jppf-mgmt-body');
-  const chev=document.getElementById('jppf-chevron');
-  if(!body||!chev) return;
-  const isOpen=chev.classList.contains('open');
-  body.style.display=isOpen?'none':'block';
-  chev.classList.toggle('open',!isOpen);
-}
-
-// ── Filter table ──
-function filterJppfTable(){
-  const t=document.getElementById('jppf-tbl-tahun')?.value||'';
-  const b=document.getElementById('jppf-tbl-bulan')?.value||'';
-  const rows=document.querySelectorAll('#jppf-tbl-body tr');
-  let visible=0;
-  rows.forEach(row=>{
-    const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
-    const show=(!t||rt===t)&&(!b||rb===b);
-    row.style.display=show?'':'none';
-    if(show) visible++;
-  });
-  const cnt=document.getElementById('jppf-tbl-count');
-  if(cnt) cnt.textContent=visible+' rekod';
-}
-
-function clearJppfFilter(){
-  const st=document.getElementById('jppf-tbl-tahun');
-  const sb=document.getElementById('jppf-tbl-bulan');
-  if(st) st.value=''; if(sb) sb.value='';
-  filterJppfTable();
-}
-
-function buildEpcTable(rows){
-  if(!rows||!rows.length) return '';
-  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
-  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
-  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
-
-  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-
-  let rowsHtml='';
-  sorted.forEach(r=>{
-    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
-      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-      <td>${fmt(r.chillerTrauma)}</td><td>${fmt(r.chillerGeneral)}</td><td>${fmt(r.totalKwh)}</td>
-      <td>${r.tahunBaseline||'—'}</td><td>${fmt(r.baselineTrauma)}</td><td>${fmt(r.baselineGeneral)}</td>
-      <td class="edit-action-col" style="display:none">
-        <button class="btn-edit" onclick="openEditModal('epc',epcRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
-        <button class="btn-del"  onclick="openDelModal('epc','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
-      </td>
-    </tr>`;
-  });
-
-  return `<div class="epc-mgmt" id="epc-mgmt-wrap">
-    <!-- HEADER — klik untuk minimize -->
-    <div class="epc-mgmt-header" onclick="toggleEpcMgmt()">
-      <div class="epc-mgmt-title">
-        <i class="ti ti-table" style="color:#0e7490"></i>
-        Pengurusan Data EPC
-        <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
-      </div>
-      <i class="ti ti-chevron-down epc-mgmt-chevron open" id="epc-chevron"></i>
-    </div>
-
-    <!-- BODY — collapsible -->
-    <div class="epc-mgmt-body" id="epc-mgmt-body">
-      ${buildAdminStrip()}
-
-      <!-- FILTER BAR -->
-      <div class="epc-tbl-filter">
-        <label><i class="ti ti-filter"></i> Filter:</label>
-        <select id="epc-tbl-tahun" onchange="filterEpcTable()">${yearOpts}</select>
-        <select id="epc-tbl-bulan" onchange="filterEpcTable()">${monthOpts}</select>
-        <button onclick="clearEpcFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
-        <span class="epc-tbl-count" id="epc-tbl-count">${sorted.length} rekod</span>
-      </div>
-
-      <!-- TABLE -->
-      <div class="data-table-wrap">
-        <table class="data-table" id="epc-data-tbl">
-          <thead><tr>
-            <th>Bulan</th><th>Tahun</th>
-            <th>Trauma kWh</th><th>General OT kWh</th><th>Total kWh</th>
-            <th>Tahun Baseline</th><th>Baseline Trauma</th><th>Baseline General</th>
-            <th class="edit-action-col" style="display:none">Tindakan</th>
-          </tr></thead>
-          <tbody id="epc-tbl-body">${rowsHtml}</tbody>
-        </table>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── EPC Minimize toggle ──
-function toggleEpcMgmt(){
-  const body=document.getElementById('epc-mgmt-body');
-  const chev=document.getElementById('epc-chevron');
-  if(!body||!chev) return;
-  const isOpen=chev.classList.contains('open');
-  body.style.display=isOpen?'none':'block';
-  chev.classList.toggle('open',!isOpen);
-}
-
-// ── EPC Filter table ──
-function filterEpcTable(){
-  const t=document.getElementById('epc-tbl-tahun')?.value||'';
-  const b=document.getElementById('epc-tbl-bulan')?.value||'';
-  const rows=document.querySelectorAll('#epc-tbl-body tr');
-  let visible=0;
-  rows.forEach(row=>{
-    const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
-    const show=(!t||rt===t)&&(!b||rb===b);
-    row.style.display=show?'':'none';
-    if(show) visible++;
-  });
-  const cnt=document.getElementById('epc-tbl-count');
-  if(cnt) cnt.textContent=visible+' rekod';
-}
-
-function clearEpcFilter(){
-  const st=document.getElementById('epc-tbl-tahun');
-  const sb=document.getElementById('epc-tbl-bulan');
-  if(st) st.value=''; if(sb) sb.value='';
-  filterEpcTable();
-}
-
-// Inject data tables after renderShell and renderEPC are called
-const _origRenderShell = window.renderShell;
-window.renderShell = function(){
-  _origRenderShell && _origRenderShell();
-  // append JPPF table after health-row
-  setTimeout(()=>{
-    const hr=document.getElementById('health-row');
-    if(hr&&!document.getElementById('jppf-data-table')){
-      const div=document.createElement('div');div.id='jppf-data-table';
-      div.innerHTML=buildJppfTable(allRows);
-      hr.parentElement.appendChild(div);
-    }
-  },150);
-};
-
-const _origRenderEPC = window.renderEPC;
-window.renderEPC = function(){
-  _origRenderEPC && _origRenderEPC();
-  setTimeout(()=>{
-    const hr=document.getElementById('epc-health');
-    if(hr&&!document.getElementById('epc-data-table')){
-      const div=document.createElement('div');div.id='epc-data-table';
-      div.innerHTML=buildEpcTable(epcRows);
-      hr.parentElement.appendChild(div);
-    }
-  },150);
-};
-
-// ══════════════════════════════════════════════
 // KAMPUS+HPUSM MODULE — Dikemaskini
 // ══════════════════════════════════════════════
-const KH_SHEET_GID = '1853842562';
-let khRows=[];
-let khChart1=null,khChart2=null,khChart3=null,khChart4=null;
-let khYoy1=null,khYoy2=null,khYoy3=null,khYoy4=null;
-let khRangeStart=0,khRangeEnd=11,khYoySelecting=false;
-
 async function loadKH(){
   const el=document.getElementById('kh-content');
   if(!el) return;
@@ -2115,10 +1829,15 @@ function parseKH(csv){
     const bRaw=row[m.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    
+    let kRm = n('kampusRm');
+    let hRm = n('hospitalRm');
+    let tRm = kRm + hRm;
+
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
       kampusKwh:n('kampusKwh'),hpusmKwh:n('hpusmKwh'),totalKwh:n('totalKwh'),
-      kampusRm:n('kampusRm'),hospitalRm:n('hospitalRm'),totalRm:n('totalRm')
+      kampusRm:kRm,hospitalRm:hRm,totalRm:tRm
     });
   }
   return rows;
@@ -2140,7 +1859,6 @@ function buildKHPage(){
   const yOptsPrev=years.map(y=>`<option value="${y}"${y===yPrev?' selected':''}>${y}</option>`).join('');
 
   el.innerHTML=`
-  <!-- TAPIS UTAMA -->
   <div class="filter-row" style="margin-top:18px">
     <label><i class="ti ti-filter"></i> Tapis:</label>
     <select id="kh-f-tahun" onchange="khUpdateMain()">${yOptsFull}</select>
@@ -2148,10 +1866,8 @@ function buildKHPage(){
     <button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>
   </div>
 
-  <!-- KAD METRIK -->
   <div class="metrics" id="kh-metrics"></div>
 
-  <!-- CARTA UTAMA -->
   <div class="charts" style="margin-bottom:22px">
     <div class="chart-box">
       <div class="chart-title">Penggunaan kWh — Kampus vs HPUSM</div>
@@ -2173,7 +1889,6 @@ function buildKHPage(){
     </div>
   </div>
 
-  <!-- CARTA PAI -->
   <div class="charts" style="margin-bottom:22px">
     <div class="chart-box">
       <div class="chart-title">Carta Pai — Bahagian Bil (RM)</div>
@@ -2185,23 +1900,17 @@ function buildKHPage(){
     </div>
   </div>
 
-  <!-- KESIHATAN -->
   <div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan</div>
   <div class="health-row" id="kh-health"></div>
 
-  <!-- ══ ANALISIS YOY ══ -->
   <div class="yoy-section" style="margin-top:22px">
     <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
-
-    <!-- Kawalan YoY -->
     <div class="yoy-top">
       <label>Tahun Semasa:</label>
       <select id="kh-yoy-curr">${yOptsCurr}</select>
       <label style="margin-left:6px">Berbanding:</label>
       <select id="kh-yoy-prev">${yOptsPrev}</select>
     </div>
-
-    <!-- Julat Bulan -->
     <div class="range-box">
       <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
       <div class="month-pills" id="kh-pills">${pills}</div>
@@ -2210,11 +1919,7 @@ function buildKHPage(){
         <button class="range-reset" onclick="khResetRange()"><i class="ti ti-refresh"></i> Reset</button>
       </div>
     </div>
-
-    <!-- Kad YoY -->
     <div id="kh-yoy-cards"></div>
-
-    <!-- 4 Carta YoY -->
     <div class="yoy-charts">
       <div class="yoy-chart-box">
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh Kampus — YoY</div>
@@ -2255,12 +1960,9 @@ function buildKHPage(){
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c4"></canvas></div>
       </div>
     </div>
-
-    <!-- Jadual YoY -->
-    <div class="yoy-table-box kh-yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
+    <div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
   </div>
 
-  <!-- ══ PENGURUSAN DATA ══ -->
   <div class="jppf-mgmt" id="kh-mgmt-outer" style="margin-top:22px">
     <div class="jppf-mgmt-header" onclick="khToggleMgmt()">
       <div class="jppf-mgmt-title"><i class="ti ti-table" style="color:#1a3a5c"></i> Pengurusan Data Kampus+HPUSM <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span></div>
@@ -2289,14 +1991,12 @@ function buildKHPage(){
     </div>
   </div>`;
 
-  // Render admin strip
   document.getElementById('kh-admin-strip').innerHTML=buildAdminStrip();
   if(adminUnlocked){
     document.querySelectorAll('#kh-mgmt-body .edit-action-col').forEach(el=>el.style.display='');
     document.querySelectorAll('#kh-mgmt-body .lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
   }
 
-  // Attach events
   document.getElementById('kh-yoy-curr').addEventListener('change',khRenderYoY);
   document.getElementById('kh-yoy-prev').addEventListener('change',khRenderYoY);
   document.getElementById('kh-pills').addEventListener('click',function(e){
@@ -2312,7 +2012,6 @@ function buildKHPage(){
   khBuildTableRows();
 }
 
-// ── Main metrics + charts ──
 function khUpdateMain(){
   const t=document.getElementById('kh-f-tahun')?.value||'';
   const b=document.getElementById('kh-f-bulan')?.value||'';
@@ -2361,7 +2060,6 @@ function khUpdateMain(){
     <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Nisbah Bil</div></div><div class="hstat">Kampus<span style="color:#1a5fa8">${kRPct}%</span></div><div class="hstat">Hospital<span style="color:#1e7e34">${hRPct}%</span></div><div class="hstat">Jumlah<span>${fmtRM2d(d.totalRm)}</span></div></div>`;
 }
 
-// ── YoY ──
 function khUpdatePills(){
   const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
   BULAN_SHORT.forEach((_,i)=>{
@@ -2398,7 +2096,6 @@ function khRenderYoY(){
   const dKK=khDlt(c.kampusKwh,p.kampusKwh),dHK=khDlt(c.hpusmKwh,p.hpusmKwh);
   const dKR=khDlt(c.kampusRm,p.kampusRm),dHR=khDlt(c.hospitalRm,p.hospitalRm);
 
-  // Kad YoY
   const cardsEl=document.getElementById('kh-yoy-cards');
   if(cardsEl) cardsEl.innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
     <div class="yoy-card kwh-card"><div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct}</div></div>
@@ -2425,9 +2122,8 @@ function khRenderYoY(){
   if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
   if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
 
-  // Jadual
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
-  <table class="yoy-table kh-yoy-table"><thead><tr>
+  <table class="yoy-table"><thead><tr>
     <th>Bulan</th>
     <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
     <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
@@ -2452,7 +2148,6 @@ function khRenderYoY(){
   const tblEl=document.getElementById('kh-yoy-tbl');if(tblEl)tblEl.innerHTML=th;
 }
 
-// ── Pengurusan Data ──
 window.khToggleMgmt=function(){
   const body=document.getElementById('kh-mgmt-body');
   const chev=document.getElementById('kh-mgmt-chev');
@@ -2500,7 +2195,6 @@ const KH_EDIT_FIELDS=[
   {key:'totalKwh',  label:'Total kWh'},
   {key:'kampusRm',  label:'Kampus RM'},
   {key:'hospitalRm',label:'Hospital RM'},
-  {key:'totalRm',   label:'Total RM'},
 ];
 
 loadData();
@@ -2517,7 +2211,6 @@ loadData();
 </div>
 
 <script>
-// ── Service Worker Registration ──
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -2526,7 +2219,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── PWA Install Prompt ──
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -2547,7 +2239,6 @@ if (installBtn) {
   });
 }
 
-// Hide banner if already installed
 window.addEventListener('appinstalled', () => {
   const banner = document.getElementById('pwa-install-banner');
   if (banner) banner.style.display = 'none';
