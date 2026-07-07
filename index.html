@@ -771,9 +771,7 @@ if(document.getElementById('tog-solar')) document.getElementById('tog-solar').cl
 Chart.register(ChartDataLabels);
 function fmtDL(v,isRM){
   if(!v||v===0) return '';
-  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
-  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
-  return (isRM?'RM ':'')+Math.round(v).toLocaleString();
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString('ms-MY');
 }
 // bar chart data labels — vertical, outside end of bar
 function dlBar(isRM){
@@ -1776,11 +1774,18 @@ async function submitEdit(){
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
 
-  // ── Auto-kira Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
+  // ── Auto-kira Total kWh, Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
   if(editRow.tab==='jppf'){
+    const ssaKwhVal=parseFloat(fields.ssaKwh);
+    const ssdKwhVal=parseFloat(fields.ssdKwh);
     const ssaRmVal=parseFloat(fields.ssaRm);
     const ssdRmVal=parseFloat(fields.ssdRm);
     const pvSolarVal=parseFloat(fields.bilPvSolar);
+
+    // 0) Total kWh = SS-A kWh + SS-D kWh — dikira automatik setiap kali disimpan
+    if(!isNaN(ssaKwhVal) && !isNaN(ssdKwhVal)){
+      fields.totalKwh = ssaKwhVal + ssdKwhVal;
+    }
 
     // 1) Total RM = SS-A (RM) + SS-D (RM) — dikira automatik setiap kali disimpan
     if(!isNaN(ssaRmVal) && !isNaN(ssdRmVal)){
