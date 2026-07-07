@@ -692,6 +692,10 @@ function renderShell(){
     <div class="trend-box">
       <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
+      <div class="legend" style="margin-top:6px">
+        <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
+        <span><span class="leg-dot" style="background:#e8a020"></span>Total RM</span>
+      </div>
       <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
@@ -862,7 +866,7 @@ function renderCharts(filtered,d){
         layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
+          legend:{display:false},
           datalabels:{} // controlled per-dataset
         },
         scales:{
@@ -1771,6 +1775,31 @@ async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+
+  // ── Auto-kira Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
+  if(editRow.tab==='jppf'){
+    const ssaRmVal=parseFloat(fields.ssaRm);
+    const ssdRmVal=parseFloat(fields.ssdRm);
+    const pvSolarVal=parseFloat(fields.bilPvSolar);
+
+    // 1) Total RM = SS-A (RM) + SS-D (RM) — dikira automatik setiap kali disimpan
+    if(!isNaN(ssaRmVal) && !isNaN(ssdRmVal)){
+      fields.totalRm = ssaRmVal + ssdRmVal;
+    }
+
+    // 2) Penjimatan USM (RM) = Total RM tahun sebelum (bulan sama) − (SS-A + SS-D + PV Solar) bulan semasa
+    //    Hanya dikira untuk rekod/bulan semasa yang sedang diedit, dan hanya jika
+    //    SS-A (RM), SS-D (RM) dan Bil PV Hi-Tech Solar (RM) bulan tersebut sudah lengkap.
+    //    Jika mana-mana nilai ini belum dikemaskini, Penjimatan USM (RM) TIDAK dikira automatik.
+    if(!isNaN(ssaRmVal) && !isNaN(ssdRmVal) && !isNaN(pvSolarVal)){
+      const prevYear=String(parseInt(editRow.tahun)-1);
+      const prevRow=allRows.find(r=>r.bulan===editRow.bulan && r.tahun===prevYear);
+      if(prevRow && !isNaN(prevRow.totalRm)){
+        fields.penjimatan = prevRow.totalRm - (ssaRmVal + ssdRmVal + pvSolarVal);
+      }
+    }
+  }
+
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
