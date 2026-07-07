@@ -1041,6 +1041,24 @@ function yoyKwhLabel(){
   if(yoyShowSSD) return 'SS-D kWh';
   return 'kWh';
 }
+// helper: nilai Penjimatan RM mengikut filter SS-A/SS-D
+// kedua-dua aktif = Penjimatan sebenar (asal, tiada perubahan)
+// SS-A/SS-D sahaja = agihan Penjimatan mengikut nisbah Bil RM (SS-A RM atau SS-D RM / Total RM)
+function yoyPenjimatanVal(row){
+  if(!row) return 0;
+  if(yoyShowSSA&&yoyShowSSD) return row.penjimatan;
+  const totalRmRow=row.totalRm||(row.ssaRm+row.ssdRm)||0;
+  if(totalRmRow<=0) return 0;
+  if(yoyShowSSA) return row.penjimatan*(row.ssaRm/totalRmRow);
+  if(yoyShowSSD) return row.penjimatan*(row.ssdRm/totalRmRow);
+  return row.penjimatan;
+}
+function yoyPenjimatanLabel(){
+  if(yoyShowSSA&&yoyShowSSD) return 'Penjimatan';
+  if(yoyShowSSA) return 'Penjimatan (SS-A)';
+  if(yoyShowSSD) return 'Penjimatan (SS-D)';
+  return 'Penjimatan';
+}
 
 function renderYoY(){
   const currY=document.getElementById('yoy-curr')?.value;
@@ -1096,10 +1114,10 @@ function renderYoY(){
       <hr class="yoy-divider"><div class="yoy-delta ${dExp.cls}">${dExp.arrow} ${dExp.pct}</div>
     </div>
     <div class="yoy-card jimat-card">
-      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> Penjimatan USM (RM)</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.penjimatan)}</span></div>
-      <hr class="yoy-divider"><div class="yoy-delta ${dJim.cls}">${dJim.arrow} ${dJim.pct}</div>
+      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> ${yoyPenjimatanLabel()} USM (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(yoyPenjimatanVal(c))}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyPenjimatanVal(p))}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).cls}">${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).arrow} ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).pct}</div>
     </div>
     <div class="yoy-card" style="border-top:3px solid #be185d">
       <div class="yoy-card-label" style="color:#be185d"><i class="ti ti-solar-panel-2"></i> Bil PV Hi-Tech Solar</div>
@@ -1151,7 +1169,7 @@ function renderYoY(){
       <th>Bulan</th>
       <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
       <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
-      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
+      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">${yoyPenjimatanLabel()} ${currY}</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
@@ -1166,7 +1184,7 @@ function renderYoY(){
       <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
-      <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
+      <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(yoyPenjimatanVal(cr)):'—'}</td>
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
@@ -1180,7 +1198,7 @@ function renderYoY(){
     <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
-    <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
+    <td class="td-num" style="color:#7c3aed">${fmtRM2(yoyPenjimatanVal(c))}</td>
     <td class="td-num" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</td>
   </tr></tbody></table></div>`;
 
