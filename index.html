@@ -1699,11 +1699,13 @@ if(localStorage.getItem('usm_dark')==='1'){
 // ══════════════════════════════════════════════
 // ADMIN UNLOCK
 // ══════════════════════════════════════════════
+// URL Apps Script — dikonfigurasi terus dalam kod, pengguna tidak perlu memasukkannya
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzhNTjCursIX83gf1xVgbonvXZV_IBvSlmWmbgyFmJ1IgImr_1tTW1YMx_iDkoShdVt/exec';
+
 let adminUnlocked=false;
-function unlockAdmin(pw,gasUrl){
+function unlockAdmin(pw){
   if(!pw){alert('Sila masukkan password admin.');return;}
   adminUnlocked=true;
-  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
   localStorage.setItem('usm_admin_pw',pw);
   // show edit/delete columns in all tables (termasuk KH)
   document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
@@ -1755,22 +1757,18 @@ function openEditModal(tab,row){
 
 async function gasRequest(payload){
   // Apps Script requires Content-Type text/plain to avoid CORS preflight
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
-  const res=await fetch(url,{
+  const res=await fetch(GAS_URL,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload)
   });
   const text=await res.text();
   try{ return JSON.parse(text); }
-  catch(e){ throw new Error('Respons tidak sah. Semak URL deployment Apps Script.'); }
+  catch(e){ throw new Error('Respons tidak sah. Semak deployment Apps Script.'); }
 }
 
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
@@ -1801,8 +1799,6 @@ function openDelModal(tab,bulan,tahun){
 }
 async function submitDelete(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
-  const url=localStorage.getItem('usm_gas_url')||'';
-  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
@@ -1828,9 +1824,7 @@ function buildAdminStrip(){
     <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
     <label>Password:</label>
     <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
-    <label>Apps Script URL:</label>
-    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
-    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
+    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
     <span class="lock-status locked">🔒 Terkunci</span>
   </div>`;
 }
