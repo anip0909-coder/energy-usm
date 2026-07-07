@@ -1041,16 +1041,33 @@ function yoyKwhLabel(){
   if(yoyShowSSD) return 'SS-D kWh';
   return 'kWh';
 }
+// helper: nilai Bil RM mengikut filter — kedua-dua aktif = Total RM (asal)
+function yoyBilVal(row){
+  if(!row) return 0;
+  if(yoyShowSSA&&yoyShowSSD) return row.totalRm;
+  if(yoyShowSSA) return row.ssaRm;
+  if(yoyShowSSD) return row.ssdRm;
+  return row.totalRm;
+}
+function yoyBilLabel(){
+  if(yoyShowSSA&&yoyShowSSD) return 'Bil';
+  if(yoyShowSSA) return 'Bil (SS-A)';
+  if(yoyShowSSD) return 'Bil (SS-D)';
+  return 'Bil';
+}
 // helper: nilai Penjimatan RM mengikut filter SS-A/SS-D
-// kedua-dua aktif = Penjimatan sebenar (asal, tiada perubahan)
-// SS-A/SS-D sahaja = agihan Penjimatan mengikut nisbah Bil RM (SS-A RM atau SS-D RM / Total RM)
+// kedua-dua aktif        = Penjimatan sebenar (asal, tiada perubahan)
+// SS-A sahaja            = Bil SS-A tahun sebelum (bulan sama) − (Bil SS-A + Bil PV Solar) bulan semasa
+// SS-D sahaja            = Bil SS-D tahun sebelum (bulan sama) − Bil SS-D bulan semasa
+// Jika tiada rekod tahun sebelum untuk bulan sama, kembalikan null (paparan '—')
 function yoyPenjimatanVal(row){
   if(!row) return 0;
   if(yoyShowSSA&&yoyShowSSD) return row.penjimatan;
-  const totalRmRow=row.totalRm||(row.ssaRm+row.ssdRm)||0;
-  if(totalRmRow<=0) return 0;
-  if(yoyShowSSA) return row.penjimatan*(row.ssaRm/totalRmRow);
-  if(yoyShowSSD) return row.penjimatan*(row.ssdRm/totalRmRow);
+  const prevYear=String(parseInt(row.tahun)-1);
+  const prevRow=allRows.find(r=>r.bulan===row.bulan && r.tahun===prevYear);
+  if(!prevRow) return null;
+  if(yoyShowSSA) return prevRow.ssaRm-(row.ssaRm+row.bilPvSolar);
+  if(yoyShowSSD) return prevRow.ssdRm-row.ssdRm;
   return row.penjimatan;
 }
 function yoyPenjimatanLabel(){
@@ -1084,10 +1101,10 @@ function renderYoY(){
       <hr class="yoy-divider"><div class="yoy-delta ${dK.cls}">${dK.arrow} ${dK.pct}</div>
     </div>
     <div class="yoy-card bil-card">
-      <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
-      <hr class="yoy-divider"><div class="yoy-delta ${dB.cls}">${dB.arrow} ${dB.pct}</div>
+      <div class="yoy-card-label"><i class="ti ti-cash"></i> ${yoyBilLabel()==='Bil'?'Jumlah Bil (RM)':yoyBilLabel()+' (RM)'}</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(yoyBilVal(c))}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyBilVal(p))}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyBilVal(c),yoyBilVal(p)).cls}">${delta(yoyBilVal(c),yoyBilVal(p)).arrow} ${delta(yoyBilVal(c),yoyBilVal(p)).pct}</div>
     </div>
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh</div>
@@ -1168,37 +1185,43 @@ function renderYoY(){
     <table class="yoy-table"><thead><tr>
       <th>Bulan</th>
       <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
-      <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
+      <th class="td-num">${yoyBilLabel()} ${currY}</th><th class="td-num">${yoyBilLabel()} ${prevY}</th><th class="td-num">Δ ${yoyBilLabel()}</th>
       <th class="td-num">Eksport RM ${currY}</th><th class="td-num">${yoyPenjimatanLabel()} ${currY}</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
+  let sumBilC=0,sumBilP=0,sumPenjimatan=0,anyPenjimatanValid=false;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
+    const bilC=yoyBilVal(cr),bilP=yoyBilVal(pr);
+    if(cr) sumBilC+=bilC;
+    if(pr) sumBilP+=bilP;
+    const penjVal=cr?yoyPenjimatanVal(cr):null;
+    if(penjVal!==null&&penjVal!==undefined){sumPenjimatan+=penjVal;anyPenjimatanValid=true;}
     const dKr=delta(cr?yoyKwhVal(cr):0,pr?yoyKwhVal(pr):0);
-    const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
+    const dBr=delta(cr?bilC:0,pr?bilP:0);
     html+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
       <td class="td-num">${cr?fmtN(yoyKwhVal(cr)):'—'}</td>
       <td class="td-num" style="color:#aaa">${pr?fmtN(yoyKwhVal(pr)):'—'}</td>
       <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
-      <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
+      <td class="td-num">${cr?fmtRM2(bilC):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(bilP):'—'}</td>
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
-      <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(yoyPenjimatanVal(cr)):'—'}</td>
+      <td class="td-num" style="color:#7c3aed">${(penjVal!==null&&penjVal!==undefined)?fmtRM2(penjVal):'—'}</td>
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
   const jKC=yoyShowSSA&&yoyShowSSD?c.totalKwh:(yoyShowSSA?c.ssaKwh:c.ssdKwh);
   const jKP=yoyShowSSA&&yoyShowSSD?p.totalKwh:(yoyShowSSA?p.ssaKwh:p.ssdKwh);
-  const dKT=delta(jKC,jKP),dBT=delta(c.totalRm,p.totalRm);
+  const dKT=delta(jKC,jKP),dBT=delta(sumBilC,sumBilP);
   html+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
     <td class="td-num">${fmtN(jKC)}</td><td class="td-num" style="color:#aaa">${fmtN(jKP)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
-    <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
+    <td class="td-num">${fmtRM2(sumBilC)}</td><td class="td-num" style="color:#aaa">${fmtRM2(sumBilP)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
-    <td class="td-num" style="color:#7c3aed">${fmtRM2(yoyPenjimatanVal(c))}</td>
+    <td class="td-num" style="color:#7c3aed">${anyPenjimatanValid?fmtRM2(sumPenjimatan):'—'}</td>
     <td class="td-num" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</td>
   </tr></tbody></table></div>`;
 
