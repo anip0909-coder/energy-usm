@@ -234,47 +234,40 @@ body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
-/* @page margin:0 — kekalkan tetapi body padding dikurangkan untuk memaksimumkan ruang cetakan */
-@page{ margin:0; }
+/* @page margin:0 — teknik buang header/footer automatik pelayar (URL, tarikh, tajuk).
+   Margin visual dikekalkan semula melalui padding pada body semasa cetak. */
+@page{
+  margin:0;
+}
 @media print{
   html,body{background:white!important}
-  body{padding:10mm 10mm!important}
-  
-  /* Sembunyikan elemen UI yang tidak perlu dicetak untuk jimat ruang */
-  .topbar { display: none !important; } 
+  body{padding:10mm 8mm!important}
+  .topbar{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
   .container{padding:0!important;max-width:100%!important}
-  
-  .charts,.yoy-charts{grid-template-columns:1fr 1fr!important; gap: 12px!important;}
-  .metrics{grid-template-columns:repeat(4,1fr)!important; gap: 8px!important;}
-  .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #c0cdd8!important}
-  
-  /* Cetak Tajuk */
-  .print-header{display:block!important; padding:0 0 10px!important; margin-bottom:15px!important; border-bottom:2px solid #1a3a5c!important;}
-  .print-header h1{font-size:18px!important; margin-bottom: 4px!important;}
-  .print-header p{font-size:11px!important; margin-top:2px!important;}
+  .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important}
+  .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
+  .print-header{display:block!important}
   canvas{max-width:100%}
 
-  /* ── Tab KWH USMKK: Susun atur dioptimumkan supaya Halaman 1 kemas ── */
+  /* ── Tab KWH USMKK: kad metrik + carta Penggunaan Tenaga + carta Bil & Penjimatan + Trend Bulanan dalam 1 halaman ── */
   .print-page1{page-break-after:always;break-after:page}
-  .print-page1 .metrics{margin-bottom:12px!important}
-  .print-page1 .card{padding:8px!important}
-  .print-page1 .card-icon{font-size:14px!important;margin-bottom:4px!important;display:inline-block;}
-  .print-page1 .card-label{font-size:8.5px!important;margin-bottom:3px!important}
-  .print-page1 .card-value{font-size:13px!important}
-  .print-page1 .card-unit{font-size:8px!important;margin-top:2px!important;}
-  
-  .print-page1 .charts{margin-bottom:12px!important}
-  .print-page1 .chart-box,.print-page1 .trend-box{padding:10px!important;margin-bottom:0!important}
-  .print-page1 .chart-title{font-size:11px!important;margin-bottom:3px!important}
-  .print-page1 .chart-sub{font-size:9px!important;margin-bottom:5px!important}
-  .print-page1 .legend{gap:6px!important;margin-bottom:5px!important}
-  .print-page1 .legend span{font-size:8.5px!important}
-  
-  /* Besarkan tinggi carta supaya tidak terlalu sempit */
-  .print-page1 .chart-canvas-wrap{height:160px!important}
-  .print-page1 .trend-box{margin-top:12px!important}
+  .print-page1 .metrics{gap:6px!important;margin-bottom:8px!important}
+  .print-page1 .card{padding:6px 8px!important}
+  .print-page1 .card-icon{font-size:12px!important;margin-bottom:2px!important}
+  .print-page1 .card-label{font-size:7.5px!important;margin-bottom:2px!important}
+  .print-page1 .card-value{font-size:12px!important}
+  .print-page1 .card-unit{font-size:7.5px!important}
+  .print-page1 .charts{gap:8px!important;margin-bottom:8px!important}
+  .print-page1 .chart-box,.print-page1 .trend-box{padding:8px!important;margin-bottom:0!important}
+  .print-page1 .chart-title{font-size:11px!important;margin-bottom:2px!important}
+  .print-page1 .chart-sub{font-size:8px!important;margin-bottom:4px!important}
+  .print-page1 .legend{gap:5px!important;margin-bottom:4px!important}
+  .print-page1 .legend span{font-size:8px!important}
+  .print-page1 .chart-canvas-wrap{height:130px!important}
+  .print-page1 .trend-box{margin-top:8px!important}
 }
 .print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
 .print-header h1{font-size:20px;color:#1a3a5c;font-weight:700;letter-spacing:.3px}
@@ -538,25 +531,13 @@ function printPDF(){
   window.print();
 }
 
-// Resize carta Chart.js supaya sesuai dengan saiz padat semasa cetak (termasuk carta dari tab lain)
+// Resize carta Chart.js supaya sesuai dengan saiz padat semasa cetak (chart-canvas-wrap dikecilkan via CSS print)
 window.addEventListener('beforeprint', () => {
-  const charts = [
-    chartKwh, chartBil, chartTrend, 
-    epcChartTrauma, epcChartGeneral, epcChartYoyTrauma, epcChartYoyGeneral, 
-    khChart1, khChart2, khChart3, khChart4,
-    yoyKwhChart, yoyBilChart, khYoy1, khYoy2, khYoy3, khYoy4
-  ];
-  charts.forEach(ch => { if(ch) ch.resize(); });
+  [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
 });
 window.addEventListener('afterprint', () => {
   setTimeout(() => {
-    const charts = [
-      chartKwh, chartBil, chartTrend, 
-      epcChartTrauma, epcChartGeneral, epcChartYoyTrauma, epcChartYoyGeneral, 
-      khChart1, khChart2, khChart3, khChart4,
-      yoyKwhChart, yoyBilChart, khYoy1, khYoy2, khYoy3, khYoy4
-    ];
-    charts.forEach(ch => { if(ch) ch.resize(); });
+    [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
   }, 100);
 });
 
@@ -730,11 +711,13 @@ function renderShell(){
         <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
       </div>
       <div class="chart-box">
-        <div class="chart-title">Bil Elektrik & Solar (RM)</div>
+        <div class="chart-title">Bil & Penjimatan (RM)</div>
         <div class="chart-sub">SS-A · SS-D · Eksport · Penjimatan</div>
         <div class="legend">
           <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A</span>
           <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
+          <span><span class="leg-dot" style="background:#0891b2"></span>Eksport</span>
+          <span><span class="leg-dot" style="background:#7c3aed"></span>Penjimatan</span>
           <span><span class="leg-dot" style="background:#be185d"></span>PV Solar</span>
         </div>
         <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
@@ -885,6 +868,8 @@ function renderCharts(filtered,d){
     if(showSSA) bilDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
     if(showSolar) {
+      bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
+      bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
       bilDatasets.push({label:'PV Solar',data:sorted.map(r=>r.bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false});
     }
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
@@ -1052,7 +1037,7 @@ function getRowsInRange(year){
   return allRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
 }
 
-function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssdKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
+function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
 function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
@@ -2647,4 +2632,31 @@ if ('serviceWorker' in navigator) {
 
 // ── PWA Install Prompt ──
 let deferredPrompt = null;
-window.
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+
+const installBtn = document.getElementById('pwa-install-btn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('[PWA] Install outcome:', outcome);
+    deferredPrompt = null;
+    document.getElementById('pwa-install-banner').style.display = 'none';
+  });
+}
+
+// Hide banner if already installed
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'none';
+  console.log('[PWA] App installed successfully');
+});
+</script>
+</body>
+</html>
