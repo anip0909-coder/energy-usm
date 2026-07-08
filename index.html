@@ -234,8 +234,14 @@ body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
+/* @page margin:0 — teknik buang header/footer automatik pelayar (URL, tarikh, tajuk).
+   Margin visual dikekalkan semula melalui padding pada body semasa cetak. */
+@page{
+  margin:0;
+}
 @media print{
-  body{background:white!important}
+  html,body{background:white!important}
+  body{padding:10mm 8mm!important}
   .topbar{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
@@ -245,6 +251,23 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
   .print-header{display:block!important}
   canvas{max-width:100%}
+
+  /* ── Tab KWH USMKK: kad metrik + carta Penggunaan Tenaga + carta Bil & Penjimatan + Trend Bulanan dalam 1 halaman ── */
+  .print-page1{page-break-after:always;break-after:page}
+  .print-page1 .metrics{gap:6px!important;margin-bottom:8px!important}
+  .print-page1 .card{padding:6px 8px!important}
+  .print-page1 .card-icon{font-size:12px!important;margin-bottom:2px!important}
+  .print-page1 .card-label{font-size:7.5px!important;margin-bottom:2px!important}
+  .print-page1 .card-value{font-size:12px!important}
+  .print-page1 .card-unit{font-size:7.5px!important}
+  .print-page1 .charts{gap:8px!important;margin-bottom:8px!important}
+  .print-page1 .chart-box,.print-page1 .trend-box{padding:8px!important;margin-bottom:0!important}
+  .print-page1 .chart-title{font-size:11px!important;margin-bottom:2px!important}
+  .print-page1 .chart-sub{font-size:8px!important;margin-bottom:4px!important}
+  .print-page1 .legend{gap:5px!important;margin-bottom:4px!important}
+  .print-page1 .legend span{font-size:8px!important}
+  .print-page1 .chart-canvas-wrap{height:130px!important}
+  .print-page1 .trend-box{margin-top:8px!important}
 }
 .print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
 .print-header h1{font-size:20px;color:#1a3a5c;font-weight:700;letter-spacing:.3px}
@@ -508,6 +531,16 @@ function printPDF(){
   window.print();
 }
 
+// Resize carta Chart.js supaya sesuai dengan saiz padat semasa cetak (chart-canvas-wrap dikecilkan via CSS print)
+window.addEventListener('beforeprint', () => {
+  [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
+});
+window.addEventListener('afterprint', () => {
+  setTimeout(() => {
+    [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
+  }, 100);
+});
+
 // ── ADMIN ──
 function openAdmin(){document.getElementById('input-sheet-id').value=CONFIG.sheetId;document.getElementById('input-sheet-name').value=CONFIG.sheetName;document.getElementById('admin-modal').classList.add('show')}
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('show')}
@@ -664,6 +697,7 @@ function sumRows(rows){
 
 function renderShell(){
   document.getElementById('main-content').innerHTML=`
+    <div class="print-page1">
     <div class="metrics" id="metrics-grid"></div>
     <div class="charts">
       <div class="chart-box">
@@ -674,7 +708,7 @@ function renderShell(){
           <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
           <span><span class="leg-dot" style="background:#e8a020"></span>Solar</span>
         </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
+        <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
       </div>
       <div class="chart-box">
         <div class="chart-title">Bil & Penjimatan (RM)</div>
@@ -686,7 +720,7 @@ function renderShell(){
           <span><span class="leg-dot" style="background:#7c3aed"></span>Penjimatan</span>
           <span><span class="leg-dot" style="background:#be185d"></span>PV Solar</span>
         </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
+        <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
       </div>
     </div>
     <div class="trend-box">
@@ -696,7 +730,8 @@ function renderShell(){
         <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
         <span><span class="leg-dot" style="background:#e8a020"></span>Total RM</span>
       </div>
-      <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
+      <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
+    </div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
     <div class="health-row" id="health-row"></div>
