@@ -157,12 +157,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
 .yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
-/* Jadual YoY Kampus+HPUSM — paparan penuh tanpa scroll mendatar */
-.kh-yoy-table-box{overflow-x:visible!important;padding:14px 10px}
-.kh-yoy-table{table-layout:fixed;width:100%}
-.kh-yoy-table th,.kh-yoy-table td{white-space:normal!important;word-break:break-word;font-size:9.5px;padding:6px 3px;text-align:center;line-height:1.3}
-.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left;width:42px}
-body.dark .kh-yoy-table th{background:#0f172a}
 .yoy-table{width:100%;border-collapse:collapse;font-size:12px}
 .yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
 .yoy-table td{padding:8px 10px;border-bottom:1px solid #f4f6f9;color:#333;white-space:nowrap}
@@ -234,14 +228,8 @@ body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
 
 /* ── PRINT / PDF ── */
-/* @page margin:0 — teknik buang header/footer automatik pelayar (URL, tarikh, tajuk).
-   Margin visual dikekalkan semula melalui padding pada body semasa cetak. */
-@page{
-  margin:0;
-}
 @media print{
-  html,body{background:white!important}
-  body{padding:10mm 8mm!important}
+  body{background:white!important}
   .topbar{background:#1a3a5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
@@ -251,23 +239,6 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
   .print-header{display:block!important}
   canvas{max-width:100%}
-
-  /* ── Tab KWH USMKK: kad metrik + carta Penggunaan Tenaga + carta Bil & Penjimatan + Trend Bulanan dalam 1 halaman ── */
-  .print-page1{page-break-after:always;break-after:page}
-  .print-page1 .metrics{gap:6px!important;margin-bottom:8px!important}
-  .print-page1 .card{padding:6px 8px!important}
-  .print-page1 .card-icon{font-size:12px!important;margin-bottom:2px!important}
-  .print-page1 .card-label{font-size:7.5px!important;margin-bottom:2px!important}
-  .print-page1 .card-value{font-size:12px!important}
-  .print-page1 .card-unit{font-size:7.5px!important}
-  .print-page1 .charts{gap:8px!important;margin-bottom:8px!important}
-  .print-page1 .chart-box,.print-page1 .trend-box{padding:8px!important;margin-bottom:0!important}
-  .print-page1 .chart-title{font-size:11px!important;margin-bottom:2px!important}
-  .print-page1 .chart-sub{font-size:8px!important;margin-bottom:4px!important}
-  .print-page1 .legend{gap:5px!important;margin-bottom:4px!important}
-  .print-page1 .legend span{font-size:8px!important}
-  .print-page1 .chart-canvas-wrap{height:130px!important}
-  .print-page1 .trend-box{margin-top:8px!important}
 }
 .print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
 .print-header h1{font-size:20px;color:#1a3a5c;font-weight:700;letter-spacing:.3px}
@@ -531,16 +502,6 @@ function printPDF(){
   window.print();
 }
 
-// Resize carta Chart.js supaya sesuai dengan saiz padat semasa cetak (chart-canvas-wrap dikecilkan via CSS print)
-window.addEventListener('beforeprint', () => {
-  [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
-});
-window.addEventListener('afterprint', () => {
-  setTimeout(() => {
-    [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
-  }, 100);
-});
-
 // ── ADMIN ──
 function openAdmin(){document.getElementById('input-sheet-id').value=CONFIG.sheetId;document.getElementById('input-sheet-name').value=CONFIG.sheetName;document.getElementById('admin-modal').classList.add('show')}
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('show')}
@@ -697,7 +658,6 @@ function sumRows(rows){
 
 function renderShell(){
   document.getElementById('main-content').innerHTML=`
-    <div class="print-page1">
     <div class="metrics" id="metrics-grid"></div>
     <div class="charts">
       <div class="chart-box">
@@ -708,7 +668,7 @@ function renderShell(){
           <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D</span>
           <span><span class="leg-dot" style="background:#e8a020"></span>Solar</span>
         </div>
-        <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="chartKwh"></canvas></div>
       </div>
       <div class="chart-box">
         <div class="chart-title">Bil & Penjimatan (RM)</div>
@@ -720,18 +680,13 @@ function renderShell(){
           <span><span class="leg-dot" style="background:#7c3aed"></span>Penjimatan</span>
           <span><span class="leg-dot" style="background:#be185d"></span>PV Solar</span>
         </div>
-        <div class="chart-canvas-wrap" style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="chartBil"></canvas></div>
       </div>
     </div>
     <div class="trend-box">
       <div class="chart-title">Trend Bulanan — Total kWh & Total Bil (RM)</div>
       <div class="chart-sub" id="trend-sub"></div>
-      <div class="legend" style="margin-top:6px">
-        <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh</span>
-        <span><span class="leg-dot" style="background:#e8a020"></span>Total RM</span>
-      </div>
-      <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
-    </div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
     <div class="health-row" id="health-row"></div>
@@ -806,7 +761,9 @@ if(document.getElementById('tog-solar')) document.getElementById('tog-solar').cl
 Chart.register(ChartDataLabels);
 function fmtDL(v,isRM){
   if(!v||v===0) return '';
-  return (isRM?'RM ':'')+Math.round(v).toLocaleString('ms-MY');
+  if(v>=1e6) return (isRM?'RM ':'')+( v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (isRM?'RM ':'')+( v/1e3).toFixed(1)+'k';
+  return (isRM?'RM ':'')+Math.round(v).toLocaleString();
 }
 // bar chart data labels — vertical, outside end of bar
 function dlBar(isRM){
@@ -899,7 +856,7 @@ function renderCharts(filtered,d){
         layout:{padding:{top:28,bottom:24}},
         interaction:{mode:'index',intersect:false},
         plugins:{
-          legend:{display:false},
+          legend:{display:true,labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
           datalabels:{} // controlled per-dataset
         },
         scales:{
@@ -978,11 +935,6 @@ function buildYoY(){
     <div class="yoy-top">
       <label>Tahun Semasa:</label><select id="yoy-curr"></select>
       <label style="margin-left:6px">Berbanding:</label><select id="yoy-prev"></select>
-      <label style="margin-left:10px">Paparan kWh:</label>
-      <div class="toggle-group">
-        <button class="toggle-btn active ssa" id="yoy-tog-ssa" onclick="yoyToggleSS('ssa')">SS-A</button>
-        <button class="toggle-btn active ssd" id="yoy-tog-ssd" onclick="yoyToggleSS('ssd')">SS-D</button>
-      </div>
     </div>
     <div class="range-box">
       <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan — Klik mula, klik akhir</div>
@@ -1042,76 +994,6 @@ function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
 
-// ── Filter SS-A/SS-D khas untuk bahagian Analisis Perbandingan Tahun (YoY) ──
-// Default: kedua-dua aktif = kekalkan paparan Total kWh asal (tiada perubahan fungsi sedia ada)
-let yoyShowSSA=true, yoyShowSSD=true;
-function yoyToggleSS(which){
-  if(which==='ssa'){
-    yoyShowSSA=!yoyShowSSA;
-    const b=document.getElementById('yoy-tog-ssa');
-    b.classList.toggle('active',yoyShowSSA);
-  }else{
-    yoyShowSSD=!yoyShowSSD;
-    const b=document.getElementById('yoy-tog-ssd');
-    b.classList.toggle('active',yoyShowSSD);
-  }
-  if(!yoyShowSSA&&!yoyShowSSD){
-    yoyShowSSA=true;
-    const b=document.getElementById('yoy-tog-ssa');
-    if(b) b.classList.add('active');
-  }
-  renderYoY();
-}
-// helper: nilai kWh mengikut filter — kedua-dua aktif = Total kWh (asal)
-function yoyKwhVal(row){
-  if(!row) return 0;
-  if(yoyShowSSA&&yoyShowSSD) return row.totalKwh;
-  if(yoyShowSSA) return row.ssaKwh;
-  if(yoyShowSSD) return row.ssdKwh;
-  return row.totalKwh;
-}
-function yoyKwhLabel(){
-  if(yoyShowSSA&&yoyShowSSD) return 'kWh';
-  if(yoyShowSSA) return 'SS-A kWh';
-  if(yoyShowSSD) return 'SS-D kWh';
-  return 'kWh';
-}
-// helper: nilai Bil RM mengikut filter — kedua-dua aktif = Total RM (asal)
-function yoyBilVal(row){
-  if(!row) return 0;
-  if(yoyShowSSA&&yoyShowSSD) return row.totalRm;
-  if(yoyShowSSA) return row.ssaRm;
-  if(yoyShowSSD) return row.ssdRm;
-  return row.totalRm;
-}
-function yoyBilLabel(){
-  if(yoyShowSSA&&yoyShowSSD) return 'Bil';
-  if(yoyShowSSA) return 'Bil (SS-A)';
-  if(yoyShowSSD) return 'Bil (SS-D)';
-  return 'Bil';
-}
-// helper: nilai Penjimatan RM mengikut filter SS-A/SS-D
-// kedua-dua aktif        = Penjimatan sebenar (asal, tiada perubahan)
-// SS-A sahaja            = Bil SS-A tahun sebelum (bulan sama) − (Bil SS-A + Bil PV Solar) bulan semasa
-// SS-D sahaja            = Bil SS-D tahun sebelum (bulan sama) − Bil SS-D bulan semasa
-// Jika tiada rekod tahun sebelum untuk bulan sama, kembalikan null (paparan '—')
-function yoyPenjimatanVal(row){
-  if(!row) return 0;
-  if(yoyShowSSA&&yoyShowSSD) return row.penjimatan;
-  const prevYear=String(parseInt(row.tahun)-1);
-  const prevRow=allRows.find(r=>r.bulan===row.bulan && r.tahun===prevYear);
-  if(!prevRow) return null;
-  if(yoyShowSSA) return prevRow.ssaRm-(row.ssaRm+row.bilPvSolar);
-  if(yoyShowSSD) return prevRow.ssdRm-row.ssdRm;
-  return row.penjimatan;
-}
-function yoyPenjimatanLabel(){
-  if(yoyShowSSA&&yoyShowSSD) return 'Penjimatan';
-  if(yoyShowSSA) return 'Penjimatan (SS-A)';
-  if(yoyShowSSD) return 'Penjimatan (SS-D)';
-  return 'Penjimatan';
-}
-
 function renderYoY(){
   const currY=document.getElementById('yoy-curr')?.value;
   const prevY=document.getElementById('yoy-prev')?.value;
@@ -1136,10 +1018,10 @@ function renderYoY(){
       <hr class="yoy-divider"><div class="yoy-delta ${dK.cls}">${dK.arrow} ${dK.pct}</div>
     </div>
     <div class="yoy-card bil-card">
-      <div class="yoy-card-label"><i class="ti ti-cash"></i> ${yoyBilLabel()==='Bil'?'Jumlah Bil (RM)':yoyBilLabel()+' (RM)'}</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(yoyBilVal(c))}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyBilVal(p))}</span></div>
-      <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyBilVal(c),yoyBilVal(p)).cls}">${delta(yoyBilVal(c),yoyBilVal(p)).arrow} ${delta(yoyBilVal(c),yoyBilVal(p)).pct}</div>
+      <div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dB.cls}">${dB.arrow} ${dB.pct}</div>
     </div>
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh</div>
@@ -1166,10 +1048,10 @@ function renderYoY(){
       <hr class="yoy-divider"><div class="yoy-delta ${dExp.cls}">${dExp.arrow} ${dExp.pct}</div>
     </div>
     <div class="yoy-card jimat-card">
-      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> ${yoyPenjimatanLabel()} USM (RM)</div>
-      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(yoyPenjimatanVal(c))}</span></div>
-      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyPenjimatanVal(p))}</span></div>
-      <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).cls}">${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).arrow} ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).pct}</div>
+      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> Penjimatan USM (RM)</div>
+      <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</span></div>
+      <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.penjimatan)}</span></div>
+      <hr class="yoy-divider"><div class="yoy-delta ${dJim.cls}">${dJim.arrow} ${dJim.pct}</div>
     </div>
     <div class="yoy-card" style="border-top:3px solid #be185d">
       <div class="yoy-card-label" style="color:#be185d"><i class="ti ti-solar-panel-2"></i> Bil PV Hi-Tech Solar</div>
@@ -1194,7 +1076,7 @@ function renderYoY(){
   const getPrev=b=>prevRows.find(r=>r.bulan===b);
   html+=`<div class="yoy-charts">
     <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">${yoyKwhLabel()} — ${rangeStr}</div>
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh — ${rangeStr}</div>
       <div style="font-size:11px;color:#aaa;margin-bottom:8px">${currY} vs ${prevY}</div>
       <div class="legend" style="margin-bottom:8px">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>${currY}</span>
@@ -1219,44 +1101,36 @@ function renderYoY(){
     <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
     <table class="yoy-table"><thead><tr>
       <th>Bulan</th>
-      <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
-      <th class="td-num">${yoyBilLabel()} ${currY}</th><th class="td-num">${yoyBilLabel()} ${prevY}</th><th class="td-num">Δ ${yoyBilLabel()}</th>
-      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">${yoyPenjimatanLabel()} ${currY}</th><th class="td-num">PV Solar ${currY}</th>
+      <th class="td-num">kWh ${currY}</th><th class="td-num">kWh ${prevY}</th><th class="td-num">Δ kWh</th>
+      <th class="td-num">Bil ${currY}</th><th class="td-num">Bil ${prevY}</th><th class="td-num">Δ Bil</th>
+      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">Penjimatan ${currY}</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
-  let sumBilC=0,sumBilP=0,sumPenjimatan=0,anyPenjimatanValid=false;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
-    const bilC=yoyBilVal(cr),bilP=yoyBilVal(pr);
-    if(cr) sumBilC+=bilC;
-    if(pr) sumBilP+=bilP;
-    const penjVal=cr?yoyPenjimatanVal(cr):null;
-    if(penjVal!==null&&penjVal!==undefined){sumPenjimatan+=penjVal;anyPenjimatanValid=true;}
-    const dKr=delta(cr?yoyKwhVal(cr):0,pr?yoyKwhVal(pr):0);
-    const dBr=delta(cr?bilC:0,pr?bilP:0);
+    const dKr=delta(cr?cr.totalKwh:0,pr?pr.totalKwh:0);
+    const dBr=delta(cr?cr.totalRm:0,pr?pr.totalRm:0);
     html+=`<tr>
       <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num">${cr?fmtN(yoyKwhVal(cr)):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtN(yoyKwhVal(pr)):'—'}</td>
+      <td class="td-num">${cr?fmtN(cr.totalKwh):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtN(pr.totalKwh):'—'}</td>
       <td class="td-num td-${dKr.cls}">${(cr&&pr)?dKr.pct:'—'}</td>
-      <td class="td-num">${cr?fmtRM2(bilC):'—'}</td>
-      <td class="td-num" style="color:#aaa">${pr?fmtRM2(bilP):'—'}</td>
+      <td class="td-num">${cr?fmtRM2(cr.totalRm):'—'}</td>
+      <td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.totalRm):'—'}</td>
       <td class="td-num td-${dBr.cls}">${(cr&&pr)?dBr.pct:'—'}</td>
       <td class="td-num" style="color:#0891b2">${cr?fmtRM2(cr.eksportRm):'—'}</td>
-      <td class="td-num" style="color:#7c3aed">${(penjVal!==null&&penjVal!==undefined)?fmtRM2(penjVal):'—'}</td>
+      <td class="td-num" style="color:#7c3aed">${cr?fmtRM2(cr.penjimatan):'—'}</td>
       <td class="td-num" style="color:#be185d">${cr?fmtRM2(cr.bilPvSolar):'—'}</td>
     </tr>`;
   });
-  const jKC=yoyShowSSA&&yoyShowSSD?c.totalKwh:(yoyShowSSA?c.ssaKwh:c.ssdKwh);
-  const jKP=yoyShowSSA&&yoyShowSSD?p.totalKwh:(yoyShowSSA?p.ssaKwh:p.ssdKwh);
-  const dKT=delta(jKC,jKP),dBT=delta(sumBilC,sumBilP);
+  const dKT=delta(c.totalKwh,p.totalKwh),dBT=delta(c.totalRm,p.totalRm);
   html+=`<tr class="td-total">
     <td><strong>JUMLAH</strong></td>
-    <td class="td-num">${fmtN(jKC)}</td><td class="td-num" style="color:#aaa">${fmtN(jKP)}</td>
+    <td class="td-num">${fmtN(c.totalKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(p.totalKwh)}</td>
     <td class="td-num td-${dKT.cls}">${dKT.pct}</td>
-    <td class="td-num">${fmtRM2(sumBilC)}</td><td class="td-num" style="color:#aaa">${fmtRM2(sumBilP)}</td>
+    <td class="td-num">${fmtRM2(c.totalRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(p.totalRm)}</td>
     <td class="td-num td-${dBT.cls}">${dBT.pct}</td>
     <td class="td-num" style="color:#0891b2">${fmtRM2(c.eksportRm)}</td>
-    <td class="td-num" style="color:#7c3aed">${anyPenjimatanValid?fmtRM2(sumPenjimatan):'—'}</td>
+    <td class="td-num" style="color:#7c3aed">${fmtRM2(c.penjimatan)}</td>
     <td class="td-num" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</td>
   </tr></tbody></table></div>`;
 
@@ -1282,8 +1156,8 @@ function renderYoY(){
     }
   });
   yoyKwhChart=new Chart(document.getElementById('yoy-kwh-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
-    {label:currY,data:bulanDlm.map(b=>yoyKwhVal(getCurr(b))),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
-    {label:prevY,data:bulanDlm.map(b=>yoyKwhVal(getPrev(b))),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
+    {label:currY,data:bulanDlm.map(b=>(getCurr(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+    {label:prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalKwh:0}).totalKwh),backgroundColor:'rgba(160,189,216,.7)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(false)});
   yoyBilChart=new Chart(document.getElementById('yoy-bil-chart'),{type:'bar',data:{labels:shortDlm,datasets:[
     {label:'Penjimatan '+currY,data:bulanDlm.map(b=>(getCurr(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false},
@@ -1777,13 +1651,11 @@ if(localStorage.getItem('usm_dark')==='1'){
 // ══════════════════════════════════════════════
 // ADMIN UNLOCK
 // ══════════════════════════════════════════════
-// URL Apps Script — dikonfigurasi terus dalam kod, pengguna tidak perlu memasukkannya
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzhNTjCursIX83gf1xVgbonvXZV_IBvSlmWmbgyFmJ1IgImr_1tTW1YMx_iDkoShdVt/exec';
-
 let adminUnlocked=false;
-function unlockAdmin(pw){
+function unlockAdmin(pw,gasUrl){
   if(!pw){alert('Sila masukkan password admin.');return;}
   adminUnlocked=true;
+  if(gasUrl) localStorage.setItem('usm_gas_url',gasUrl);
   localStorage.setItem('usm_admin_pw',pw);
   // show edit/delete columns in all tables (termasuk KH)
   document.querySelectorAll('.edit-action-col').forEach(el=>el.style.display='');
@@ -1835,52 +1707,24 @@ function openEditModal(tab,row){
 
 async function gasRequest(payload){
   // Apps Script requires Content-Type text/plain to avoid CORS preflight
-  const res=await fetch(GAS_URL,{
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url) throw new Error('URL Apps Script belum dikonfigurasi.');
+  const res=await fetch(url,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload)
   });
   const text=await res.text();
   try{ return JSON.parse(text); }
-  catch(e){ throw new Error('Respons tidak sah. Semak deployment Apps Script.'); }
+  catch(e){ throw new Error('Respons tidak sah. Semak URL deployment Apps Script.'); }
 }
 
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showEditMsg('URL Apps Script belum dikonfigurasi dalam Admin Strip.','err');return;}
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
   (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
-
-  // ── Auto-kira Total kWh, Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
-  if(editRow.tab==='jppf'){
-    const ssaKwhVal=parseFloat(fields.ssaKwh);
-    const ssdKwhVal=parseFloat(fields.ssdKwh);
-    const ssaRmVal=parseFloat(fields.ssaRm);
-    const ssdRmVal=parseFloat(fields.ssdRm);
-    const pvSolarVal=parseFloat(fields.bilPvSolar);
-
-    // 0) Total kWh = SS-A kWh + SS-D kWh — dikira automatik setiap kali disimpan
-    if(!isNaN(ssaKwhVal) && !isNaN(ssdKwhVal)){
-      fields.totalKwh = ssaKwhVal + ssdKwhVal;
-    }
-
-    // 1) Total RM = SS-A (RM) + SS-D (RM) — dikira automatik setiap kali disimpan
-    if(!isNaN(ssaRmVal) && !isNaN(ssdRmVal)){
-      fields.totalRm = ssaRmVal + ssdRmVal;
-    }
-
-    // 2) Penjimatan USM (RM) = Total RM tahun sebelum (bulan sama) − (SS-A + SS-D + PV Solar) bulan semasa
-    //    Hanya dikira untuk rekod/bulan semasa yang sedang diedit, dan hanya jika
-    //    SS-A (RM), SS-D (RM) dan Bil PV Hi-Tech Solar (RM) bulan tersebut sudah lengkap.
-    //    Jika mana-mana nilai ini belum dikemaskini, Penjimatan USM (RM) TIDAK dikira automatik.
-    if(!isNaN(ssaRmVal) && !isNaN(ssdRmVal) && !isNaN(pvSolarVal)){
-      const prevYear=String(parseInt(editRow.tahun)-1);
-      const prevRow=allRows.find(r=>r.bulan===editRow.bulan && r.tahun===prevYear);
-      if(prevRow && !isNaN(prevRow.totalRm)){
-        fields.penjimatan = prevRow.totalRm - (ssaRmVal + ssdRmVal + pvSolarVal);
-      }
-    }
-  }
-
   const btn=document.querySelector('#edit-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'update',password:pw,tab:editRow.tab,fields});
@@ -1909,6 +1753,8 @@ function openDelModal(tab,bulan,tahun){
 }
 async function submitDelete(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
+  const url=localStorage.getItem('usm_gas_url')||'';
+  if(!url){showDelMsg('URL Apps Script belum dikonfigurasi.','err');return;}
   const btn=document.querySelector('#del-modal .btn-save');btn.textContent='Memadam...';btn.disabled=true;
   try{
     const data=await gasRequest({action:'delete',password:pw,tab:delRow.tab,bulan:delRow.bulan,tahun:delRow.tahun});
@@ -1934,7 +1780,9 @@ function buildAdminStrip(){
     <i class="ti ti-shield-lock" style="color:#1a3a5c;font-size:18px"></i>
     <label>Password:</label>
     <input type="password" id="admin-pw-input" placeholder="Password admin" value="${localStorage.getItem('usm_admin_pw')||''}">
-    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
+    <label>Apps Script URL:</label>
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('usm_gas_url')||''}" style="flex:1;min-width:200px">
+    <button onclick="unlockAdmin(document.getElementById('admin-pw-input').value,document.getElementById('gas-url-input').value)"><i class="ti ti-lock-open"></i> Unlock Admin</button>
     <span class="lock-status locked">🔒 Terkunci</span>
   </div>`;
 }
@@ -2361,7 +2209,7 @@ function buildKHPage(){
     </div>
 
     <!-- Jadual YoY -->
-    <div class="yoy-table-box kh-yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
+    <div class="yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
   </div>
 
   <!-- ══ PENGURUSAN DATA ══ -->
@@ -2531,7 +2379,7 @@ function khRenderYoY(){
 
   // Jadual
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
-  <table class="yoy-table kh-yoy-table"><thead><tr>
+  <table class="yoy-table"><thead><tr>
     <th>Bulan</th>
     <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
     <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
