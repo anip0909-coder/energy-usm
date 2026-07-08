@@ -885,8 +885,6 @@ function renderCharts(filtered,d){
     if(showSSA) bilDatasets.push({label:'SS-A',data:sorted.map(r=>r.ssaRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
     if(showSSD) bilDatasets.push({label:'SS-D',data:sorted.map(r=>r.ssdRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
     if(showSolar) {
-      bilDatasets.push({label:'Eksport',data:sorted.map(r=>r.eksportRm),backgroundColor:'rgba(8,145,178,.85)',borderRadius:3,borderSkipped:false});
-      bilDatasets.push({label:'Penjimatan',data:sorted.map(r=>r.penjimatan),backgroundColor:'rgba(124,58,237,.85)',borderRadius:3,borderSkipped:false});
       bilDatasets.push({label:'PV Solar',data:sorted.map(r=>r.bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false});
     }
     chartBil=new Chart(document.getElementById('chartBil'),{type:'bar',data:{labels:lbl,datasets:bilDatasets},options:baseOpts(true)});
