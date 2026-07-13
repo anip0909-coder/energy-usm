@@ -941,6 +941,7 @@ function renderHealth(d){
 // YoY SECTION
 // ══════════════════════════════════════════════
 let rangeStart=0,rangeEnd=11,yoySelecting=false,yoyKwhChart,yoyBilChart;
+let yoyRmPiePrev=null,yoyRmPieCurr=null,yoyKwhPiePrev=null,yoyKwhPieCurr=null;
 
 function buildYoY(){
   const el=document.getElementById('yoy-section');
@@ -1187,6 +1188,46 @@ function renderYoY(){
     </div>
   </div>`;
 
+  // ── Carta Pai — Brown vs Green Energy (RM & kWh) ──
+  html+=`<div class="yoy-charts" style="margin-top:16px">
+    <div class="yoy-chart-box">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Komitmen (RM) — Brown vs Green Energy</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px">SS-A RM (Brown) vs PV Solar RM (Green) | ${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:10px">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c2703d;margin-right:4px"></span>Brown Energy (SS-A RM)</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#22c55e;margin-right:4px"></span>Green Energy (PV Solar RM)</span>
+      </div>
+      <div style="display:flex;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${prevY}</div>
+          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-rm-pie-prev"></canvas></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${currY}</div>
+          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-rm-pie-curr"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="yoy-chart-box">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penggunaan (kWh) — Brown vs Green Energy</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px">SS-A kWh (Brown) vs Janaan Solar kWh (Green) | ${currY} vs ${prevY}</div>
+      <div class="legend" style="margin-bottom:10px">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c2703d;margin-right:4px"></span>Brown Energy (SS-A kWh)</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#22c55e;margin-right:4px"></span>Green Energy (Janaan Solar)</span>
+      </div>
+      <div style="display:flex;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${prevY}</div>
+          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-kwh-pie-prev"></canvas></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${currY}</div>
+          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-kwh-pie-curr"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
   // table
   html+=`<div class="yoy-table-box">
     <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual — ${rangeStr} | ${currY} vs ${prevY}</div>
@@ -1263,6 +1304,38 @@ function renderYoY(){
     {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
     {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
+
+  // ── Carta Pai — Brown vs Green Energy (RM & kWh) ──
+  // Brown Energy = SS-A (nilai konvensional/TNB), Green Energy = PV Solar (janaan solar)
+  if(yoyRmPiePrev)yoyRmPiePrev.destroy();
+  if(yoyRmPieCurr)yoyRmPieCurr.destroy();
+  if(yoyKwhPiePrev)yoyKwhPiePrev.destroy();
+  if(yoyKwhPieCurr)yoyKwhPieCurr.destroy();
+  const pieDLBrownGreen={
+    display:true,
+    formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(0)+'%':'0%';},
+    color:'white', font:{size:12,weight:'700'}
+  };
+  const pieOptsBrownGreen={
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, datalabels:pieDLBrownGreen }
+  };
+  yoyRmPiePrev=new Chart(document.getElementById('yoy-rm-pie-prev'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[p.ssaRm,p.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyRmPieCurr=new Chart(document.getElementById('yoy-rm-pie-curr'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[c.ssaRm,c.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyKwhPiePrev=new Chart(document.getElementById('yoy-kwh-pie-prev'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[p.ssaKwh,p.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyKwhPieCurr=new Chart(document.getElementById('yoy-kwh-pie-curr'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[c.ssaKwh,c.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
 }
 
 // ── INIT ──
