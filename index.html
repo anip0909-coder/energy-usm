@@ -1782,7 +1782,6 @@ const JPPF_EDIT_FIELDS=[
 const EPC_EDIT_FIELDS=[
   {key:'chillerTrauma',  label:'Chiller Trauma & PPSG kWh'},
   {key:'chillerGeneral', label:'Chiller General OT kWh'},
-  {key:'totalKwh',       label:'Total kWh'},
   {key:'tahunBaseline',  label:'Tahun Baseline'},
   {key:'baselineTrauma', label:'Baseline Trauma kWh'},
   {key:'baselineGeneral',label:'Baseline General OT kWh'},
@@ -1851,6 +1850,31 @@ async function submitEdit(){
       if(prevRow && !isNaN(prevRow.totalRm)){
         fields.penjimatan = prevRow.totalRm - (ssaRmVal + ssdRmVal + pvSolarVal);
       }
+    }
+  }
+
+  // ── Auto-kira Total kWh — khas tab EPC sahaja (Chiller Trauma & PPSG kWh + Chiller General OT kWh) ──
+  if(editRow.tab==='epc'){
+    const traumaVal=parseFloat(fields.chillerTrauma);
+    const generalVal=parseFloat(fields.chillerGeneral);
+    if(!isNaN(traumaVal) && !isNaN(generalVal)){
+      fields.totalKwh = traumaVal + generalVal;
+    }
+  }
+
+  // ── Auto-kira Total kWh & Total RM — khas tab Kampus+HPUSM sahaja ──
+  if(editRow.tab==='kh'){
+    const kampusKwhVal=parseFloat(fields.kampusKwh);
+    const hpusmKwhVal=parseFloat(fields.hpusmKwh);
+    const kampusRmVal=parseFloat(fields.kampusRm);
+    const hospitalRmVal=parseFloat(fields.hospitalRm);
+    // Total kWh = Kampus kWh + HPUSM kWh — dikira automatik setiap kali disimpan
+    if(!isNaN(kampusKwhVal) && !isNaN(hpusmKwhVal)){
+      fields.totalKwh = kampusKwhVal + hpusmKwhVal;
+    }
+    // Total RM = Kampus RM + HPUSM (Hospital) RM — dikira automatik setiap kali disimpan
+    if(!isNaN(kampusRmVal) && !isNaN(hospitalRmVal)){
+      fields.totalRm = kampusRmVal + hospitalRmVal;
     }
   }
 
@@ -2574,10 +2598,8 @@ window.khClearFilter=function(){
 const KH_EDIT_FIELDS=[
   {key:'kampusKwh', label:'Kampus kWh'},
   {key:'hpusmKwh',  label:'HPUSM kWh'},
-  {key:'totalKwh',  label:'Total kWh'},
   {key:'kampusRm',  label:'Kampus RM'},
   {key:'hospitalRm',label:'Hospital RM'},
-  {key:'totalRm',   label:'Total RM'},
 ];
 
 loadData();
