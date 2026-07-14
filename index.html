@@ -1955,11 +1955,19 @@ function barSparkSVG(values, color){
 }
 
 function deltaBadge(cur,prev){
-  if(prev===undefined || prev===null || prev===0 || isNaN(prev)) return '<span class="dcard-delta flat">— vs tempoh sebelum</span>';
+  if(prev===undefined || prev===null || prev===0 || isNaN(prev)) return '<span class="dcard-delta flat">— vs bulan sebelum</span>';
   const pct=((cur-prev)/Math.abs(prev))*100;
   const cls = pct>0.05 ? 'up' : (pct<-0.05 ? 'down' : 'flat');
   const arrow = pct>0.05 ? '▲' : (pct<-0.05 ? '▼' : '—');
-  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs tempoh sebelum</span>`;
+  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs bulan sebelum</span>`;
+}
+
+function deltaBadgePts(curPct,prevPct){
+  if(prevPct===undefined || prevPct===null || isNaN(prevPct)) return '<span class="dcard-delta flat">— vs bulan sebelum</span>';
+  const diff=curPct-prevPct;
+  const cls = diff>0.05 ? 'up' : (diff<-0.05 ? 'down' : 'flat');
+  const arrow = diff>0.05 ? '▲' : (diff<-0.05 ? '▼' : '—');
+  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(diff).toFixed(1)} p.p. vs bulan sebelum</span>`;
 }
 
 function ringGaugeSVG(pct,color){
@@ -1969,6 +1977,13 @@ function ringGaugeSVG(pct,color){
     <circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"
       stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 32 32)"/>
   </svg>`;
+}
+
+function ringGaugeWithLeaf(pct,color){
+  return `<div style="position:relative;width:64px;height:64px">
+    ${ringGaugeSVG(pct,color)}
+    <i class="ti ti-leaf" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:${color};font-size:19px"></i>
+  </div>`;
 }
 
 function renderDashboardSection(){
@@ -1990,6 +2005,7 @@ function renderDashboardSection(){
   const saving=d.solarKwh*CARBON_EF;
   const net=emission-saving;
   const rePct=(d.solarKwh+d.totalKwh)>0 ? (d.solarKwh/(d.solarKwh+d.totalKwh))*100 : 0;
+  const prevRePct = (prev && (prev.solarKwh+prev.totalKwh)>0) ? (prev.solarKwh/(prev.solarKwh+prev.totalKwh))*100 : null;
   const costElec=d.ssaRm+d.ssdRm;
   const costSaving=d.penjimatan;
 
@@ -2017,10 +2033,11 @@ function renderDashboardSection(){
       ${deltaBadge(cur?cur.ssdKwh:d.ssdKwh, prev?prev.ssdKwh:null)}
       ${sparklineSVG(ssdSpark,'#a78bfa')}
     </div>
-    <div class="dcard">
+    <div class="dcard" style="padding-right:84px">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(1,223,1,.14);color:#01DF01"><i class="ti ti-leaf"></i></div><div class="dcard-label">Renewable Energy Contribution</div></div>
       <div class="dcard-value">${rePct.toFixed(1)}<span>%</span></div>
-      <div class="dring-wrap">${ringGaugeSVG(rePct,'#01DF01')}</div>
+      ${deltaBadgePts(rePct, prevRePct)}
+      <div class="dring-wrap">${ringGaugeWithLeaf(rePct,'#01DF01')}</div>
     </div>`;
 
   document.getElementById('dash-metrics-bottom').innerHTML = `
