@@ -190,11 +190,48 @@ body.dark .kh-yoy-table th{background:#0f172a}
 .toggle-btn.active:not(.ssa):not(.ssd):not(.solar){background:#1a3a5c;border-color:#1a3a5c;color:white}
 .toggle-btn:hover:not(.active){border-color:#1a3a5c;color:#1a3a5c}
 
-/* ── TAB NAV ── */
-.tab-nav{background:white;border-bottom:2px solid #e0e6ed;display:flex;gap:0;padding:0 28px}
-.tab-btn{padding:12px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:7px;transition:all .2s}
+/* ── SUB TAB NAV (Energy Overview) ── */
+.tab-nav{background:white;border-bottom:2px solid #e0e6ed;display:flex;gap:0;padding:0 4px;border-radius:10px 10px 0 0;overflow-x:auto}
+.tab-btn{padding:12px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:7px;transition:all .2s;white-space:nowrap}
 .tab-btn:hover{color:#1a3a5c}
 .tab-btn.active{color:#1a3a5c;border-bottom-color:#1a3a5c}
+
+/* ── SIDEBAR ── */
+.app-shell{display:flex;align-items:stretch;min-height:calc(100vh - 68px)}
+.sidebar{width:230px;flex-shrink:0;background:#0f2640;color:#cfe0f0;padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:#b9cede;transition:all .15s;user-select:none}
+.sidebar-item i{font-size:17px;width:18px;text-align:center}
+.sidebar-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sidebar-item.active{background:#1a5fa8;color:#fff}
+.sidebar-item .chev{margin-left:auto;font-size:14px;transition:transform .2s}
+.sidebar-item.expanded .chev{transform:rotate(90deg)}
+.sidebar-sub{display:none;flex-direction:column;gap:1px;margin:2px 0 6px 12px;padding-left:14px;border-left:2px solid rgba(255,255,255,.12)}
+.sidebar-sub.open{display:flex}
+.sidebar-sub-item{padding:9px 12px;border-radius:7px;font-size:12.5px;font-weight:600;color:#9fb6c9;cursor:pointer;display:flex;align-items:center;gap:8px}
+.sidebar-sub-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.sidebar-sub-item.active{background:rgba(255,255,255,.12);color:#93c5fd}
+.main-area{flex:1;min-width:0}
+.main-area .container{max-width:1120px}
+.content-section{display:none}
+.content-section.active{display:block}
+.placeholder-box{background:white;border-radius:12px;border:1px dashed #d0d8e0;padding:60px 24px;text-align:center;color:#9aa5b1}
+.placeholder-box i{font-size:34px;color:#c3cdd6;margin-bottom:10px;display:block}
+.placeholder-box h3{font-size:15px;color:#5b6773;margin-bottom:6px}
+.placeholder-box p{font-size:12.5px}
+body.dark .sidebar{background:#020617}
+body.dark .sidebar-item{color:#8fa3b8}
+body.dark .sidebar-item:hover{background:rgba(255,255,255,.06)}
+body.dark .sidebar-item.active{background:#1e40af}
+body.dark .sidebar-sub{border-color:rgba(255,255,255,.1)}
+body.dark .placeholder-box{background:#1e293b;border-color:#334155;color:#94a3b8}
+body.dark .placeholder-box h3{color:#cbd5e1}
+@media(max-width:860px){
+  .app-shell{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:8px}
+  .sidebar-item{font-size:12px;padding:9px 10px}
+  .sidebar-sub{margin-left:6px;border-left:none;flex-direction:row;flex-wrap:wrap}
+  .sidebar-sub.open{display:flex}
+}
 
 /* ── JPPF DATA MANAGEMENT — no print ── */
 .jppf-mgmt{margin-bottom:22px}
@@ -242,8 +279,9 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   }
   body{background:white!important}
   .topbar{background:#1a3a5c!important}
-  .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
+  .live-pill,.countdown-pill,.dm-btn,.tab-nav,.sidebar{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
+  .app-shell{display:block!important}
   .container{padding:0!important;max-width:100%!important}
   .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
   .metrics{grid-template-columns:repeat(4,1fr)!important}
@@ -379,14 +417,48 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 </div>
 
-<!-- TAB NAV -->
-<div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
-  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
-  <button class="tab-btn" id="tab-kh" onclick="switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</button>
-</div>
+<!-- APP SHELL: SIDEBAR + MAIN -->
+<div class="app-shell">
 
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-item" id="side-dashboard" onclick="switchSection('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+
+  <div class="sidebar-item expanded active" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev"></i></div>
+  <div class="sidebar-sub open" id="side-energy-sub">
+    <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
+    <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
+    <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
+  </div>
+
+  <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
+  <div class="sidebar-item" id="side-carbon" onclick="switchSection('carbon')"><i class="ti ti-leaf-2"></i> Carbon &amp; Sustainability</div>
+  <div class="sidebar-item" id="side-analysis" onclick="switchSection('analysis')"><i class="ti ti-chart-line"></i> Analysis</div>
+  <div class="sidebar-item" id="side-settings" onclick="switchSection('settings')"><i class="ti ti-settings"></i> Settings</div>
+</aside>
+
+<!-- MAIN AREA -->
+<div class="main-area">
 <div class="container">
+
+  <!-- ═══════ SECTION: DASHBOARD ═══════ -->
+  <div class="content-section" id="section-dashboard">
+    <div class="placeholder-box"><i class="ti ti-layout-dashboard"></i>
+      <h3>Dashboard</h3>
+      <p>Ringkasan keseluruhan akan dipaparkan di sini.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: ENERGY OVERVIEW ═══════ -->
+  <div class="content-section active" id="section-energy">
+
+  <!-- SUB TAB NAV -->
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
+    <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
+    <button class="tab-btn" id="tab-kh" onclick="switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</button>
+  </div>
+
   <!-- print header (hidden on screen) -->
   <div class="print-header">
     <h1>Laporan Pemantauan Tenaga Elektrik USMKK</h1>
@@ -438,7 +510,44 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>
     </div>
   </div>
-</div>
+
+  </div><!-- end section-energy -->
+
+  <!-- ═══════ SECTION: SOLAR MONITORING ═══════ -->
+  <div class="content-section" id="section-solar">
+    <div class="placeholder-box"><i class="ti ti-sun"></i>
+      <h3>Solar Monitoring</h3>
+      <p>Data pemantauan solar/PV akan dipaparkan di sini.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: CARBON & SUSTAINABILITY ═══════ -->
+  <div class="content-section" id="section-carbon">
+    <div class="placeholder-box"><i class="ti ti-leaf-2"></i>
+      <h3>Carbon &amp; Sustainability</h3>
+      <p>Metrik jejak karbon dan kelestarian akan dipaparkan di sini.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: ANALYSIS ═══════ -->
+  <div class="content-section" id="section-analysis">
+    <div class="placeholder-box"><i class="ti ti-chart-line"></i>
+      <h3>Analysis</h3>
+      <p>Analisis lanjutan akan dipaparkan di sini.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: SETTINGS ═══════ -->
+  <div class="content-section" id="section-settings">
+    <div class="placeholder-box"><i class="ti ti-settings"></i>
+      <h3>Settings</h3>
+      <p>Gunakan butang Admin <i class="ti ti-settings"></i> pada bar status dalam Energy Overview untuk konfigurasi Google Sheets.</p>
+    </div>
+  </div>
+
+</div><!-- end container -->
+</div><!-- end main-area -->
+</div><!-- end app-shell -->
 
 <!-- EDIT MODAL -->
 <div class="edit-modal-bg" id="edit-modal">
@@ -1391,8 +1500,32 @@ function switchTab(tab){
   document.getElementById('tab-jppf').classList.toggle('active', tab==='jppf');
   document.getElementById('tab-epc').classList.toggle('active',  tab==='epc');
   document.getElementById('tab-kh').classList.toggle('active',   tab==='kh');
+  const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh');
+  if(sj)sj.classList.toggle('active', tab==='jppf');
+  if(se)se.classList.toggle('active', tab==='epc');
+  if(sk)sk.classList.toggle('active', tab==='kh');
   if(tab==='epc' && epcRows.length===0) loadEPC();
   if(tab==='kh'  && khRows.length===0)  loadKH();
+}
+
+// ══════════════════════════════════════════════
+// SIDEBAR SECTION NAVIGATION
+// ══════════════════════════════════════════════
+let activeSection = 'energy';
+function switchSection(section){
+  activeSection = section;
+  ['dashboard','energy','solar','carbon','analysis','settings'].forEach(s=>{
+    const panel = document.getElementById('section-'+s);
+    if(panel) panel.classList.toggle('active', s===section);
+    const nav = document.getElementById('side-'+s);
+    if(nav) nav.classList.toggle('active', s===section);
+  });
+  const energySub = document.getElementById('side-energy-sub');
+  const energyItem = document.getElementById('side-energy');
+  if(energySub){
+    energySub.classList.toggle('open', section==='energy');
+    energyItem.classList.toggle('expanded', section==='energy');
+  }
 }
 
 // ══════════════════════════════════════════════
