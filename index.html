@@ -548,11 +548,10 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <div class="chart-box">
         <div class="chart-title">Sumbangan Tenaga Boleh Baharu (RE)</div>
         <div class="chart-sub">Solar PV vs Total kWh (Grid)</div>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#e8a020"></span>Solar PV (RE)</span>
-          <span><span class="leg-dot" style="background:#1a5fa8"></span>Total kWh (Grid)</span>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+          <div class="chart-canvas-wrap" style="position:relative;flex:1 1 220px;min-width:180px;height:240px"><canvas id="carbonChartDonut"></canvas></div>
+          <div id="carbonDonutLegend" style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;font-weight:600"></div>
         </div>
-        <div class="chart-canvas-wrap" style="position:relative;width:100%;height:240px"><canvas id="carbonChartDonut"></canvas></div>
       </div>
       <div class="chart-box">
         <div class="chart-title">Nota Formula &amp; Faktor Pelepasan (EF)</div>
@@ -1723,11 +1722,30 @@ function renderCarbonCharts(filtered, d, rePct){
   const canvasDonut=document.getElementById('carbonChartDonut');
   if(canvasDonut){
     if(carbonChartDonut) carbonChartDonut.destroy();
+    const totalRe=d.solarKwh + d.totalKwh;
+    const reShare=totalRe>0 ? (d.solarKwh/totalRe*100) : 0;
+    const centerTextPlugin={
+      id:'carbonDonutCenterText',
+      afterDraw(chart){
+        const {ctx,chartArea}=chart;
+        if(!chartArea) return;
+        const cx=(chartArea.left+chartArea.right)/2, cy=(chartArea.top+chartArea.bottom)/2;
+        ctx.save();
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle='#01DF01';
+        ctx.font='700 22px Segoe UI, Arial, sans-serif';
+        ctx.fillText(reShare.toFixed(1)+'%', cx, cy-8);
+        ctx.fillStyle='#888';
+        ctx.font='600 11px Segoe UI, Arial, sans-serif';
+        ctx.fillText('Tenaga Boleh Baharu', cx, cy+14);
+        ctx.restore();
+      }
+    };
     carbonChartDonut=new Chart(canvasDonut,{
       type:'doughnut',
       data:{
         labels:['Solar PV (RE)','Total kWh (Grid)'],
-        datasets:[{data:[d.solarKwh, d.totalKwh],backgroundColor:['#e8a020','#1a5fa8'],borderWidth:2,borderColor:'white'}]
+        datasets:[{data:[d.solarKwh, d.totalKwh],backgroundColor:['#01DF01','#1a5fa8'],borderWidth:2,borderColor:'white'}]
       },
       options:{
         responsive:true,maintainAspectRatio:false,cutout:'62%',
@@ -1739,8 +1757,22 @@ function renderCarbonCharts(filtered, d, rePct){
           }},
           tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.parsed)} kWh`}}
         }
-      }
+      },
+      plugins:[centerTextPlugin]
     });
+
+    const legendEl=document.getElementById('carbonDonutLegend');
+    if(legendEl){
+      legendEl.innerHTML=`
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:11px;height:11px;border-radius:3px;background:#01DF01;display:inline-block;flex-shrink:0"></span>
+          <span>Solar PV (RE)<br><span style="font-weight:400;color:#999;font-size:11px">${fmt(d.solarKwh)} kWh</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:11px;height:11px;border-radius:3px;background:#1a5fa8;display:inline-block;flex-shrink:0"></span>
+          <span>Total kWh (Grid)<br><span style="font-weight:400;color:#999;font-size:11px">${fmt(d.totalKwh)} kWh</span></span>
+        </div>`;
+    }
   }
 }
 
