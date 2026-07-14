@@ -190,11 +190,68 @@ body.dark .kh-yoy-table th{background:#0f172a}
 .toggle-btn.active:not(.ssa):not(.ssd):not(.solar){background:#1a3a5c;border-color:#1a3a5c;color:white}
 .toggle-btn:hover:not(.active){border-color:#1a3a5c;color:#1a3a5c}
 
-/* ── TAB NAV ── */
-.tab-nav{background:white;border-bottom:2px solid #e0e6ed;display:flex;gap:0;padding:0 28px}
-.tab-btn{padding:12px 22px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:7px;transition:all .2s}
-.tab-btn:hover{color:#1a3a5c}
-.tab-btn.active{color:#1a3a5c;border-bottom-color:#1a3a5c}
+/* ── NEW PREMIUM MAIN NAV & SUB NAV ── */
+.tab-nav.main-tabs {
+  background: white;
+  border-bottom: 2px solid #e0e6ed;
+  display: flex;
+  gap: 4px;
+  padding: 0 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.tab-nav.main-tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab-nav.main-tabs .tab-btn {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tab-nav.main-tabs .tab-btn:hover {
+  color: #1a3a5c;
+}
+.tab-nav.main-tabs .tab-btn.active {
+  color: #1a3a5c;
+  border-bottom-color: #1a3a5c;
+}
+.sub-tab-nav {
+  display: flex;
+  gap: 8px;
+  background: #f8fafc;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+}
+.sub-tab-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.sub-tab-btn:hover {
+  border-color: #1a3a5c;
+  color: #1a3a5c;
+}
+.sub-tab-btn.active {
+  background: #1a3a5c;
+  color: white;
+  border-color: #1a3a5c;
+}
 
 /* ── JPPF DATA MANAGEMENT — no print ── */
 .jppf-mgmt{margin-bottom:22px}
@@ -242,13 +299,14 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   }
   body{background:white!important}
   .topbar{background:#1a3a5c!important}
-  .live-pill,.countdown-pill,.dm-btn,.tab-nav{display:none!important}
+  .live-pill,.countdown-pill,.dm-btn,.tab-nav, .sub-tab-nav, .admin-strip, .jppf-mgmt, .epc-mgmt, #kh-mgmt-outer{display:none!important}
   .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
   .container{padding:0!important;max-width:100%!important}
   .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
   .metrics{grid-template-columns:repeat(4,1fr)!important}
   .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
   .print-header{display:block!important}
+  .main-panel{display:block!important}
   canvas{max-width:100%}
 }
 .print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
@@ -260,9 +318,38 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 /* ── DARK MODE ── */
 body.dark{background:#0f172a;color:#e2e8f0}
 body.dark .topbar{background:linear-gradient(135deg,#020617,#0f172a)}
-body.dark .tab-nav{background:#1e293b;border-color:#334155}
-body.dark .tab-btn{color:#94a3b8}
-body.dark .tab-btn.active{color:#93c5fd;border-bottom-color:#93c5fd}
+body.dark .tab-nav.main-tabs {
+  background: #1e293b;
+  border-color: #334155;
+}
+body.dark .tab-nav.main-tabs .tab-btn {
+  color: #94a3b8;
+}
+body.dark .tab-nav.main-tabs .tab-btn:hover {
+  color: white;
+}
+body.dark .tab-nav.main-tabs .tab-btn.active {
+  color: #93c5fd;
+  border-bottom-color: #93c5fd;
+}
+body.dark .sub-tab-nav {
+  background: #0f172a;
+  border-color: #334155;
+}
+body.dark .sub-tab-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+body.dark .sub-tab-btn:hover {
+  color: white;
+  border-color: #93c5fd;
+}
+body.dark .sub-tab-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
 body.dark .filter-row,body.dark .card,body.dark .chart-box,body.dark .trend-box,
 body.dark .hcard,body.dark .yoy-card,body.dark .yoy-chart-box,body.dark .yoy-table-box,
 body.dark .range-box,body.dark .yoy-top,body.dark .modal,body.dark .edit-modal-box{background:#1e293b;border-color:#334155;color:#e2e8f0}
@@ -287,6 +374,11 @@ body.dark footer{color:#475569;border-color:#334155}
 body.dark .error-state{background:#2d1515;border-color:#7f1d1d}
 body.dark .empty-state{background:#1e293b;border-color:#334155}
 body.dark .toggle-group .toggle-btn{background:#0f172a;border-color:#475569;color:#94a3b8}
+body.dark .dash-welcome {
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1px solid #334155;
+  color: #e2e8f0 !important;
+}
 
 /* dark mode toggle button */
 .dm-btn{font-size:16px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;font-size:13px}
@@ -379,11 +471,14 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 </div>
 
-<!-- TAB NAV -->
-<div class="tab-nav">
-  <button class="tab-btn active" id="tab-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
-  <button class="tab-btn" id="tab-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
-  <button class="tab-btn" id="tab-kh" onclick="switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</button>
+<!-- TAB NAV UTAMA (Baru) -->
+<div class="tab-nav main-tabs">
+  <button class="tab-btn active" id="main-tab-dash" onclick="switchMainTab('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+  <button class="tab-btn" id="main-tab-energy" onclick="switchMainTab('energy')"><i class="ti ti-bolt"></i> Energy Overview</button>
+  <button class="tab-btn" id="main-tab-solar" onclick="switchMainTab('solar')"><i class="ti ti-solar-panel"></i> Solar Monitoring</button>
+  <button class="tab-btn" id="main-tab-carbon" onclick="switchMainTab('carbon')"><i class="ti ti-leaf"></i> Carbon & Sustainability</button>
+  <button class="tab-btn" id="main-tab-analysis" onclick="switchMainTab('analysis')"><i class="ti ti-chart-bar"></i> Analysis</button>
+  <button class="tab-btn" id="main-tab-settings" onclick="switchMainTab('settings')"><i class="ti ti-settings"></i> Settings</button>
 </div>
 
 <div class="container">
@@ -403,39 +498,229 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     </div>
   </div>
 
-  <div class="filter-row">
-    <label><i class="ti ti-filter"></i> Tapis:</label>
-    <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
-    <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
-    <div class="filter-divider"></div>
-    <label><i class="ti ti-building"></i> Paparan:</label>
-    <div class="toggle-group">
-      <button class="toggle-btn active ssa" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
-      <button class="toggle-btn active ssd" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
-      <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
+  <!-- 1. DASHBOARD MAIN TAB PANEL -->
+  <div id="panel-dashboard" class="main-panel">
+    <div class="dash-welcome" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 24px; border-radius: 12px; margin-bottom: 22px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Selamat Datang ke Dashboard Eksekutif Tenaga</h2>
+      <p style="font-size: 13px; opacity: 0.9; line-height: 1.5;">Sistem integrasi pemantauan penggunaan tenaga elektrik, janaan solar PV, kecekapan penjimatan dan kelestarian karbon bagi Kampus Kesihatan USM Kubang Kerian & Hospital Pengajar (HPUSM).</p>
+    </div>
+    
+    <!-- Dynamic summary widgets -->
+    <div class="metrics" id="dash-summary-cards">
+      <div class="loading-state" style="grid-column: 1/-1;"><i class="ti ti-loader"></i> Sila tunggu, memuatkan data...</div>
+    </div>
+
+    <div class="charts" style="margin-bottom: 22px;">
+      <!-- Supply Mix Pie Chart -->
+      <div class="chart-box">
+        <div class="chart-title">Status Bekalan & Janaan Semasa</div>
+        <div class="chart-sub">Perbandingan Janaan Solar vs Pembekalan Grid TNB</div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="dashMixChart"></canvas></div>
+      </div>
+      <!-- Sustainability impact box -->
+      <div class="chart-box" style="display:flex; flex-direction:column; justify-content: space-between;">
+        <div>
+          <div class="chart-title">Kelestarian & Impak Hijau</div>
+          <div class="chart-sub">Anggaran penyerapan karbon terkumpul hasil inisiatif solar</div>
+        </div>
+        <div id="dash-eco-impact" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;">
+          <!-- Loaded dynamically -->
+        </div>
+        <button class="icon-btn" onclick="switchMainTab('carbon')" style="width: 100%; justify-content: center; background: #e2f5e9; color: #15803d; border-color: #bbf7d0;">Lihat Butiran Kelestarian <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- Sub-system Quick Access navigation tiles -->
+    <div class="sec-title"><i class="ti ti-category"></i> Akses Pantas Sub-Sistem</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 22px;">
+      <div class="card" style="cursor: pointer; border-top: 3px solid #1a5fa8;" onclick="switchMainTab('energy'); switchSubTab('jppf');">
+        <h4 style="font-size: 14px; color: #1a5fa8; margin-bottom: 6px;"><i class="ti ti-bolt"></i> JPPF KWH</h4>
+        <p style="font-size: 11px; color: #666; line-height: 1.4;">Pemantauan meter pencawang SS-A & SS-D untuk Kampus dan HPUSM secara terperinci.</p>
+      </div>
+      <div class="card" style="cursor: pointer; border-top: 3px solid #0e7490;" onclick="switchMainTab('energy'); switchSubTab('epc');">
+        <h4 style="font-size: 14px; color: #0e7490; margin-bottom: 6px;"><i class="ti ti-leaf"></i> EPC Chiller</h4>
+        <p style="font-size: 11px; color: #666; line-height: 1.4;">Analisis kecekapan penjimatan tenaga sistem chiller pendingin hawa di HPUSM.</p>
+      </div>
+      <div class="card" style="cursor: pointer; border-top: 3px solid #e8a020;" onclick="switchMainTab('solar');">
+        <h4 style="font-size: 14px; color: #e8a020; margin-bottom: 6px;"><i class="ti ti-solar-panel"></i> Janaan Solar PV</h4>
+        <p style="font-size: 11px; color: #666; line-height: 1.4;">Pantau statistik janaan solar bersih, kadar eksport tenaga, dan penjimatan RM.</p>
+      </div>
+      <div class="card" style="cursor: pointer; border-top: 3px solid #7c3aed;" onclick="switchMainTab('analysis');">
+        <h4 style="font-size: 14px; color: #7c3aed; margin-bottom: 6px;"><i class="ti ti-chart-arrows-vertical"></i> Analisis YoY</h4>
+        <p style="font-size: 11px; color: #666; line-height: 1.4;">Lakukan perbandingan mendalam tahun-ke-tahun dengan pemilihan julat bulan fleksibel.</p>
+      </div>
     </div>
   </div>
 
-  <!-- JPPF TAB PANEL -->
-  <div id="panel-jppf">
+  <!-- 2. ENERGY OVERVIEW TAB PANEL (Consolidates JPPF, EPC and KH as sub-tabs) -->
+  <div id="panel-energy" class="main-panel" style="display:none">
+    <!-- Sub-navigation links bar -->
+    <div class="sub-tab-nav" style="margin-bottom: 18px;">
+      <button class="sub-tab-btn active" id="sub-tab-jppf" onclick="switchSubTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</button>
+      <button class="sub-tab-btn" id="sub-tab-epc" onclick="switchSubTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</button>
+      <button class="sub-tab-btn" id="sub-tab-kh" onclick="switchSubTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</button>
+    </div>
 
-  <div id="main-content">
-    <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
-  </div>
+    <!-- JPPF Sub-panel -->
+    <div id="sub-panel-jppf" class="sub-panel">
+      <div class="filter-row">
+        <label><i class="ti ti-filter"></i> Tapis:</label>
+        <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
+        <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
+        <div class="filter-divider"></div>
+        <label><i class="ti ti-building"></i> Paparan:</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active ssa" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
+          <button class="toggle-btn active ssd" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
+          <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
+        </div>
+      </div>
+      <div id="main-content">
+        <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
+      </div>
+    </div>
 
-  </div><!-- end panel-jppf -->
+    <!-- EPC Sub-panel -->
+    <div id="sub-panel-epc" class="sub-panel" style="display:none">
+      <div id="epc-content">
+        <div class="loading-state"><i class="ti ti-loader"></i>Memuat data EPC...</div>
+      </div>
+    </div>
 
-  <!-- EPC TAB PANEL -->
-  <div id="panel-epc" style="display:none">
-    <div id="epc-content">
-      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data EPC...</div>
+    <!-- Kampus+HPUSM Sub-panel -->
+    <div id="sub-panel-kh" class="sub-panel" style="display:none">
+      <div id="kh-content">
+        <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>
+      </div>
     </div>
   </div>
 
-  <!-- KAMPUS+HPUSM TAB PANEL -->
-  <div id="panel-kh" style="display:none">
-    <div id="kh-content">
-      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>
+  <!-- 3. SOLAR MONITORING TAB PANEL -->
+  <div id="panel-solar" class="main-panel" style="display:none">
+    <div class="dash-welcome" style="background: linear-gradient(135deg, #d97706, #f59e0b); color: white; padding: 20px; border-radius: 12px; margin-bottom: 22px;">
+      <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 4px;"><i class="ti ti-solar-panel"></i> Hab Pemantauan Janaan Solar PV</h3>
+      <p style="font-size: 12px; opacity: 0.9;">Analisis prestasi janaan sistem Solar PV, sumbangan tenaga boleh baharu, metrik jualan tenaga eksport kepada grid (TNB) serta penjimatan bersih komitmen bulanan.</p>
+    </div>
+    
+    <div class="metrics" id="solar-metrics-grid">
+      <div class="loading-state" style="grid-column: 1/-1;"><i class="ti ti-loader"></i> Sila tunggu, memuatkan data...</div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-box">
+        <div class="chart-title">Janaan Solar vs Tenaga Eksport (kWh)</div>
+        <div class="chart-sub">Perbandingan janaan elektrik bersih berbanding kuantiti yang dijual balik ke grid</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="solarGenExportChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Aliran Kewangan Solar (RM)</div>
+        <div class="chart-sub">Korelasi Bil PV Solar, Nilai Hasil Eksport & Penjimatan Bersih Terkumpul</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="solarFinancialChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. CARBON & SUSTAINABILITY TAB PANEL -->
+  <div id="panel-carbon" class="main-panel" style="display:none">
+    <div class="dash-welcome" style="background: linear-gradient(135deg, #047857, #10b981); color: white; padding: 20px; border-radius: 12px; margin-bottom: 22px;">
+      <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 4px;"><i class="ti ti-leaf"></i> Penjejak Carbon & Kelestarian Hijau</h3>
+      <p style="font-size: 12px; opacity: 0.9;">Mengira anggaran impak positif kelestarian alam sekitar hasil daripada janaan tenaga solar PV dan inisiatif penjimatan tenaga sistem kecekapan Chiller EPC.</p>
+    </div>
+
+    <div class="metrics" id="carbon-metrics-grid">
+      <div class="loading-state" style="grid-column: 1/-1;"><i class="ti ti-loader"></i> Sila tunggu, memuatkan data...</div>
+    </div>
+
+    <div class="charts" style="margin-bottom: 22px;">
+      <div class="chart-box">
+        <div class="chart-title">Nisbah Tenaga Hijau vs Tenaga Konvensional (kWh)</div>
+        <div class="chart-sub">Bahagian Tenaga Boleh Baharu (Solar) vs Grid Elektrik Konvensional</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="carbonEnergyMixChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Trend Pengurangan Karbon Bulanan (kg CO2e)</div>
+        <div class="chart-sub">Penjimatan pelepasan karbon terkumpul daripada solar & kecekapan pendingin hawa</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="carbonTrendChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Eco equivalents presentation card -->
+    <div class="trend-box" style="border-left: 5px solid #059669;">
+      <div class="chart-title"><i class="ti ti-trees" style="color: #059669;"></i> Kesan Kesetaraan Ekologi Terkumpul</div>
+      <div class="chart-sub">Bagaimana sumbangan kelestarian kita diterjemahkan ke dalam kesetaraan dunia sebenar:</div>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 15px;">
+        <div style="text-align: center; padding: 14px; background: #f0fdf4; border-radius: 10px;">
+          <div style="font-size: 32px; margin-bottom: 6px;">🌳</div>
+          <h5 style="font-size: 15px; font-weight: 700; color: #065f46;" id="eco-trees-val">0 Pokok</h5>
+          <p style="font-size: 11px; color: #666; margin-top: 4px;">Pokok matang ditanam & membesar selama 10 tahun</p>
+        </div>
+        <div style="text-align: center; padding: 14px; background: #f0fdf4; border-radius: 10px;">
+          <div style="font-size: 32px; margin-bottom: 6px;">🚗</div>
+          <h5 style="font-size: 15px; font-weight: 700; color: #065f46;" id="eco-cars-val">0 km</h5>
+          <p style="font-size: 11px; color: #666; margin-top: 4px;">Pelepasan kereta penumpang konvensional dipandu (km)</p>
+        </div>
+        <div style="text-align: center; padding: 14px; background: #f0fdf4; border-radius: 10px;">
+          <div style="font-size: 32px; margin-bottom: 6px;">💡</div>
+          <h5 style="font-size: 15px; font-weight: 700; color: #065f46;" id="eco-bulbs-val">0 Mentol</h5>
+          <p style="font-size: 11px; color: #666; margin-top: 4px;">Mentol lampu LED dinyalakan selama setahun penuh</p>
+        </div>
+        <div style="text-align: center; padding: 14px; background: #f0fdf4; border-radius: 10px;">
+          <div style="font-size: 32px; margin-bottom: 6px;">🔥</div>
+          <h5 style="font-size: 15px; font-weight: 700; color: #065f46;" id="eco-coal-val">0 kg</h5>
+          <p style="font-size: 11px; color: #666; margin-top: 4px;">Pembakaran batu arang di stesen jana kuasa yang dielakkan</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ANALYSIS (YoY) TAB PANEL -->
+  <div id="panel-analysis" class="main-panel" style="display:none">
+    <div class="dash-welcome" style="background: linear-gradient(135deg, #4c1d95, #7c3aed); color: white; padding: 20px; border-radius: 12px; margin-bottom: 22px;">
+      <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 4px;"><i class="ti ti-chart-arrows-vertical"></i> Analisis Trend & Perbandingan YoY</h3>
+      <p style="font-size: 12px; opacity: 0.9;">Bandingkan prestasi penggunaan elektrik, kos bil, janaan solar PV, dan penjimatan merentas tahun dengan pemilihan julat bulan yang fleksibel.</p>
+    </div>
+    
+    <!-- YoY section targets here dynamically -->
+    <div id="yoy-section"></div>
+  </div>
+
+  <!-- 6. SETTINGS TAB PANEL -->
+  <div id="panel-settings" class="main-panel" style="display:none">
+    <div class="sec-title" style="margin-top: 10px;"><i class="ti ti-settings"></i> Tetapan Sistem & Konfigurasi Google Sheets</div>
+    <p style="font-size: 12px; color: #666; margin-bottom: 16px;">Konfigurasi parameter asas, id pautan fail Google Sheets, dan selaraskan kebenaran mod administrator.</p>
+
+    <!-- Google Sheets Integration config card -->
+    <div class="trend-box" style="margin-bottom: 22px;">
+      <h4 style="font-size: 14px; font-weight: 700; color: #1a3a5c; margin-bottom: 12px;"><i class="ti ti-database-cog"></i> Pautan Integrasi Google Sheets</h4>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+        <div>
+          <label style="font-size: 11px; font-weight: 700; color: #555; display: block; margin-bottom: 4px; text-transform: uppercase;">Google Sheets ID:</label>
+          <input type="text" id="settings-sheet-id" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #c0cdd8; font-size: 13px; font-family: monospace;" placeholder="Masukkan Google Sheet ID">
+        </div>
+        <div>
+          <label style="font-size: 11px; font-weight: 700; color: #555; display: block; margin-bottom: 4px; text-transform: uppercase;">Nama Tab Utama (Sheet):</label>
+          <input type="text" id="settings-sheet-name" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #c0cdd8; font-size: 13px;" placeholder="cth: JPPF">
+        </div>
+        <button class="modal-btn" onclick="saveSettingsTab()" style="margin-top: 10px; max-width: 320px;"><i class="ti ti-device-floppy"></i> Simpan Pautan & Muat Semula</button>
+      </div>
+    </div>
+
+    <!-- Admin Unlock Strip -->
+    <div id="settings-admin-strip-container" style="margin-bottom: 22px;">
+      <!-- Loaded dynamically -->
+    </div>
+
+    <!-- System information widget -->
+    <div class="trend-box">
+      <h4 style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 10px;"><i class="ti ti-info-circle"></i> Maklumat Aplikasi</h4>
+      <div style="font-size: 12px; line-height: 1.8; color: #555;">
+        <div>Nama Aplikasi: <strong>Pemantauan Tenaga Elektrik USMKK & HPUSM</strong></div>
+        <div>Versi: <strong>3.0.0 (Tabbed Hub Upgrade)</strong></div>
+        <div>Refresh Rate: <strong>Auto-refresh setiap 1800 saat (30 minit)</strong></div>
+        <div>Grounding Engine: <strong>Google Sheets Visual Query API v1.5</strong></div>
+        <div>Status PWA: <span style="color: #16a34a; font-weight: 700;">Aktif (Service Worker Ready)</span></div>
+      </div>
     </div>
   </div>
 </div>
@@ -499,15 +784,18 @@ function fmtRM2d(n){return(!n||isNaN(n))?'—':'RM '+Number(n).toLocaleString('m
 
 // ── PRINT PDF ──
 function printPDF(){
-  const tahun = document.getElementById('sel-tahun').value;
-  const bulan = document.getElementById('sel-bulan').value;
-  const tStr = tahun.includes('Semua') ? 'Semua Tahun' : tahun;
-  const bStr = bulan.includes('Semua') ? 'Semua Bulan' : bulan;
-  let scopeStr = '';
-  if(!tahun.includes('Semua') && !bulan.includes('Semua')) scopeStr = `Tempoh: ${bStr} ${tStr}`;
-  else if(!tahun.includes('Semua')) scopeStr = `Tahun: ${tStr}`;
-  else if(!bulan.includes('Semua')) scopeStr = `Bulan: ${bStr} (Semua Tahun)`;
-  else scopeStr = 'Tempoh: Semua Data';
+  const JPPFActive = (activeMainTab === 'energy' && activeSubTab === 'jppf');
+  const EPCActive = (activeMainTab === 'energy' && activeSubTab === 'epc');
+  const KHActive = (activeMainTab === 'energy' && activeSubTab === 'kh');
+
+  let scopeStr = 'Laporan Dashboard Eksekutif Tenaga';
+  if (JPPFActive) scopeStr = 'Penyata Penggunaan JPPF KWH';
+  else if (EPCActive) scopeStr = 'Analisis Kecekapan EPC Chiller';
+  else if (KHActive) scopeStr = 'Perbandingan Kampus & HPUSM';
+  else if (activeMainTab === 'solar') scopeStr = 'Laporan Pemantauan Tenaga Solar';
+  else if (activeMainTab === 'carbon') scopeStr = 'Penjejak Impak Kelestarian Karbon';
+  else if (activeMainTab === 'analysis') scopeStr = 'Analisis YoY Komprehensif';
+
   document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
   document.getElementById('print-scope').textContent = scopeStr;
   window.print();
@@ -524,7 +812,11 @@ window.addEventListener('afterprint', () => {
 });
 
 // ── ADMIN ──
-function openAdmin(){document.getElementById('input-sheet-id').value=CONFIG.sheetId;document.getElementById('input-sheet-name').value=CONFIG.sheetName;document.getElementById('admin-modal').classList.add('show')}
+function openAdmin(){
+  document.getElementById('input-sheet-id').value=CONFIG.sheetId;
+  document.getElementById('input-sheet-name').value=CONFIG.sheetName;
+  document.getElementById('admin-modal').classList.add('show');
+}
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('show')}
 function saveAdmin(){
   const id=document.getElementById('input-sheet-id').value.trim();
@@ -566,13 +858,10 @@ function detectColumns(lines){
       else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('rm'))m.ssdRm=idx;
       else if(h.includes('total')&&h.includes('rm'))m.totalRm=idx;
       else if(h.includes('solar')&&h.includes('kwh'))m.solarKwh=idx;
-      // NEW: Amaun Eksport (RM) — checked before eksport kwh
       else if((h.includes('eksport')||h.includes('export'))&&h.includes('rm'))m.eksportRm=idx;
       else if((h.includes('amaun'))&&(h.includes('eksport')||h.includes('export')))m.eksportRm=idx;
-      // Penjimatan Sebenar USM
       else if(h.includes('penjimatan'))m.penjimatan=idx;
       else if(h.includes('saving')&&h.includes('usm'))m.penjimatan=idx;
-      // eksport kWh (must come after eksport RM check)
       else if((h.includes('eksport')||h.includes('export'))&&!h.includes('rm'))m.eksportKwh=idx;
       else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
       else if(h.includes('pv')&&h.includes('solar')&&h.includes('rm'))m.bilPvSolar=idx;
@@ -632,9 +921,19 @@ async function loadData(isManual=false){
 
 function manualRefresh(){
   clearInterval(countdownTimer);
-  if (activeTab === 'jppf') loadData(true);
-  else if (activeTab === 'epc') loadEPC();
-  else if (activeTab === 'kh') loadKH();
+  if (activeMainTab === 'energy') {
+    if (activeSubTab === 'jppf') loadData(true);
+    else if (activeSubTab === 'epc') loadEPC();
+    else if (activeSubTab === 'kh') loadKH();
+  } else if (activeMainTab === 'solar') {
+    loadData(true);
+  } else if (activeMainTab === 'carbon') {
+    loadData(true);
+  } else if (activeMainTab === 'analysis') {
+    loadData(true);
+  } else {
+    loadData(true);
+  }
 }
 
 function resetCountdown(){
@@ -645,7 +944,7 @@ function resetCountdown(){
     document.getElementById('countdown-label').textContent=m>0?`${m}m ${s}s`:`${s}s`;
     if(secondsLeft<=0){
         clearInterval(countdownTimer);
-        manualRefresh(); // automatically refreshes the active tab
+        manualRefresh(); // automatically refreshes active subsystems
     }
   },1000);
 }
@@ -714,8 +1013,9 @@ function renderShell(){
     </div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
-    <div class="health-row" id="health-row"></div>
-    <div id="yoy-section"></div>`;
+    <div class="health-row" id="health-row"></div>`;
+    
+  // build YoY structure inside YoY Tab Panel dynamically instead of JPPF shell
   buildYoY();
   updateDisplay();
 }
@@ -748,6 +1048,11 @@ function updateDisplay(){
   renderCharts(filtered,d);
   renderHealth(d);
   if(window._refreshYoYDropdowns) window._refreshYoYDropdowns();
+
+  // Propagate and sync values to new dashboard, solar hub, and carbon tabs
+  updateDashboardSummary();
+  updateSolarTab();
+  updateCarbonTab();
 }
 
 // ── SS FILTER STATE ──
@@ -1016,13 +1321,12 @@ function getRowsInRange(year){
   return allRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
 }
 
-function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssdKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
+function sumR(rows){return rows.reduce((a,r)=>({ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm}),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});}
 function fmtN(n){return Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2(n){return 'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function delta(c,p){if(!p)return{pct:'—',cls:'flat',arrow:'→'};const pct=(c-p)/p*100;return{pct:(pct>=0?'+':'')+pct.toFixed(1)+'%',cls:pct>0.05?'up':pct<-0.05?'down':'flat',arrow:pct>0.05?'↑':pct<-0.05?'↓':'→'};}
 
 // ── Filter SS-A/SS-D khas untuk bahagian Analisis Perbandingan Tahun (YoY) ──
-// Default: kedua-dua aktif = kekalkan paparan Total kWh asal (tiada perubahan fungsi sedia ada)
 let yoyShowSSA=true, yoyShowSSD=true;
 function yoyToggleSS(which){
   if(which==='ssa'){
@@ -1041,7 +1345,7 @@ function yoyToggleSS(which){
   }
   renderYoY();
 }
-// helper: nilai kWh mengikut filter — kedua-dua aktif = Total kWh (asal)
+
 function yoyKwhVal(row){
   if(!row) return 0;
   if(yoyShowSSA&&yoyShowSSD) return row.totalKwh;
@@ -1055,7 +1359,7 @@ function yoyKwhLabel(){
   if(yoyShowSSD) return 'SS-D kWh';
   return 'kWh';
 }
-// helper: nilai Bil RM mengikut filter — kedua-dua aktif = Total RM (asal)
+
 function yoyBilVal(row){
   if(!row) return 0;
   if(yoyShowSSA&&yoyShowSSD) return row.totalRm;
@@ -1069,11 +1373,7 @@ function yoyBilLabel(){
   if(yoyShowSSD) return 'Bil (SS-D)';
   return 'Bil';
 }
-// helper: nilai Penjimatan RM mengikut filter SS-A/SS-D
-// kedua-dua aktif        = Penjimatan sebenar (asal, tiada perubahan)
-// SS-A sahaja            = Bil SS-A tahun sebelum (bulan sama) − (Bil SS-A + Bil PV Solar) bulan semasa
-// SS-D sahaja            = Bil SS-D tahun sebelum (bulan sama) − Bil SS-D bulan semasa
-// Jika tiada rekod tahun sebelum untuk bulan sama, kembalikan null (paparan '—')
+
 function yoyPenjimatanVal(row){
   if(!row) return 0;
   if(yoyShowSSA&&yoyShowSSD) return row.penjimatan;
@@ -1194,44 +1494,36 @@ function renderYoY(){
   </div>`;
 
   // ── Carta Pai — Brown vs Green Energy (RM & kWh) ──
-  html+=`<div class="yoy-charts" style="margin-top:16px">
-    <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Komitmen (RM) — Brown vs Green Energy</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:8px">SS-A RM (Brown) vs PV Solar RM (Green) | ${currY} vs ${prevY}</div>
-      <div class="legend" style="margin-bottom:10px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c2703d;margin-right:4px"></span>Brown Energy (SS-A RM)</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#22c55e;margin-right:4px"></span>Green Energy (PV Solar RM)</span>
-      </div>
-      <div style="display:flex;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
-        <div style="text-align:center">
-          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${prevY}</div>
-          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-rm-pie-prev"></canvas></div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${currY}</div>
-          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-rm-pie-curr"></canvas></div>
-        </div>
-      </div>
-    </div>
-    <div class="yoy-chart-box">
-      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Penggunaan (kWh) — Brown vs Green Energy</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:8px">SS-A kWh (Brown) vs Janaan Solar kWh (Green) | ${currY} vs ${prevY}</div>
-      <div class="legend" style="margin-bottom:10px">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#c2703d;margin-right:4px"></span>Brown Energy (SS-A kWh)</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#22c55e;margin-right:4px"></span>Green Energy (Janaan Solar)</span>
-      </div>
-      <div style="display:flex;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
-        <div style="text-align:center">
-          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${prevY}</div>
-          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-kwh-pie-prev"></canvas></div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">${currY}</div>
-          <div style="position:relative;width:150px;height:150px"><canvas id="yoy-kwh-pie-curr"></canvas></div>
-        </div>
-      </div>
-    </div>
-  </div>`;
+  // Brown Energy = SS-A (nilai konvensional/TNB), Green Energy = PV Solar (janaan solar)
+  if(yoyRmPiePrev)yoyRmPiePrev.destroy();
+  if(yoyRmPieCurr)yoyRmPieCurr.destroy();
+  if(yoyKwhPiePrev)yoyKwhPiePrev.destroy();
+  if(yoyKwhPieCurr)yoyKwhPieCurr.destroy();
+  const pieDLBrownGreen={
+    display:true,
+    formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(0)+'%':'0%';},
+    color:'white', font:{size:12,weight:'700'}
+  };
+  const pieOptsBrownGreen={
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, datalabels:pieDLBrownGreen }
+  };
+  yoyRmPiePrev=new Chart(document.getElementById('yoy-rm-pie-prev'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[p.ssaRm,p.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyRmPieCurr=new Chart(document.getElementById('yoy-rm-pie-curr'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[c.ssaRm,c.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyKwhPiePrev=new Chart(document.getElementById('yoy-kwh-pie-prev'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[p.ssaKwh,p.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
+  yoyKwhPieCurr=new Chart(document.getElementById('yoy-kwh-pie-curr'),{type:'pie',data:{
+    labels:['Brown Energy','Green Energy'],
+    datasets:[{data:[c.ssaKwh,c.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
+  },options:pieOptsBrownGreen});
 
   // table
   html+=`<div class="yoy-table-box">
@@ -1309,38 +1601,6 @@ function renderYoY(){
     {label:'Penjimatan '+prevY,data:bulanDlm.map(b=>(getPrev(b)||{totalRm:0}).totalRm),backgroundColor:'rgba(196,181,253,.7)',borderRadius:3,borderSkipped:false},
     {label:'PV Solar '+currY,data:bulanDlm.map(b=>(getCurr(b)||{bilPvSolar:0}).bilPvSolar),backgroundColor:'rgba(190,24,93,.85)',borderRadius:3,borderSkipped:false}
   ]},options:yoyBase(true)});
-
-  // ── Carta Pai — Brown vs Green Energy (RM & kWh) ──
-  // Brown Energy = SS-A (nilai konvensional/TNB), Green Energy = PV Solar (janaan solar)
-  if(yoyRmPiePrev)yoyRmPiePrev.destroy();
-  if(yoyRmPieCurr)yoyRmPieCurr.destroy();
-  if(yoyKwhPiePrev)yoyKwhPiePrev.destroy();
-  if(yoyKwhPieCurr)yoyKwhPieCurr.destroy();
-  const pieDLBrownGreen={
-    display:true,
-    formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(0)+'%':'0%';},
-    color:'white', font:{size:12,weight:'700'}
-  };
-  const pieOptsBrownGreen={
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, datalabels:pieDLBrownGreen }
-  };
-  yoyRmPiePrev=new Chart(document.getElementById('yoy-rm-pie-prev'),{type:'pie',data:{
-    labels:['Brown Energy','Green Energy'],
-    datasets:[{data:[p.ssaRm,p.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
-  },options:pieOptsBrownGreen});
-  yoyRmPieCurr=new Chart(document.getElementById('yoy-rm-pie-curr'),{type:'pie',data:{
-    labels:['Brown Energy','Green Energy'],
-    datasets:[{data:[c.ssaRm,c.bilPvSolar],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
-  },options:pieOptsBrownGreen});
-  yoyKwhPiePrev=new Chart(document.getElementById('yoy-kwh-pie-prev'),{type:'pie',data:{
-    labels:['Brown Energy','Green Energy'],
-    datasets:[{data:[p.ssaKwh,p.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
-  },options:pieOptsBrownGreen});
-  yoyKwhPieCurr=new Chart(document.getElementById('yoy-kwh-pie-curr'),{type:'pie',data:{
-    labels:['Brown Energy','Green Energy'],
-    datasets:[{data:[c.ssaKwh,c.solarKwh],backgroundColor:['#c2703d','#22c55e'],borderWidth:2,borderColor:'white'}]
-  },options:pieOptsBrownGreen});
 }
 
 // ── INIT ──
@@ -1378,6 +1638,491 @@ function barDLmulti(isRM=false){
     display:(ctx)=>{ const v=ctx.dataset.data[ctx.dataIndex]; return v&&v>0; }
   };
 }
+
+// ══════════════════════════════════════════════
+// TAB & NAVIGATION ENGINE (Main Tabs & Sub-Tabs)
+// ══════════════════════════════════════════════
+let activeMainTab = 'dashboard';
+let activeSubTab = 'jppf';
+
+function switchMainTab(tab){
+  activeMainTab = tab;
+  
+  // Hide all main panel divs
+  document.querySelectorAll('.main-panel').forEach(p => {
+    p.style.display = 'none';
+  });
+  
+  // Display active panel div
+  const activePanel = document.getElementById(`panel-${tab}`);
+  if(activePanel) activePanel.style.display = 'block';
+
+  // Manage navigation button states
+  document.querySelectorAll('.tab-nav.main-tabs .tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  const mainTabButtonIds = {
+    'dashboard': 'main-tab-dash',
+    'energy': 'main-tab-energy',
+    'solar': 'main-tab-solar',
+    'carbon': 'main-tab-carbon',
+    'analysis': 'main-tab-analysis',
+    'settings': 'main-tab-settings'
+  };
+
+  const targetBtn = document.getElementById(mainTabButtonIds[tab]);
+  if(targetBtn) targetBtn.classList.add('active');
+
+  // Specific panel triggers
+  if (tab === 'energy') {
+    switchSubTab(activeSubTab);
+  } else if (tab === 'dashboard') {
+    updateDashboardSummary();
+  } else if (tab === 'solar') {
+    updateSolarTab();
+  } else if (tab === 'carbon') {
+    updateCarbonTab();
+  } else if (tab === 'analysis') {
+    renderYoY();
+    if(epcRows.length > 0) renderEpcYoY();
+    if(khRows.length > 0) khRenderYoY();
+  } else if (tab === 'settings') {
+    document.getElementById('settings-sheet-id').value = CONFIG.sheetId;
+    document.getElementById('settings-sheet-name').value = CONFIG.sheetName;
+    document.getElementById('settings-admin-strip-container').innerHTML = buildAdminStrip();
+    if(adminUnlocked) {
+      document.querySelectorAll('#panel-settings .lock-status').forEach(el => {
+        el.textContent = '✓ Mod Admin Aktif';
+        el.className = 'lock-status unlocked';
+      });
+    }
+  }
+}
+
+function switchSubTab(subTab){
+  activeSubTab = subTab;
+  
+  // Hide all sub tab views inside energy panel
+  document.querySelectorAll('#panel-energy .sub-panel').forEach(p => {
+    p.style.display = 'none';
+  });
+
+  // Display targeted sub view
+  const activeSubPanel = document.getElementById(`sub-panel-${subTab}`);
+  if(activeSubPanel) activeSubPanel.style.display = 'block';
+
+  // Sub button classes
+  document.querySelectorAll('#panel-energy .sub-tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const targetSubBtn = document.getElementById(`sub-tab-${subTab}`);
+  if(targetSubBtn) targetSubBtn.classList.add('active');
+
+  // Trigger loads if not loaded
+  if(subTab==='jppf' && allRows.length===0) loadData();
+  if(subTab==='epc' && epcRows.length===0) loadEPC();
+  if(subTab==='kh'  && khRows.length===0)  loadKH();
+}
+
+// Keep backwards-compatible window-level tab switcher
+window.switchTab = function(tab){
+  switchMainTab('energy');
+  switchSubTab(tab);
+};
+
+// ══════════════════════════════════════════════
+// DYNAMIC DASHBOARD SUMMARY GENERATOR
+// ══════════════════════════════════════════════
+let dashMixChart = null;
+
+function updateDashboardSummary(){
+  const cardsGrid = document.getElementById('dash-summary-cards');
+  if(!cardsGrid) return;
+
+  if (allRows.length === 0) {
+    cardsGrid.innerHTML = '<div class="loading-state" style="grid-column: 1/-1;"><i class="ti ti-loader"></i> Menunggu data dimuat turun...</div>';
+    return;
+  }
+
+  const d = sumRows(allRows);
+  let epcSavingsKwh = 0;
+  if(epcRows.length > 0) {
+    const epcTotal = sumEpc(epcRows);
+    epcSavingsKwh = (epcTotal.baselineTrauma + epcTotal.baselineGeneral) - epcTotal.totalKwh;
+    if (epcSavingsKwh < 0) epcSavingsKwh = 0;
+  }
+  
+  // Estimated total net savings (Solar penjimatan + Chiller saving value estimated)
+  const estChillerSavingsRM = epcSavingsKwh * 0.365; // Estimated Chiller RM savings
+  const combinedNetSavings = d.penjimatan + estChillerSavingsRM;
+
+  cardsGrid.innerHTML = `
+    <div class="card total">
+      <div class="card-icon"><i class="ti ti-plug"></i></div>
+      <div class="card-label">Jumlah Tenaga Dinilai</div>
+      <div class="card-value">${fmt(d.totalKwh)}</div>
+      <div class="card-unit">kWh (${allRows.length} rekod)</div>
+    </div>
+    <div class="card kampus">
+      <div class="card-icon"><i class="ti ti-receipt"></i></div>
+      <div class="card-label">Jumlah Komitmen Bil TNB</div>
+      <div class="card-value">${fmtRM2d(d.totalRm)}</div>
+      <div class="card-unit">SS-A Kampus & SS-D HPUSM</div>
+    </div>
+    <div class="card solar-c">
+      <div class="card-icon"><i class="ti ti-solar-panel"></i></div>
+      <div class="card-label">Janaan Bersih Solar</div>
+      <div class="card-value" style="color:#c47800;">${fmt2d(d.solarKwh)}</div>
+      <div class="card-unit">kWh (Sumbangan: ${((d.solarKwh / d.totalKwh) * 100).toFixed(1)}%)</div>
+    </div>
+    <div class="card jimat">
+      <div class="card-icon"><i class="ti ti-piggy-bank"></i></div>
+      <div class="card-label">Jumlah Penjimatan Bersih</div>
+      <div class="card-value" style="color:#7c3aed;">${fmtRM2d(combinedNetSavings)}</div>
+      <div class="card-unit">Solar: ${fmtRM(d.penjimatan)} | Chiller: ${fmtRM(estChillerSavingsRM)}</div>
+    </div>
+  `;
+
+  // CO2 avoided
+  const co2AvoidedKg = (d.solarKwh + epcSavingsKwh) * 0.585;
+  const treesEquiv = co2AvoidedKg / 22;
+
+  const ecoImpactDiv = document.getElementById('dash-eco-impact');
+  if(ecoImpactDiv) {
+    ecoImpactDiv.innerHTML = `
+      <div style="background:#f0fdf4; padding:12px; border-radius:8px; border-left:4px solid #16a34a;">
+        <div style="font-size:10px; color:#15803d; font-weight:700; text-transform:uppercase;">Pengurangan CO2</div>
+        <div style="font-size:15px; font-weight:700; color:#14532d; margin-top:4px;">${Math.round(co2AvoidedKg).toLocaleString('ms-MY')} kg CO2e</div>
+      </div>
+      <div style="background:#f0fdf4; padding:12px; border-radius:8px; border-left:4px solid #16a34a;">
+        <div style="font-size:10px; color:#15803d; font-weight:700; text-transform:uppercase;">Penyerapan Pokok</div>
+        <div style="font-size:15px; font-weight:700; color:#14532d; margin-top:4px;">${Math.round(treesEquiv).toLocaleString('ms-MY')} Pokok</div>
+      </div>
+    `;
+  }
+
+  // Supply mix chart on landing
+  if(dashMixChart) dashMixChart.destroy();
+  const ctx = document.getElementById('dashMixChart');
+  if(ctx) {
+    dashMixChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Bekalan Grid TNB (SS-A + SS-D)', 'Sumbangan Solar PV'],
+        datasets: [{
+          data: [d.ssaKwh + d.ssdKwh, d.solarKwh],
+          backgroundColor: ['#1a5fa8', '#e8a020'],
+          borderWidth: 2,
+          borderColor: 'white'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+          datalabels: {
+            formatter: (val, ctx) => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return total > 0 ? (val / total * 100).toFixed(1) + '%' : '';
+            },
+            color: 'white',
+            font: { weight: 'bold', size: 12 }
+          }
+        }
+      }
+    });
+  }
+}
+
+// ── SOLAR TAB VIEW GENERATOR ──
+let solarGenExportChart = null;
+let solarFinancialChart = null;
+
+function updateSolarTab(){
+  const cardsGrid = document.getElementById('solar-metrics-grid');
+  if(!cardsGrid) return;
+
+  if (allRows.length === 0) {
+    cardsGrid.innerHTML = '<div class="loading-state" style="grid-column:1/-1;"><i class="ti ti-loader"></i> Memuat turun data solar...</div>';
+    return;
+  }
+
+  const d = sumRows(allRows);
+  const solarPct = d.totalKwh > 0 ? ((d.solarKwh / d.totalKwh) * 100).toFixed(1) : '0.0';
+
+  cardsGrid.innerHTML = `
+    <div class="card solar-c" style="border-top:3px solid #e8a020;">
+      <div class="card-icon" style="color:#e8a020;"><i class="ti ti-solar-panel"></i></div>
+      <div class="card-label" style="color:#e8a020;">Jumlah Janaan Bersih</div>
+      <div class="card-value" style="color:#c47800;">${fmt2d(d.solarKwh)}</div>
+      <div class="card-unit">kWh (Sumbangan: ${solarPct}%)</div>
+    </div>
+    <div class="card eksport-rm" style="border-top:3px solid #0891b2;">
+      <div class="card-icon" style="color:#0891b2;"><i class="ti ti-arrow-up-right"></i></div>
+      <div class="card-label" style="color:#0891b2;">Tenaga Eksport Grid</div>
+      <div class="card-value" style="color:#0891b2;">${fmt(d.eksportKwh)}</div>
+      <div class="card-unit">kWh dijual semula ke TNB</div>
+    </div>
+    <div class="card eksport-rm" style="border-top:3px solid #0891b2;">
+      <div class="card-icon" style="color:#0891b2;"><i class="ti ti-cash"></i></div>
+      <div class="card-label" style="color:#0891b2;">Hasil Pulangan Eksport</div>
+      <div class="card-value" style="color:#0891b2;">${fmtRM2d(d.eksportRm)}</div>
+      <div class="card-unit">RM dijana hasil jualan elektrik</div>
+    </div>
+    <div class="card jimat" style="border-top:3px solid #7c3aed;">
+      <div class="card-icon" style="color:#7c3aed;"><i class="ti ti-piggy-bank"></i></div>
+      <div class="card-label" style="color:#7c3aed;">Penjimatan Bersih Solar</div>
+      <div class="card-value" style="color:#7c3aed;">${fmtRM2d(d.penjimatan)}</div>
+      <div class="card-unit">Pulangan pelaburan solar PV</div>
+    </div>
+  `;
+
+  // Gen vs Export Bar chart
+  const sorted = [...allRows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl = sorted.map(r=>r.bulan.substring(0,3)+' '+r.tahun.slice(-2));
+  const tck = {color: '#999', font: {size: 10}};
+
+  if(solarGenExportChart) solarGenExportChart.destroy();
+  const ctx1 = document.getElementById('solarGenExportChart');
+  if(ctx1) {
+    solarGenExportChart = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: lbl,
+        datasets: [
+          { label: 'Janaan Solar (kWh)', data: sorted.map(r=>r.solarKwh), backgroundColor: 'rgba(232, 160, 32, 0.85)', borderRadius: 3 },
+          { label: 'Tenaga Eksport (kWh)', data: sorted.map(r=>r.eksportKwh), backgroundColor: 'rgba(8, 145, 178, 0.85)', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top' }, datalabels: { display: false } },
+        scales: {
+          x: { ticks: tck, grid: { display: false } },
+          y: { ticks: { callback: v => v.toLocaleString() }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        }
+      }
+    });
+  }
+
+  // Solar financial chart line (PV Solar Bill vs Export return vs clean savings)
+  if(solarFinancialChart) solarFinancialChart.destroy();
+  const ctx2 = document.getElementById('solarFinancialChart');
+  if(ctx2) {
+    solarFinancialChart = new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: lbl,
+        datasets: [
+          { label: 'Bil PV Solar (RM)', data: sorted.map(r=>r.bilPvSolar), borderColor: '#be185d', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+          { label: 'Hasil Pulangan Eksport (RM)', data: sorted.map(r=>r.eksportRm), borderColor: '#0891b2', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+          { label: 'Penjimatan Bersih (RM)', data: sorted.map(r=>r.penjimatan), borderColor: '#7c3aed', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top' }, datalabels: { display: false } },
+        scales: {
+          x: { ticks: tck, grid: { display: false } },
+          y: { ticks: { callback: v => 'RM ' + v.toLocaleString() }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        }
+      }
+    });
+  }
+}
+
+// ── CARBON & SUSTAINABILITY VIEW GENERATOR ──
+let carbonEnergyMixChart = null;
+let carbonTrendChart = null;
+
+function updateCarbonTab(){
+  const cardsGrid = document.getElementById('carbon-metrics-grid');
+  if(!cardsGrid) return;
+
+  if (allRows.length === 0) {
+    cardsGrid.innerHTML = '<div class="loading-state" style="grid-column:1/-1;"><i class="ti ti-loader"></i> Memuat turun metrik kelestarian...</div>';
+    return;
+  }
+
+  const d = sumRows(allRows);
+  
+  let epcSavingsKwh = 0;
+  if(epcRows.length > 0) {
+    const epcTotal = sumEpc(epcRows);
+    epcSavingsKwh = (epcTotal.baselineTrauma + epcTotal.baselineGeneral) - epcTotal.totalKwh;
+    if (epcSavingsKwh < 0) epcSavingsKwh = 0;
+  }
+
+  const totalCleanPowerKwh = d.solarKwh + epcSavingsKwh;
+  const standardMalaysianGridCO2Factor = 0.585; // kg CO2/kWh
+  const co2AvoidedKg = totalCleanPowerKwh * standardMalaysianGridCO2Factor;
+
+  // Conversions
+  const treesEquiv = co2AvoidedKg / 22; // 1 mature tree absorbs ~22kg of CO2 per year
+  const carDriveEquivKm = co2AvoidedKg / 0.12; // Standard passenger car emissions
+  const standardCoalSavedKg = co2AvoidedKg * 0.45; // Avoided coal weight reduction equivalent
+
+  cardsGrid.innerHTML = `
+    <div class="card jimat" style="border-top:3px solid #10b981;">
+      <div class="card-icon" style="color:#10b981;"><i class="ti ti-leaf"></i></div>
+      <div class="card-label" style="color:#10b981;">Karbon Dihindari (CO2)</div>
+      <div class="card-value" style="color:#047857;">${Math.round(co2AvoidedKg).toLocaleString('ms-MY')} kg</div>
+      <div class="card-unit">Karbon dioksida ditiadakan</div>
+    </div>
+    <div class="card solar-c" style="border-top:3px solid #10b981;">
+      <div class="card-icon" style="color:#10b981;"><i class="ti ti-trees"></i></div>
+      <div class="card-label" style="color:#10b981;">Kesetaraan Pokok</div>
+      <div class="card-value" style="color:#047857;">${Math.round(treesEquiv).toLocaleString('ms-MY')}</div>
+      <div class="card-unit">Bilangan pokok ditanam & membesar</div>
+    </div>
+    <div class="card total" style="border-top:3px solid #10b981;">
+      <div class="card-icon" style="color:#10b981;"><i class="ti ti-award"></i></div>
+      <div class="card-label" style="color:#10b981;">Tenaga Bersih Disuntik</div>
+      <div class="card-value" style="color:#047857;">${fmt(totalCleanPowerKwh)} kWh</div>
+      <div class="card-unit">Solar: ${fmt(d.solarKwh)} | EPC Chiller: ${fmt(epcSavingsKwh)}</div>
+    </div>
+  `;
+
+  // Equivalents numbers
+  document.getElementById('eco-trees-val').textContent = Math.round(treesEquiv).toLocaleString('ms-MY') + " pokok";
+  document.getElementById('eco-cars-val').textContent = Math.round(carDriveEquivKm).toLocaleString('ms-MY') + " km";
+  document.getElementById('eco-bulbs-val').textContent = Math.round(co2AvoidedKg / 120).toLocaleString('ms-MY') + " mentol";
+  document.getElementById('eco-coal-val').textContent = Math.round(standardCoalSavedKg).toLocaleString('ms-MY') + " kg";
+
+  // Carbon energy mix doughnut chart
+  if (carbonEnergyMixChart) carbonEnergyMixChart.destroy();
+  const ctx1 = document.getElementById('carbonEnergyMixChart');
+  if (ctx1) {
+    carbonEnergyMixChart = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: ['Bekalan Grid TNB (SS-A + SS-D)', 'Sumbangan Solar PV', 'Kecekapan EPC Chiller (Dihindari)'],
+        datasets: [{
+          data: [d.ssaKwh + d.ssdKwh, d.solarKwh, epcSavingsKwh],
+          backgroundColor: ['#c2703d', '#22c55e', '#10b981'],
+          borderWidth: 1,
+          borderColor: 'white'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+          datalabels: {
+            formatter: (val, ctx) => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return total > 0 ? (val / total * 100).toFixed(1) + '%' : '';
+            },
+            color: 'white',
+            font: { weight: 'bold', size: 11 }
+          }
+        }
+      }
+    });
+  }
+
+  // Monthly avoided carbon emission line trend
+  const sorted = [...allRows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl = sorted.map(r=>r.bulan.substring(0,3)+' '+r.tahun.slice(-2));
+
+  if (carbonTrendChart) carbonTrendChart.destroy();
+  const ctx2 = document.getElementById('carbonTrendChart');
+  if (ctx2) {
+    carbonTrendChart = new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: lbl,
+        datasets: [{
+          label: 'Pengurangan Karbon Pelepasan (kg CO2e)',
+          data: sorted.map(r => r.solarKwh * standardMalaysianGridCO2Factor),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.3,
+          fill: true,
+          pointRadius: 4,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, datalabels: { display: false } },
+        scales: {
+          x: { ticks: { color: '#999' }, grid: { display: false } },
+          y: { ticks: { color: '#999' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        }
+      }
+    });
+  }
+}
+
+// ── SAVE SETTINGS FORM TRIGGER ──
+function saveSettingsTab(){
+  const id = document.getElementById('settings-sheet-id').value.trim();
+  const name = document.getElementById('settings-sheet-name').value.trim();
+  if(!id || !name) {
+    alert('Sila lengkapkan kedua-dua ruangan Google Sheets ID dan Nama Tab.');
+    return;
+  }
+  CONFIG = { sheetId: id, sheetName: name };
+  localStorage.setItem('usm_admin_config', JSON.stringify(CONFIG));
+  allRows = [];
+  loadData();
+  alert('Konfigurasi berjaya disimpan! Memuat semula data aplikasi...');
+  switchMainTab('dashboard');
+}
+
+// ══════════════════════════════════════════════
+// TAB BACKWARDS WRAPPING LOGIC (Synchronisers)
+// ══════════════════════════════════════════════
+const _origRenderShell = window.renderShell;
+window.renderShell = function(){
+  _origRenderShell && _origRenderShell();
+  // Append table inside sub-panel container
+  setTimeout(() => {
+    const hr = document.getElementById('health-row');
+    if (hr && !document.getElementById('jppf-data-table')) {
+      const div = document.createElement('div'); div.id = 'jppf-data-table';
+      div.innerHTML = buildJppfTable(allRows);
+      hr.parentElement.appendChild(div);
+    }
+  }, 150);
+};
+
+const _origRenderEPC = window.renderEPC;
+window.renderEPC = function(){
+  _origRenderEPC && _origRenderEPC();
+  setTimeout(() => {
+    const hr = document.getElementById('epc-health');
+    if (hr && !document.getElementById('epc-data-table')) {
+      const div = document.createElement('div'); div.id = 'epc-data-table';
+      div.innerHTML = buildEpcTable(epcRows);
+      hr.parentElement.appendChild(div);
+    }
+  }, 150);
+  
+  // Update dependent metrics once loaded
+  updateDashboardSummary();
+  updateCarbonTab();
+};
+
+const _origBuildKHPage = window.buildKHPage;
+window.buildKHPage = function(){
+  _origBuildKHPage && _origBuildKHPage();
+  updateDashboardSummary();
+};
+
+// ══════════════════════════════════════════════
+// INITIALIZATION ON DOM READY
+// ══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  switchMainTab('dashboard');
+});
 
 // ══════════════════════════════════════════════
 // TAB SWITCHING
@@ -1551,22 +2296,25 @@ function renderEPC(){
   // YoY year dropdowns
   const epcYears=[...new Set(epcRows.map(r=>r.tahun).filter(Boolean))].sort((a,b)=>b-a);
   const curr=document.getElementById('epc-yoy-curr'),prev=document.getElementById('epc-yoy-prev');
-  curr.innerHTML='';prev.innerHTML='';
-  epcYears.forEach((y,i)=>{
-    const oc=document.createElement('option');oc.value=y;oc.textContent=y;if(i===0)oc.selected=true;curr.appendChild(oc);
-    const op=document.createElement('option');op.value=y;op.textContent=y;if(i===1)op.selected=true;prev.appendChild(op);
-  });
-  curr.addEventListener('change',renderEpcYoY);
-  prev.addEventListener('change',renderEpcYoY);
+  if (curr && prev) {
+    curr.innerHTML='';prev.innerHTML='';
+    epcYears.forEach((y,i)=>{
+      const oc=document.createElement('option');oc.value=y;oc.textContent=y;if(i===0)oc.selected=true;curr.appendChild(oc);
+      const op=document.createElement('option');op.value=y;op.textContent=y;if(i===1)op.selected=true;prev.appendChild(op);
+    });
+    curr.addEventListener('change',renderEpcYoY);
+    prev.addEventListener('change',renderEpcYoY);
+  }
 
   // Month pills
-  document.getElementById('epc-month-pills').addEventListener('click',e=>{
+  document.getElementById('epc-month-pills')?.addEventListener('click',e=>{
     const pill=e.target.closest('.mpill');if(!pill)return;
     const idx=parseInt(pill.dataset.idx);
     if(!epcYoySelecting){epcRangeStart=idx;epcRangeEnd=idx;epcYoySelecting=true;}
     else{if(idx<epcRangeStart)epcRangeStart=idx;else epcRangeEnd=idx;epcYoySelecting=false;}
     updateEpcPills();renderEpcYoY();
   });
+  
   updateEpcPills();
   updateEPC();
   renderEpcYoY();
@@ -2210,34 +2958,6 @@ function clearEpcFilter(){
   filterEpcTable();
 }
 
-// Inject data tables after renderShell and renderEPC are called
-const _origRenderShell = window.renderShell;
-window.renderShell = function(){
-  _origRenderShell && _origRenderShell();
-  // append JPPF table after health-row
-  setTimeout(()=>{
-    const hr=document.getElementById('health-row');
-    if(hr&&!document.getElementById('jppf-data-table')){
-      const div=document.createElement('div');div.id='jppf-data-table';
-      div.innerHTML=buildJppfTable(allRows);
-      hr.parentElement.appendChild(div);
-    }
-  },150);
-};
-
-const _origRenderEPC = window.renderEPC;
-window.renderEPC = function(){
-  _origRenderEPC && _origRenderEPC();
-  setTimeout(()=>{
-    const hr=document.getElementById('epc-health');
-    if(hr&&!document.getElementById('epc-data-table')){
-      const div=document.createElement('div');div.id='epc-data-table';
-      div.innerHTML=buildEpcTable(epcRows);
-      hr.parentElement.appendChild(div);
-    }
-  },150);
-};
-
 // ══════════════════════════════════════════════
 // KAMPUS+HPUSM MODULE — Dikemaskini
 // ══════════════════════════════════════════════
@@ -2276,460 +2996,4 @@ function parseKH(csv){
     if(!row.some(c=>c.includes('bulan'))) continue;
     hi=i;
     row.forEach((h,idx)=>{
-      if(h.includes('bulan'))                                                    m.bulan=idx;
-      else if(h.includes('tahun'))                                               m.tahun=idx;
-      else if(h.includes('kampus')&&h.includes('kwh'))                          m.kampusKwh=idx;
-      else if((h.includes('hpusm')||h.includes('hospital'))&&h.includes('kwh')) m.hpusmKwh=idx;
-      else if(h.includes('total')&&h.includes('kwh'))                           m.totalKwh=idx;
-      else if(h.includes('kampus')&&h.includes('rm'))                           m.kampusRm=idx;
-      else if(h.includes('hospital')&&h.includes('rm'))                         m.hospitalRm=idx;
-      else if(h.includes('total')&&h.includes('rm'))                            m.totalRm=idx;
-    });
-    break;
-  }
-  if(hi<0) return [];
-  const rows=[];
-  for(let i=hi+1;i<lines.length;i++){
-    const row=lines[i];
-    const bRaw=row[m.bulan];
-    if(!bRaw||bRaw==='') continue;
-    const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
-    rows.push({
-      bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
-      kampusKwh:n('kampusKwh'),hpusmKwh:n('hpusmKwh'),totalKwh:n('totalKwh'),
-      kampusRm:n('kampusRm'),hospitalRm:n('hospitalRm'),totalRm:n('totalRm')
-    });
-  }
-  return rows;
-}
-
-// ── Build full page HTML ──
-function buildKHPage(){
-  const el=document.getElementById('kh-content');
-  if(!el) return;
-  const years=[...new Set(khRows.map(r=>r.tahun).filter(Boolean))].sort();
-  const yOpts=years.map(y=>`<option value="${y}">${y}</option>`).join('');
-  const mOpts=BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`).join('');
-  const yOptsFull='<option value="">-- Semua --</option>'+yOpts;
-  const mOptsFull='<option value="">-- Semua --</option>'+mOpts;
-  const pills=BULAN_SHORT.map((b,i)=>`<span class="mpill" data-idx="${i}" id="kh-pill-${i}">${b}</span>`).join('');
-  const yPrev=years.length>1?years[years.length-2]:years[0]||'';
-  const yCurr=years[years.length-1]||'';
-  const yOptsCurr=years.map(y=>`<option value="${y}"${y===yCurr?' selected':''}>${y}</option>`).join('');
-  const yOptsPrev=years.map(y=>`<option value="${y}"${y===yPrev?' selected':''}>${y}</option>`).join('');
-
-  el.innerHTML=`
-  <!-- TAPIS UTAMA -->
-  <div class="filter-row" style="margin-top:18px">
-    <label><i class="ti ti-filter"></i> Tapis:</label>
-    <select id="kh-f-tahun" onchange="khUpdateMain()">${yOptsFull}</select>
-    <select id="kh-f-bulan" onchange="khUpdateMain()">${mOptsFull}</select>
-    <button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>
-  </div>
-
-  <!-- KAD METRIK -->
-  <div class="metrics" id="kh-metrics"></div>
-
-  <!-- CARTA UTAMA -->
-  <div class="charts" style="margin-bottom:22px">
-    <div class="chart-box">
-      <div class="chart-title">Penggunaan kWh — Kampus vs HPUSM</div>
-      <div class="chart-sub" id="kh-sub1">—</div>
-      <div class="legend">
-        <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus</span>
-        <span><span class="leg-dot" style="background:#1e7e34"></span>HPUSM</span>
-      </div>
-      <div style="position:relative;width:100%;height:250px"><canvas id="kh-c1"></canvas></div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">Bil (RM) — Kampus vs Hospital</div>
-      <div class="chart-sub" id="kh-sub2">—</div>
-      <div class="legend">
-        <span><span class="leg-dot" style="background:#1a5fa8"></span>Kampus RM</span>
-        <span><span class="leg-dot" style="background:#1e7e34"></span>Hospital RM</span>
-      </div>
-      <div style="position:relative;width:100%;height:250px"><canvas id="kh-c2"></canvas></div>
-    </div>
-  </div>
-
-  <!-- CARTA PAI -->
-  <div class="charts" style="margin-bottom:22px">
-    <div class="chart-box">
-      <div class="chart-title">Carta Pai — Bahagian Bil (RM)</div>
-      <div style="position:relative;width:100%;height:280px"><canvas id="kh-c3"></canvas></div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">Carta Pai — Bahagian kWh</div>
-      <div style="position:relative;width:100%;height:280px"><canvas id="kh-c4"></canvas></div>
-    </div>
-  </div>
-
-  <!-- KESIHATAN -->
-  <div class="sec-title"><i class="ti ti-building-community"></i> Ringkasan</div>
-  <div class="health-row" id="kh-health"></div>
-
-  <!-- ══ ANALISIS YOY ══ -->
-  <div class="yoy-section" style="margin-top:22px">
-    <div class="yoy-title"><i class="ti ti-chart-arrows-vertical" style="color:#1a3a5c"></i> Analisis Perbandingan Tahun (YoY)</div>
-
-    <!-- Kawalan YoY -->
-    <div class="yoy-top">
-      <label>Tahun Semasa:</label>
-      <select id="kh-yoy-curr">${yOptsCurr}</select>
-      <label style="margin-left:6px">Berbanding:</label>
-      <select id="kh-yoy-prev">${yOptsPrev}</select>
-    </div>
-
-    <!-- Julat Bulan -->
-    <div class="range-box">
-      <div class="range-box-title"><i class="ti ti-calendar-stats" style="color:#1a3a5c"></i> Pilih Julat Bulan</div>
-      <div class="month-pills" id="kh-pills">${pills}</div>
-      <div class="range-info">
-        Skop: <strong id="kh-range-lbl">Januari — Disember (12 bulan)</strong>
-        <button class="range-reset" onclick="khResetRange()"><i class="ti ti-refresh"></i> Reset</button>
-      </div>
-    </div>
-
-    <!-- Kad YoY -->
-    <div id="kh-yoy-cards"></div>
-
-    <!-- 4 Carta YoY -->
-    <div class="yoy-charts">
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh Kampus — YoY</div>
-        <div class="chart-sub" id="kh-yoy-s1">—</div>
-        <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c1"></canvas></div>
-      </div>
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh HPUSM — YoY</div>
-        <div class="chart-sub" id="kh-yoy-s2">—</div>
-        <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c2"></canvas></div>
-      </div>
-    </div>
-    <div class="yoy-charts" style="margin-top:16px">
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Kampus — YoY</div>
-        <div class="chart-sub" id="kh-yoy-s3">—</div>
-        <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c3"></canvas></div>
-      </div>
-      <div class="yoy-chart-box">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Hospital — YoY</div>
-        <div class="chart-sub" id="kh-yoy-s4">—</div>
-        <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
-        </div>
-        <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c4"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Jadual YoY -->
-    <div class="yoy-table-box kh-yoy-table-box" style="margin-top:16px"><div id="kh-yoy-tbl"></div></div>
-  </div>
-
-  <!-- ══ PENGURUSAN DATA ══ -->
-  <div class="jppf-mgmt" id="kh-mgmt-outer" style="margin-top:22px">
-    <div class="jppf-mgmt-header" onclick="khToggleMgmt()">
-      <div class="jppf-mgmt-title"><i class="ti ti-table" style="color:#1a3a5c"></i> Pengurusan Data Kampus+HPUSM <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span></div>
-      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="kh-mgmt-chev"></i>
-    </div>
-    <div class="jppf-mgmt-body" id="kh-mgmt-body">
-      <div id="kh-admin-strip"></div>
-      <div class="jppf-tbl-filter">
-        <label><i class="ti ti-filter"></i> Filter:</label>
-        <select id="kh-t-tahun" onchange="khFilterTable()">${yOptsFull}</select>
-        <select id="kh-t-bulan" onchange="khFilterTable()">${mOptsFull}</select>
-        <button onclick="khClearFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
-        <span class="jppf-tbl-count" id="kh-tbl-count">${khRows.length} rekod</span>
-      </div>
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>Bulan</th><th>Tahun</th>
-            <th>Kampus kWh</th><th>HPUSM kWh</th><th>Total kWh</th>
-            <th>Kampus RM</th><th>Hospital RM</th><th>Total RM</th>
-            <th class="edit-action-col" style="display:none">Tindakan</th>
-          </tr></thead>
-          <tbody id="kh-tbl-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>`;
-
-  // Render admin strip
-  document.getElementById('kh-admin-strip').innerHTML=buildAdminStrip();
-  if(adminUnlocked){
-    document.querySelectorAll('#kh-mgmt-body .edit-action-col').forEach(el=>el.style.display='');
-    document.querySelectorAll('#kh-mgmt-body .lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
-  }
-
-  // Attach events
-  document.getElementById('kh-yoy-curr').addEventListener('change',khRenderYoY);
-  document.getElementById('kh-yoy-prev').addEventListener('change',khRenderYoY);
-  document.getElementById('kh-pills').addEventListener('click',function(e){
-    const pill=e.target.closest('.mpill');if(!pill)return;
-    const idx=parseInt(pill.dataset.idx);
-    if(!khYoySelecting){khRangeStart=idx;khRangeEnd=idx;khYoySelecting=true;}
-    else{if(idx<khRangeStart)khRangeStart=idx;else khRangeEnd=idx;khYoySelecting=false;}
-    khUpdatePills();khRenderYoY();
-  });
-  khUpdatePills();
-  khUpdateMain();
-  khRenderYoY();
-  khBuildTableRows();
-}
-
-// ── Main metrics + charts ──
-function khUpdateMain(){
-  const t=document.getElementById('kh-f-tahun')?.value||'';
-  const b=document.getElementById('kh-f-bulan')?.value||'';
-  let rows=khRows;
-  if(t) rows=rows.filter(r=>r.tahun===t);
-  if(b) rows=rows.filter(r=>r.bulan===b);
-  if(!rows.length){document.getElementById('kh-metrics').innerHTML='<div class="empty-state" style="grid-column:1/-1">Tiada data</div>';return;}
-
-  const d=rows.reduce((a,r)=>({kampusKwh:a.kampusKwh+r.kampusKwh,hpusmKwh:a.hpusmKwh+r.hpusmKwh,totalKwh:a.totalKwh+r.totalKwh,kampusRm:a.kampusRm+r.kampusRm,hospitalRm:a.hospitalRm+r.hospitalRm,totalRm:a.totalRm+r.totalRm}),{kampusKwh:0,hpusmKwh:0,totalKwh:0,kampusRm:0,hospitalRm:0,totalRm:0});
-  const label=rows.length===1?(rows[0].bulan+' '+rows[0].tahun):rows.length+' rekod';
-  const kPct=d.totalKwh>0?(d.kampusKwh/d.totalKwh*100).toFixed(1):'0';
-  const hPct=d.totalKwh>0?(d.hpusmKwh/d.totalKwh*100).toFixed(1):'0';
-  const kRPct=d.totalRm>0?(d.kampusRm/d.totalRm*100).toFixed(1):'0';
-  const hRPct=d.totalRm>0?(d.hospitalRm/d.totalRm*100).toFixed(1):'0';
-
-  document.getElementById('kh-metrics').innerHTML=`
-    <div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-building"></i></div><div class="card-label" style="color:#1a5fa8">Kampus kWh</div><div class="card-value" style="color:#1a5fa8">${fmt(d.kampusKwh)}</div><div class="card-unit">kWh · ${kPct}%</div></div>
-    <div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-building-hospital"></i></div><div class="card-label" style="color:#1e7e34">HPUSM kWh</div><div class="card-value" style="color:#1e7e34">${fmt(d.hpusmKwh)}</div><div class="card-unit">kWh · ${hPct}%</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(d.totalKwh)}</div><div class="card-unit">${label}</div></div>
-    <div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1a5fa8">Kampus RM</div><div class="card-value" style="color:#1a5fa8">${fmtRM2d(d.kampusRm)}</div><div class="card-unit">· ${kRPct}%</div></div>
-    <div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1e7e34">Hospital RM</div><div class="card-value" style="color:#1e7e34">${fmtRM2d(d.hospitalRm)}</div><div class="card-unit">· ${hRPct}%</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
-
-  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
-  const sub=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
-  const el1=document.getElementById('kh-sub1');if(el1)el1.textContent=sub;
-  const el2=document.getElementById('kh-sub2');if(el2)el2.textContent=sub;
-
-  const tck={color:'#999',font:{size:10}};
-  const hideDL=sorted.length>12;
-  const dlV={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const dlVrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const barOpts=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlVrm:dlV)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
-  const pieDL={display:true,formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(1)+'%':'';},color:'white',font:{size:13,weight:'700'}};
-  const pieOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:12},boxWidth:12,padding:16}},datalabels:pieDL}};
-
-  if(khChart1)khChart1.destroy();khChart1=new Chart(document.getElementById('kh-c1'),{type:'bar',data:{labels:lbl,datasets:[{label:'Kampus',data:sorted.map(r=>r.kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'HPUSM',data:sorted.map(r=>r.hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}]},options:barOpts(false)});
-  if(khChart2)khChart2.destroy();khChart2=new Chart(document.getElementById('kh-c2'),{type:'bar',data:{labels:lbl,datasets:[{label:'Kampus RM',data:sorted.map(r=>r.kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Hospital RM',data:sorted.map(r=>r.hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}]},options:barOpts(true)});
-  if(khChart3)khChart3.destroy();khChart3=new Chart(document.getElementById('kh-c3'),{type:'pie',data:{labels:['Kampus RM','Hospital RM'],datasets:[{data:[d.kampusRm,d.hospitalRm],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]},options:pieOpts});
-  if(khChart4)khChart4.destroy();khChart4=new Chart(document.getElementById('kh-c4'),{type:'pie',data:{labels:['Kampus kWh','HPUSM kWh'],datasets:[{data:[d.kampusKwh,d.hpusmKwh],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]},options:pieOpts});
-
-  document.getElementById('kh-health').innerHTML=`
-    <div class="hcard"><div class="hhead"><div class="hname" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus</div></div><div class="hstat">kWh<span>${fmt(d.kampusKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.kampusRm)}</span></div><div class="hstat">%<span>${kPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${kPct}%;background:#1a5fa8"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM</div></div><div class="hstat">kWh<span>${fmt(d.hpusmKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.hospitalRm)}</span></div><div class="hstat">%<span>${hPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${hPct}%;background:#1e7e34"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Nisbah Bil</div></div><div class="hstat">Kampus<span style="color:#1a5fa8">${kRPct}%</span></div><div class="hstat">Hospital<span style="color:#1e7e34">${hRPct}%</span></div><div class="hstat">Jumlah<span>${fmtRM2d(d.totalRm)}</span></div></div>`;
-}
-
-// ── YoY ──
-function khUpdatePills(){
-  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
-  BULAN_SHORT.forEach((_,i)=>{
-    const p=document.getElementById('kh-pill-'+i);if(!p)return;
-    p.className='mpill';
-    if(i===s)p.classList.add('range-start');
-    if(i===e&&e!==s)p.classList.add('range-end');
-    if(i>s&&i<e)p.classList.add('in-range');
-  });
-  const lb=document.getElementById('kh-range-lbl');
-  if(lb){const s2=Math.min(khRangeStart,khRangeEnd),e2=Math.max(khRangeStart,khRangeEnd);lb.textContent=s2===e2?BULAN_ORDER[s2]+' sahaja':BULAN_ORDER[s2]+' — '+BULAN_ORDER[e2]+' ('+(e2-s2+1)+' bulan)';}
-}
-window.khResetRange=function(){khRangeStart=0;khRangeEnd=11;khYoySelecting=false;khUpdatePills();khRenderYoY();};
-
-function khGetRange(year){
-  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
-  return khRows.filter(r=>r.tahun===year&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e);
-}
-function khSum(rows){return rows.reduce((a,r)=>({kampusKwh:a.kampusKwh+r.kampusKwh,hpusmKwh:a.hpusmKwh+r.hpusmKwh,totalKwh:a.totalKwh+r.totalKwh,kampusRm:a.kampusRm+r.kampusRm,hospitalRm:a.hospitalRm+r.hospitalRm,totalRm:a.totalRm+r.totalRm}),{kampusKwh:0,hpusmKwh:0,totalKwh:0,kampusRm:0,hospitalRm:0,totalRm:0});}
-function khDlt(cv,pv){if(!pv)return{pct:'—',cls:'flat',arrow:'→'};const p=(cv-pv)/pv*100;return{pct:(p>=0?'+':'')+p.toFixed(1)+'%',cls:p>0.05?'up':p<-0.05?'down':'flat',arrow:p>0.05?'↑':p<-0.05?'↓':'→'};}
-
-function khRenderYoY(){
-  const currEl=document.getElementById('kh-yoy-curr');
-  const prevEl=document.getElementById('kh-yoy-prev');
-  if(!currEl||!prevEl)return;
-  const currY=currEl.value, prevY=prevEl.value;
-  if(!currY||!prevY)return;
-  const s=Math.min(khRangeStart,khRangeEnd),e=Math.max(khRangeStart,khRangeEnd);
-  const bulanDlm=BULAN_ORDER.slice(s,e+1),shortDlm=BULAN_SHORT.slice(s,e+1);
-  const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
-  const cRows=khGetRange(currY),pRows=khGetRange(prevY);
-  const c=khSum(cRows),p=khSum(pRows);
-  const dKwh=khDlt(c.totalKwh,p.totalKwh),dRm=khDlt(c.totalRm,p.totalRm);
-  const dKK=khDlt(c.kampusKwh,p.kampusKwh),dHK=khDlt(c.hpusmKwh,p.hpusmKwh);
-  const dKR=khDlt(c.kampusRm,p.kampusRm),dHR=khDlt(c.hospitalRm,p.hospitalRm);
-
-  // Kad YoY
-  const cardsEl=document.getElementById('kh-yoy-cards');
-  if(cardsEl) cardsEl.innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
-    <div class="yoy-card kwh-card"><div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dRm.cls}">${dRm.arrow} ${dRm.pct}</div></div>
-    <div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.kampusKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.kampusKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKK.cls}">${dKK.arrow} ${dKK.pct}</div></div>
-    <div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.hpusmKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.hpusmKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHK.cls}">${dHK.arrow} ${dHK.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-receipt"></i> Kampus RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtRM2(c.kampusRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.kampusRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKR.cls}">${dKR.arrow} ${dKR.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-receipt"></i> Hospital RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtRM2(c.hospitalRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.hospitalRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHR.cls}">${dHR.arrow} ${dHR.pct}</div></div>
-  </div>`;
-
-  const getCurr=b=>cRows.find(r=>r.bulan===b);
-  const getPrev=b=>pRows.find(r=>r.bulan===b);
-  const sub=`${rangeStr} | ${currY} vs ${prevY}`;
-  ['kh-yoy-s1','kh-yoy-s2','kh-yoy-s3','kh-yoy-s4'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=sub;});
-
-  const tck={color:'#999',font:{size:10}};
-  const hideDL=shortDlm.length>12;
-  const dlY={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const dlYrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
-
-  if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-  if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-  if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
-  if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
-
-  // Jadual
-  let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
-  <table class="yoy-table kh-yoy-table"><thead><tr>
-    <th>Bulan</th>
-    <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">Kampus RM ${currY}</th><th class="td-num">Kampus RM ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">Hospital RM ${currY}</th><th class="td-num">Hospital RM ${prevY}</th><th class="td-num">Δ</th>
-  </tr></thead><tbody>`;
-  bulanDlm.forEach((b,i)=>{
-    const cr=getCurr(b),pr=getPrev(b);
-    const dkk=khDlt(cr?cr.kampusKwh:0,pr?pr.kampusKwh:0);
-    const dhk=khDlt(cr?cr.hpusmKwh:0,pr?pr.hpusmKwh:0);
-    const dkr=khDlt(cr?cr.kampusRm:0,pr?pr.kampusRm:0);
-    const dhr=khDlt(cr?cr.hospitalRm:0,pr?pr.hospitalRm:0);
-    th+=`<tr>
-      <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td><td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>
-      <td class="td-num" style="color:#1e7e34">${cr?fmtN(cr.hpusmKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.hpusmKwh):'—'}</td><td class="td-num td-${dhk.cls}">${(cr&&pr)?dhk.pct:'—'}</td>
-      <td class="td-num" style="color:#1a5fa8">${cr?fmtRM2(cr.kampusRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.kampusRm):'—'}</td><td class="td-num td-${dkr.cls}">${(cr&&pr)?dkr.pct:'—'}</td>
-      <td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td><td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>
-    </tr>`;
-  });
-  th+=`</tbody></table>`;
-  const tblEl=document.getElementById('kh-yoy-tbl');if(tblEl)tblEl.innerHTML=th;
-}
-
-// ── Pengurusan Data ──
-window.khToggleMgmt=function(){
-  const body=document.getElementById('kh-mgmt-body');
-  const chev=document.getElementById('kh-mgmt-chev');
-  if(!body||!chev)return;
-  const isOpen=chev.classList.contains('open');
-  body.style.display=isOpen?'none':'block';
-  chev.classList.toggle('open',!isOpen);
-};
-
-function khBuildTableRows(){
-  const tbody=document.getElementById('kh-tbl-body');
-  if(!tbody)return;
-  const sorted=[...khRows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
-  tbody.innerHTML=sorted.map(r=>`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
-    <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-    <td>${fmt(r.kampusKwh)}</td><td>${fmt(r.hpusmKwh)}</td><td>${fmt(r.totalKwh)}</td>
-    <td>${fmtRM2d(r.kampusRm)}</td><td>${fmtRM2d(r.hospitalRm)}</td><td>${fmtRM2d(r.totalRm)}</td>
-    <td class="edit-action-col" style="display:${adminUnlocked?'':'none'}">
-      <button class="btn-edit" onclick="openEditModal('kh',khRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
-      <button class="btn-del" onclick="openDelModal('kh','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
-    </td>
-  </tr>`).join('');
-  const cnt=document.getElementById('kh-tbl-count');if(cnt)cnt.textContent=sorted.length+' rekod';
-}
-
-window.khFilterTable=function(){
-  const t=document.getElementById('kh-t-tahun')?.value||'';
-  const b=document.getElementById('kh-t-bulan')?.value||'';
-  const rows=document.querySelectorAll('#kh-tbl-body tr');
-  let vis=0;
-  rows.forEach(row=>{
-    const show=(!t||row.dataset.tahun===t)&&(!b||row.dataset.bulan===b);
-    row.style.display=show?'':'none';if(show)vis++;
-  });
-  const cnt=document.getElementById('kh-tbl-count');if(cnt)cnt.textContent=vis+' rekod';
-};
-window.khClearFilter=function(){
-  const st=document.getElementById('kh-t-tahun');const sb=document.getElementById('kh-t-bulan');
-  if(st)st.value='';if(sb)sb.value='';khFilterTable();
-};
-
-const KH_EDIT_FIELDS=[
-  {key:'kampusKwh', label:'Kampus kWh'},
-  {key:'hpusmKwh',  label:'HPUSM kWh'},
-  {key:'kampusRm',  label:'Kampus RM'},
-  {key:'hospitalRm',label:'Hospital RM'},
-];
-
-loadData();
-</script>
-<!-- PWA Install Prompt -->
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a3a5c;color:white;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:none;align-items:center;gap:12px;font-size:13px;max-width:340px;width:calc(100% - 32px)">
-  <img src="icon-192.png" style="width:36px;height:36px;border-radius:8px">
-  <div style="flex:1">
-    <div style="font-weight:700;margin-bottom:2px">Pasang Sebagai App</div>
-    <div style="opacity:.8;font-size:11px">Tambah ke skrin utama Android anda</div>
-  </div>
-  <button id="pwa-install-btn" style="background:#4caf50;color:white;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Pasang</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:rgba(255,255,255,.15);color:white;border:none;padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer">✕</button>
-</div>
-
-<script>
-// ── Service Worker Registration ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-      .catch(err => console.log('[PWA] SW registration failed:', err));
-  });
-}
-
-// ── PWA Install Prompt ──
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'flex';
-});
-
-const installBtn = document.getElementById('pwa-install-btn');
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('[PWA] Install outcome:', outcome);
-    deferredPrompt = null;
-    document.getElementById('pwa-install-banner').style.display = 'none';
-  });
-}
-
-// Hide banner if already installed
-window.addEventListener('appinstalled', () => {
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'none';
-  console.log('[PWA] App installed successfully');
-});
-</script>
-</body>
-</html>
+      if(h.includes('bulan'))                                                    m.bulan
