@@ -671,7 +671,8 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
           Carbon Emission = (SS-A kWh + SS-D kWh) × EF<br>
           Carbon Saving = Solar Generation × EF<br>
           Net Carbon = Carbon Emission − Carbon Saving<br>
-          BEI = Jumlah kWh ÷ GFA (m²)
+          BEI = Jumlah kWh 12 bulan ÷ GFA (m²)<br>
+          <span style="font-size:10.5px;color:#999">· Tempoh kWh: 12 bulan tertakluk (trailing) berakhir pada bulan/tahun dipilih.<br>Jika data sejarah tidak cukup, tempoh dilaraskan ke hadapan (cth: Jan–Dis tahun tersebut).</span>
         </div>
       </div>
     </div>
@@ -1751,6 +1752,25 @@ function onCarbonGfaChange(){
 function fmtKg(v){ return Math.round(v).toLocaleString('ms-MY'); }
 function fmtT(v){ return (v/1000).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
+function computeAnnualKwhForBEI(t,b){
+  // Returns {kwh, label} for a trailing-12-month window ending at the selected month/year.
+  // If insufficient history exists before the selected month, the window shifts forward
+  // (clamped to the earliest available month) so it still covers 12 months where possible.
+  if(!t || !b || t.includes('Semua') || b.includes('Semua')) return null;
+  const sorted = sortByPeriod(allRows);
+  const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
+  if(idx===-1) return null;
+  let start = idx-11, end = idx;
+  if(start<0){
+    start = 0;
+    end = Math.min(sorted.length-1, 11);
+  }
+  const win = sorted.slice(start, end+1);
+  const kwh = win.reduce((s,r)=>s+r.totalKwh,0);
+  const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
+  return {kwh, label, months:win.length};
+}
+
 function renderCarbonSection(){
   const grid=document.getElementById('carbon-metrics-grid');
   if(!grid || typeof allRows==='undefined' || !allRows.length) return;
@@ -1769,7 +1789,11 @@ function renderCarbonSection(){
   const emission = (d.ssaKwh + d.ssdKwh) * CARBON_EF;
   const saving   = d.solarKwh * CARBON_EF;
   const net      = emission - saving;
-  const bei      = gfa>0 ? d.totalKwh/gfa : 0;
+  const cT=document.getElementById('carbon-sel-tahun'), cB=document.getElementById('carbon-sel-bulan');
+  const beiWindow = computeAnnualKwhForBEI(cT?cT.value:'', cB?cB.value:'');
+  const beiKwh = beiWindow ? beiWindow.kwh : d.totalKwh;
+  const bei      = gfa>0 ? beiKwh/gfa : 0;
+  const beiNote  = beiWindow ? `${fmt(beiKwh)} kWh (${beiWindow.label})` : `${fmt(beiKwh)} kWh · GFA ${fmt(gfa)} m²`;
   const rePct    = (d.solarKwh + d.totalKwh) > 0 ? (d.solarKwh/(d.solarKwh + d.totalKwh))*100 : 0;
   const pctEmission = 100;
   const pctSaving = emission>0 ? (saving/emission)*100 : 0;
@@ -1798,7 +1822,7 @@ function renderCarbonSection(){
       <div class="card-icon" style="color:#0891b2"><i class="ti ti-building-warehouse"></i></div>
       <div class="card-label" style="color:#0891b2">Building Energy Index (BEI)</div>
       <div class="card-value" style="color:#0891b2">${bei.toFixed(2)}</div>
-      <div class="card-unit">kWh/m² · GFA ${fmt(gfa)} m²</div>
+      <div class="card-unit">kWh/m²/tahun · ${beiNote}</div>
     </div>
     <div class="card" style="border-top:3px solid #e8a020">
       <div class="card-icon" style="color:#c47800"><i class="ti ti-leaf"></i></div>
