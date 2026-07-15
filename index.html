@@ -3703,6 +3703,31 @@ let bldChartTrend=null, bldChartDonut=null, bldChartCarbon=null;
 async function loadBuilding(){
   const el = document.getElementById('building-content');
   el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>';
+  // 1) Cuba Apps Script dahulu (lebih boleh dipercayai, tidak bergantung pada sheet "published to web")
+  try{
+    const gasUrl = `${GAS_URL}?action=building&t=${Date.now()}`;
+    const res = await fetch(gasUrl,{method:'GET',cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'Ralat Apps Script');
+    buildingRows = (data.rows||[]).map(r=>({
+      bulan: normBulan(r.bulan), tahun: String(r.tahun).trim(),
+      jppfKwh: Number(r.jppfKwh)||0, importTnbKwh: Number(r.importTnbKwh)||0,
+      solarKwh: Number(r.solarKwh)||0, eksportKwh: Number(r.eksportKwh)||0,
+      billRm: Number(r.billRm)||0, penjimatanRm: Number(r.penjimatanRm)||0,
+      carbonEmission: (Number(r.importTnbKwh)||0)*CARBON_EF,
+      carbonSaving: (Number(r.solarKwh)||0)*CARBON_EF,
+      netCarbon: ((Number(r.importTnbKwh)||0)*CARBON_EF) - ((Number(r.solarKwh)||0)*CARBON_EF)
+    }));
+    if(!buildingRows.length) throw new Error('Tiada data Building dijumpai dari Apps Script.');
+    buildBuildingPanel();
+    buildBuildingDropdowns();
+    renderBuildingSection();
+    return;
+  }catch(gasErr){
+    console.warn('Apps Script Building gagal, cuba gviz CSV sebagai fallback:', gasErr.message);
+  }
+  // 2) Fallback: gviz CSV terus dari Google Sheet (perlukan sheet "Anyone with link can view")
   try{
     const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${BUILDING_SHEET_GID}&t=${Date.now()}`;
     const res = await fetch(url,{cache:'no-store'});
@@ -3714,7 +3739,7 @@ async function loadBuilding(){
     buildBuildingDropdowns();
     renderBuildingSection();
   }catch(err){
-    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul.</div>`;
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan doGet('building') sudah ditambah pada Apps Script dan sheet dikongsi.</div>`;
   }
 }
 
