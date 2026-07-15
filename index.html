@@ -501,7 +501,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       </div>
     </div>
 
-    <div class="dash-grid g4" id="dash-metrics-top"></div>
+    <div class="dash-grid g5" id="dash-metrics-top"></div>
     <div class="dash-grid g5" id="dash-metrics-bottom"></div>
 
     <div class="dash-row3">
@@ -1979,19 +1979,51 @@ function barSparkSVG(values, color){
 }
 
 function deltaBadge(cur,prev){
-  if(prev===undefined || prev===null || prev===0 || isNaN(prev)) return '<span class="dcard-delta flat">— vs bulan sebelum</span>';
+  if(prev===undefined || prev===null || prev===0 || isNaN(prev)) return '<span class="dcard-delta flat">— vs tahun sebelum</span>';
   const pct=((cur-prev)/Math.abs(prev))*100;
   const cls = pct>0.05 ? 'up' : (pct<-0.05 ? 'down' : 'flat');
   const arrow = pct>0.05 ? '▲' : (pct<-0.05 ? '▼' : '—');
-  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs bulan sebelum</span>`;
+  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs tahun sebelum</span>`;
 }
 
 function deltaBadgePts(curPct,prevPct){
-  if(prevPct===undefined || prevPct===null || isNaN(prevPct)) return '<span class="dcard-delta flat">— vs bulan sebelum</span>';
+  if(prevPct===undefined || prevPct===null || isNaN(prevPct)) return '<span class="dcard-delta flat">— vs tahun sebelum</span>';
   const diff=curPct-prevPct;
   const cls = diff>0.05 ? 'up' : (diff<-0.05 ? 'down' : 'flat');
   const arrow = diff>0.05 ? '▲' : (diff<-0.05 ? '▼' : '—');
-  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(diff).toFixed(1)} p.p. vs bulan sebelum</span>`;
+  return `<span class="dcard-delta ${cls}">${arrow} ${Math.abs(diff).toFixed(1)} p.p. vs tahun sebelum</span>`;
+}
+
+function beiStarRating(bei){
+  let stars,label;
+  if(bei<=100){stars=5;label='5-Star';}
+  else if(bei<=130){stars=4;label='4-Star';}
+  else if(bei<=160){stars=3;label='3-Star';}
+  else if(bei<=250){stars=2;label='2-Star';}
+  else {stars=1;label='1-Star';}
+  let html='';
+  for(let i=1;i<=5;i++){
+    html += i<=stars ? '<i class="ti ti-star-filled" style="color:#f0c060"></i>' : '<i class="ti ti-star" style="color:#3a4d66"></i>';
+  }
+  return {stars,label,html};
+}
+
+function getYoYFiltered(){
+  const dT=document.getElementById('dash-sel-tahun'), dB=document.getElementById('dash-sel-bulan');
+  const t = dT?dT.value:'', b = dB?dB.value:'';
+  const years=[...new Set(allRows.map(r=>parseInt(r.tahun)).filter(n=>!isNaN(n)))].sort((a,b)=>a-b);
+  let curYear;
+  if(t && !t.includes('Semua')) curYear=parseInt(t);
+  else curYear = years.length ? years[years.length-1] : null;
+  if(curYear===null) return {curRows:[],prevRows:[],curYear:null,prevYear:null};
+  const prevYear = curYear-1;
+  let curRows = allRows.filter(r=>parseInt(r.tahun)===curYear);
+  let prevRows = allRows.filter(r=>parseInt(r.tahun)===prevYear);
+  if(b && !b.includes('Semua')){
+    curRows = curRows.filter(r=>r.bulan===b);
+    prevRows = prevRows.filter(r=>r.bulan===b);
+  }
+  return {curRows,prevRows,curYear,prevYear};
 }
 
 function ringGaugeSVG(pct,color){
@@ -2023,15 +2055,31 @@ function renderDashboardSection(){
   const sorted=sortByPeriod(filtered);
   const last8=sorted.slice(-8);
   const d=sumRows(filtered);
-  const cur=sorted[sorted.length-1], prev=sorted.length>1?sorted[sorted.length-2]:null;
+  const cur=sorted[sorted.length-1];
+
+  const yoy=getYoYFiltered();
+  const prevAgg = yoy.prevRows.length ? sumRows(yoy.prevRows) : null;
 
   const emission=(d.ssaKwh+d.ssdKwh)*CARBON_EF;
   const saving=d.solarKwh*CARBON_EF;
   const net=emission-saving;
   const rePct=(d.solarKwh+d.totalKwh)>0 ? (d.solarKwh/(d.solarKwh+d.totalKwh))*100 : 0;
-  const prevRePct = (prev && (prev.solarKwh+prev.totalKwh)>0) ? (prev.solarKwh/(prev.solarKwh+prev.totalKwh))*100 : null;
+  const prevRePct = (prevAgg && (prevAgg.solarKwh+prevAgg.totalKwh)>0) ? (prevAgg.solarKwh/(prevAgg.solarKwh+prevAgg.totalKwh))*100 : null;
   const costElec=d.ssaRm+d.ssdRm;
   const costSaving=d.penjimatan;
+
+  const prevEmission = prevAgg ? (prevAgg.ssaKwh+prevAgg.ssdKwh)*CARBON_EF : null;
+  const prevSaving   = prevAgg ? prevAgg.solarKwh*CARBON_EF : null;
+  const prevNet       = (prevEmission!==null && prevSaving!==null) ? (prevEmission-prevSaving) : null;
+  const prevCostElec  = prevAgg ? (prevAgg.ssaRm+prevAgg.ssdRm) : null;
+  const prevCostSaving= prevAgg ? prevAgg.penjimatan : null;
+
+  const dT=document.getElementById('dash-sel-tahun'), dB=document.getElementById('dash-sel-bulan');
+  const gfa=getCarbonGfa();
+  const beiWindow=computeAnnualKwhForBEI(dT?dT.value:'', dB?dB.value:'');
+  const beiKwh = beiWindow ? beiWindow.kwh : d.totalKwh;
+  const bei = gfa>0 ? beiKwh/gfa : 0;
+  const beiRating = beiStarRating(bei);
 
   const ssaSpark=last8.map(r=>r.ssaKwh), ssdSpark=last8.map(r=>r.ssdKwh), solarSpark=last8.map(r=>r.solarKwh);
   const emisSpark=last8.map(r=>(r.ssaKwh+r.ssdKwh)*CARBON_EF), savSpark=last8.map(r=>r.solarKwh*CARBON_EF);
@@ -2042,19 +2090,19 @@ function renderDashboardSection(){
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-bolt"></i></div><div class="dcard-label">SS-A kWh</div></div>
       <div class="dcard-value">${fmt(d.ssaKwh)}<span>kWh</span></div>
-      ${deltaBadge(cur?cur.ssaKwh:d.ssaKwh, prev?prev.ssaKwh:null)}
+      ${deltaBadge(d.ssaKwh, prevAgg?prevAgg.ssaKwh:null)}
       ${sparklineSVG(ssaSpark,'#5fa8ff')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#e8a020"><i class="ti ti-sun"></i></div><div class="dcard-label">Solar Generation</div></div>
       <div class="dcard-value">${fmt(d.solarKwh)}<span>kWh</span></div>
-      ${deltaBadge(cur?cur.solarKwh:d.solarKwh, prev?prev.solarKwh:null)}
+      ${deltaBadge(d.solarKwh, prevAgg?prevAgg.solarKwh:null)}
       ${sparklineSVG(solarSpark,'#e8a020')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(124,58,237,.14);color:#a78bfa"><i class="ti ti-building-hospital"></i></div><div class="dcard-label">SS-D kWh</div></div>
       <div class="dcard-value">${fmt(d.ssdKwh)}<span>kWh</span></div>
-      ${deltaBadge(cur?cur.ssdKwh:d.ssdKwh, prev?prev.ssdKwh:null)}
+      ${deltaBadge(d.ssdKwh, prevAgg?prevAgg.ssdKwh:null)}
       ${sparklineSVG(ssdSpark,'#a78bfa')}
     </div>
     <div class="dcard" style="padding-right:84px">
@@ -2062,37 +2110,43 @@ function renderDashboardSection(){
       <div class="dcard-value">${rePct.toFixed(1)}<span>%</span></div>
       ${deltaBadgePts(rePct, prevRePct)}
       <div class="dring-wrap">${ringGaugeWithLeaf(rePct,'#01DF01')}</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(8,145,178,.14);color:#0891b2"><i class="ti ti-building-warehouse"></i></div><div class="dcard-label">Building Energy Index (BEI)</div></div>
+      <div class="dcard-value">${bei.toFixed(2)}<span>kWh/m²/thn</span></div>
+      <div style="font-size:15px;letter-spacing:2px;margin-bottom:6px">${beiRating.html}</div>
+      <div style="font-size:10.5px;color:#8fa5bd">${beiRating.label} · GFA ${fmt(gfa)} m²${beiWindow?'<br>'+beiWindow.label:''}</div>
     </div>`;
 
   document.getElementById('dash-metrics-bottom').innerHTML = `
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(192,57,43,.14);color:#e05a4a"><i class="ti ti-cloud"></i></div><div class="dcard-label">Carbon Emission</div></div>
       <div class="dcard-value" style="font-size:18px">${fmtKg(emission)}<span>kgCO₂e</span></div>
-      ${deltaBadge(emisSpark[emisSpark.length-1], emisSpark.length>1?emisSpark[emisSpark.length-2]:null)}
+      ${deltaBadge(emission, prevEmission)}
       ${barSparkSVG(emisSpark,'#e05a4a')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(30,126,52,.14);color:#4ade80"><i class="ti ti-solar-panel"></i></div><div class="dcard-label">Carbon Saving by Solar</div></div>
       <div class="dcard-value" style="font-size:18px">${fmtKg(saving)}<span>kgCO₂e</span></div>
-      ${deltaBadge(savSpark[savSpark.length-1], savSpark.length>1?savSpark[savSpark.length-2]:null)}
+      ${deltaBadge(saving, prevSaving)}
       ${barSparkSVG(savSpark,'#4ade80')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(124,58,237,.14);color:#a78bfa"><i class="ti ti-cloud-storm"></i></div><div class="dcard-label">Net Carbon Emission</div></div>
       <div class="dcard-value" style="font-size:18px">${fmtKg(net)}<span>kgCO₂e</span></div>
-      ${deltaBadge(netSpark[netSpark.length-1], netSpark.length>1?netSpark[netSpark.length-2]:null)}
+      ${deltaBadge(net, prevNet)}
       ${barSparkSVG(netSpark,'#a78bfa')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#f0c060"><i class="ti ti-currency-dollar"></i></div><div class="dcard-label">Cost of Electricity</div></div>
       <div class="dcard-value" style="font-size:18px">${fmtRM(costElec)}</div>
-      ${deltaBadge(costSpark[costSpark.length-1], costSpark.length>1?costSpark[costSpark.length-2]:null)}
+      ${deltaBadge(costElec, prevCostElec)}
       ${barSparkSVG(costSpark,'#f0c060')}
     </div>
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(8,145,178,.14);color:#22d3ee"><i class="ti ti-piggy-bank"></i></div><div class="dcard-label">Cost Saving by Solar</div></div>
       <div class="dcard-value" style="font-size:18px">${fmtRM(costSaving)}</div>
-      ${deltaBadge(costSavSpark[costSavSpark.length-1], costSavSpark.length>1?costSavSpark[costSavSpark.length-2]:null)}
+      ${deltaBadge(costSaving, prevCostSaving)}
       ${barSparkSVG(costSavSpark,'#22d3ee')}
     </div>`;
 
