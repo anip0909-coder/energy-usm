@@ -260,6 +260,16 @@ body.dark .kh-yoy-table th{background:#0f172a}
 .dfact-val{color:#fff;font-size:16px;font-weight:800;margin-bottom:3px}
 .dfact-sub{color:#7d93ad;font-size:10.5px}
 .dimpact-card{background:linear-gradient(135deg,#0d2b1c,#0f3322);border:1px solid #1c4a30;border-radius:14px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.dnbel-card{background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;padding:16px;margin-top:14px}
+.dnbel-title{color:#5fb8ff;font-size:11px;font-weight:800;letter-spacing:.3px;margin-bottom:12px}
+.dnbel-row{display:flex;align-items:center;gap:12px}
+.dnbel-stars{font-size:18px;letter-spacing:3px}
+.dnbel-info{flex:1}
+.dnbel-grade{color:#fff;font-size:15px;font-weight:800;margin-bottom:2px}
+.dnbel-bei{color:#7d93ad;font-size:11.5px}
+.dnbel-scale{display:flex;gap:4px;margin-top:12px}
+.dnbel-scale span{flex:1;height:6px;border-radius:3px;background:#1c2f48}
+.dnbel-scale span.on{background:linear-gradient(90deg,#4ade80,#f0c060)}
 .dimpact-title{color:#4ade80;font-size:11px;font-weight:800;letter-spacing:.3px;margin-bottom:5px}
 .dimpact-text{color:#dce8f5;font-size:12.5px;line-height:1.6}
 .dimpact-text strong{color:#4ade80;font-size:15px}
@@ -554,6 +564,10 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
             <div class="dimpact-title">IMPAK POSITIF</div>
             <div class="dimpact-text" id="dash-impact-text">Memuatkan...</div>
           </div>
+        </div>
+        <div class="dnbel-card" id="dash-nbel-card">
+          <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
+          <div class="dnbel-body" id="dash-nbel-body">Memuatkan...</div>
         </div>
       </div>
     </div>
@@ -2153,6 +2167,7 @@ function renderDashboardSection(){
   renderDashboardCharts(sorted,d,rePct,cur,emission,saving,net);
   renderDashboardKPI(cur||d, saving, costSaving);
   renderDashboardImpact(saving);
+  renderDashboardNbel(bei, beiRating, beiWindow, gfa);
 }
 
 function renderDashboardKPI(cur, saving, costSaving){
@@ -2172,6 +2187,24 @@ function renderDashboardImpact(totalSaving){
   const el=document.getElementById('dash-impact-text');
   if(!el) return;
   el.innerHTML = `Setakat ini, sistem solar telah mengelakkan <strong>${fmtKg(totalSaving)} kgCO₂e</strong> daripada dilepaskan ke atmosfera bagi tempoh yang ditapis.`;
+}
+
+function renderDashboardNbel(bei, rating, beiWindow, gfa){
+  const el=document.getElementById('dash-nbel-body');
+  if(!el) return;
+  const scaleBars = Array.from({length:5},(_,i)=> i < rating.stars ? '<span class="on"></span>' : '<span></span>').join('');
+  el.innerHTML = `
+    <div class="dnbel-row">
+      <div class="dnbel-stars">${rating.html}</div>
+      <div class="dnbel-info">
+        <div class="dnbel-grade">${rating.label} Rating</div>
+        <div class="dnbel-bei">BEI: ${bei.toFixed(2)} kWh/m²/tahun${beiWindow?' · '+beiWindow.label:''}</div>
+      </div>
+    </div>
+    <div class="dnbel-scale">${scaleBars}</div>
+    <div style="font-size:10px;color:#7d93ad;margin-top:8px;line-height:1.6">
+      5★ ≤100 &nbsp;·&nbsp; 4★ ≤130 &nbsp;·&nbsp; 3★ ≤160 &nbsp;·&nbsp; 2★ ≤250 &nbsp;·&nbsp; 1★ &gt;250 kWh/m²/tahun
+    </div>`;
 }
 
 function renderDashboardCharts(sorted,d,rePct,cur,emissionTotal,savingTotal,netTotal){
