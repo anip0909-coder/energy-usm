@@ -990,6 +990,7 @@ function manualRefresh(){
   if (activeTab === 'jppf') loadData(true);
   else if (activeTab === 'epc') loadEPC();
   else if (activeTab === 'kh') loadKH();
+  else if (activeTab === 'building') loadBuilding();
 }
 
 function resetCountdown(){
@@ -1851,12 +1852,14 @@ function onCarbonGfaChange(){
 function fmtKg(v){ return Math.round(v).toLocaleString('ms-MY'); }
 function fmtT(v){ return (v/1000).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-function computeAnnualKwhForBEI(t,b){
+function computeAnnualKwhForBEI(t,b,rows,field){
   // Returns {kwh, label} for a trailing-12-month window ending at the selected month/year.
   // If insufficient history exists before the selected month, the window shifts forward
   // (clamped to the earliest available month) so it still covers 12 months where possible.
   if(!t || !b || t.includes('Semua') || b.includes('Semua')) return null;
-  const sorted = sortByPeriod(allRows);
+  rows = rows || allRows;
+  field = field || 'totalKwh';
+  const sorted = sortByPeriod(rows);
   const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
   if(idx===-1) return null;
   let start = idx-11, end = idx;
@@ -1865,7 +1868,7 @@ function computeAnnualKwhForBEI(t,b){
     end = Math.min(sorted.length-1, 11);
   }
   const win = sorted.slice(start, end+1);
-  const kwh = win.reduce((s,r)=>s+r.totalKwh,0);
+  const kwh = win.reduce((s,r)=>s+(r[field]||0),0);
   const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
   return {kwh, label, months:win.length};
 }
@@ -3735,10 +3738,6 @@ function parseBuilding(csv){
       else if(h.includes('eksport'))                                   m.eksportKwh=idx;
       else if(h.includes('bil')&&h.includes('elektrik'))               m.billRm=idx;
       else if(h.includes('penjimatan'))                                m.penjimatanRm=idx;
-      else if(h.includes('net')&&h.includes('carbon'))                 m.netCarbon=idx;
-      else if(h.includes('carbon')&&h.includes('saving'))              m.carbonSaving=idx;
-      else if(h.includes('carbon')&&h.includes('emission'))            m.carbonEmission=idx;
-      else if(h.includes('bei')||(h.includes('building')&&h.includes('energy')&&h.includes('index'))) m.bei=idx;
     });
     break;
   }
@@ -3749,12 +3748,15 @@ function parseBuilding(csv){
     const bRaw=row[m.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    const importTnbKwh=n('importTnbKwh'), solarKwh=n('solarKwh');
     rows.push({
       bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
-      jppfKwh:n('jppfKwh'), importTnbKwh:n('importTnbKwh'), solarKwh:n('solarKwh'), eksportKwh:n('eksportKwh'),
+      jppfKwh:n('jppfKwh'), importTnbKwh, solarKwh, eksportKwh:n('eksportKwh'),
       billRm:n('billRm'), penjimatanRm:n('penjimatanRm'),
-      carbonEmission:n('carbonEmission'), carbonSaving:n('carbonSaving'), netCarbon:n('netCarbon'),
-      bei:n('bei')
+      // Auto-calculated (same formula as Dashboard/Carbon & Sustainability tabs)
+      carbonEmission: importTnbKwh*CARBON_EF,
+      carbonSaving: solarKwh*CARBON_EF,
+      netCarbon: (importTnbKwh*CARBON_EF) - (solarKwh*CARBON_EF)
     });
   }
   return rows;
@@ -3809,12 +3811,10 @@ function getYoYFilteredBuilding(){
 
 function sumRowsBuilding(rows){
   const s=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
-  const sorted=sortByPeriod(rows);
   return {
     jppfKwh:s('jppfKwh'), importTnbKwh:s('importTnbKwh'), solarKwh:s('solarKwh'), eksportKwh:s('eksportKwh'),
     billRm:s('billRm'), penjimatanRm:s('penjimatanRm'),
-    carbonEmission:s('carbonEmission'), carbonSaving:s('carbonSaving'), netCarbon:s('netCarbon'),
-    bei: sorted.length ? sorted[sorted.length-1].bei : 0
+    carbonEmission:s('carbonEmission'), carbonSaving:s('carbonSaving'), netCarbon:s('netCarbon')
   };
 }
 
@@ -3839,6 +3839,11 @@ function renderBuildingSection(){
   const rePct=(d.solarKwh+d.importTnbKwh)>0 ? (d.solarKwh/(d.solarKwh+d.importTnbKwh))*100 : 0;
   const prevRePct=(prevAgg && (prevAgg.solarKwh+prevAgg.importTnbKwh)>0) ? (prevAgg.solarKwh/(prevAgg.solarKwh+prevAgg.importTnbKwh))*100 : null;
 
+  const bT=document.getElementById('bld-sel-tahun'), bB=document.getElementById('bld-sel-bulan');
+  const gfa=getCarbonGfa();
+  const beiWindow=computeAnnualKwhForBEI(bT?bT.value:'', bB?bB.value:'', buildingRows, 'jppfKwh');
+  const beiKwh = beiWindow ? beiWindow.kwh : d.jppfKwh;
+  d.bei = gfa>0 ? beiKwh/gfa : 0;
   const beiRating = beiStarRating(d.bei);
 
   const gridSpark=last8.map(r=>r.importTnbKwh), buildSpark=last8.map(r=>r.jppfKwh), solarSpark=last8.map(r=>r.solarKwh);
@@ -3874,7 +3879,7 @@ function renderBuildingSection(){
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(8,145,178,.14);color:#0891b2"><i class="ti ti-building-warehouse"></i></div><div class="dcard-label">Building Energy Index (BEI)</div></div>
       <div class="dcard-value">${d.bei.toFixed(2)}<span>kWh/m²/thn</span></div>
       <div style="font-size:15px;letter-spacing:2px;margin-bottom:6px">${beiRating.html}</div>
-      <div style="font-size:10.5px;color:#8fa5bd">${beiRating.label} · dari lajur BEI Sheet</div>
+      <div style="font-size:10.5px;color:#8fa5bd">${beiRating.label} · GFA ${fmt(gfa)} m²${beiWindow?'<br>'+beiWindow.label:''}</div>
     </div>`;
 
   document.getElementById('bld-metrics-bottom').innerHTML = `
