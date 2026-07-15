@@ -591,6 +591,9 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <p id="print-scope" style="font-size:13px;color:#1a3a5c;font-weight:600;margin-top:4px"></p>
   </div>
 
+  <!-- JPPF TAB PANEL -->
+  <div id="panel-jppf">
+
   <div class="status-bar">
     <div class="status-left"><i class="ti ti-database"></i><span id="status-label">Memuat data...</span></div>
     <div class="btn-group">
@@ -612,9 +615,6 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
     </div>
   </div>
-
-  <!-- JPPF TAB PANEL -->
-  <div id="panel-jppf">
 
   <div id="main-content">
     <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
@@ -3704,9 +3704,17 @@ async function loadBuilding(){
   const el = document.getElementById('building-content');
   el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>';
   // 1) Cuba Apps Script dahulu (lebih boleh dipercayai, tidak bergantung pada sheet "published to web")
+  //    Timeout 8 saat supaya tidak "stuck loading" jika Apps Script perlahan/tidak respons.
   try{
     const gasUrl = `${GAS_URL}?action=building&t=${Date.now()}`;
-    const res = await fetch(gasUrl,{method:'GET',cache:'no-store'});
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 8000);
+    let res;
+    try{
+      res = await fetch(gasUrl,{method:'GET',cache:'no-store',signal:ctrl.signal});
+    }finally{
+      clearTimeout(timer);
+    }
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'Ralat Apps Script');
@@ -3725,7 +3733,8 @@ async function loadBuilding(){
     renderBuildingSection();
     return;
   }catch(gasErr){
-    console.warn('Apps Script Building gagal, cuba gviz CSV sebagai fallback:', gasErr.message);
+    const reason = gasErr.name==='AbortError' ? 'Apps Script tidak respons dalam masa (timeout).' : gasErr.message;
+    console.warn('Apps Script Building gagal, cuba gviz CSV sebagai fallback:', reason);
   }
   // 2) Fallback: gviz CSV terus dari Google Sheet (perlukan sheet "Anyone with link can view")
   try{
@@ -3739,7 +3748,8 @@ async function loadBuilding(){
     buildBuildingDropdowns();
     renderBuildingSection();
   }catch(err){
-    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan doGet('building') sudah ditambah pada Apps Script dan sheet dikongsi.</div>`;
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan doGet('building') sudah ditambah &amp; di-deploy (versi baharu) pada Apps Script, dan sheet BANGUNAN dikongsi.
+      <br><br><button class="icon-btn" onclick="loadBuilding()"><i class="ti ti-refresh"></i> Cuba Lagi</button></div>`;
   }
 }
 
