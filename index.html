@@ -3697,6 +3697,16 @@ const BUILDING_SHEET_GID = '949864181';
 let buildingRows = [];
 let bldChartTrend=null, bldChartDonut=null, bldChartCarbon=null;
 
+async function fetchWithTimeout(url, opts, ms){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), ms);
+  try{
+    return await fetch(url, Object.assign({}, opts, {signal: ctrl.signal}));
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 async function loadBuilding(){
   const el = document.getElementById('building-content');
   el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>';
@@ -3704,14 +3714,7 @@ async function loadBuilding(){
   //    Timeout 8 saat supaya tidak "stuck loading" jika Apps Script perlahan/tidak respons.
   try{
     const gasUrl = `${GAS_URL}?action=building&t=${Date.now()}`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 8000);
-    let res;
-    try{
-      res = await fetch(gasUrl,{method:'GET',cache:'no-store',signal:ctrl.signal});
-    }finally{
-      clearTimeout(timer);
-    }
+    const res = await fetchWithTimeout(gasUrl,{method:'GET',cache:'no-store'},8000);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'Ralat Apps Script');
@@ -3730,13 +3733,15 @@ async function loadBuilding(){
     renderBuildingSection();
     return;
   }catch(gasErr){
-    const reason = gasErr.name==='AbortError' ? 'Apps Script tidak respons dalam masa (timeout).' : gasErr.message;
+    const reason = gasErr.name==='AbortError' ? 'Apps Script tidak respons dalam masa (timeout 8s).' : gasErr.message;
     console.warn('Apps Script Building gagal, cuba gviz CSV sebagai fallback:', reason);
+    el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building... (cuba kaedah alternatif)</div>';
   }
   // 2) Fallback: gviz CSV terus dari Google Sheet (perlukan sheet "Anyone with link can view")
+  //    Turut guna timeout 8 saat supaya TIDAK sekali-kali "stuck loading" selama-lamanya.
   try{
     const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${BUILDING_SHEET_GID}&t=${Date.now()}`;
-    const res = await fetch(url,{cache:'no-store'});
+    const res = await fetchWithTimeout(url,{cache:'no-store'},8000);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const csv = await res.text();
     buildingRows = parseBuilding(csv);
@@ -3745,7 +3750,8 @@ async function loadBuilding(){
     buildBuildingDropdowns();
     renderBuildingSection();
   }catch(err){
-    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan doGet('building') sudah ditambah &amp; di-deploy (versi baharu) pada Apps Script, dan sheet BANGUNAN dikongsi.
+    const reason2 = err.name==='AbortError' ? 'Permintaan tidak respons dalam masa (timeout 8s). Kemungkinan rangkaian menyekat akses ke Google.' : err.message;
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${reason2}<br><br>Pastikan doGet('building') sudah ditambah &amp; di-deploy (versi baharu) pada Apps Script, dan sheet BANGUNAN dikongsi.
       <br><br><a href="${GAS_URL}?action=buildingdebug" target="_blank" style="color:#5fb8ff">🔍 Buka diagnostik (lihat nama sheet &amp; 15 baris pertama)</a>
       <br><br><button class="icon-btn" onclick="loadBuilding()"><i class="ti ti-refresh"></i> Cuba Lagi</button></div>`;
   }
