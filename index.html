@@ -3749,6 +3749,7 @@ async function loadBuilding(){
     renderBuildingSection();
   }catch(err){
     el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan doGet('building') sudah ditambah &amp; di-deploy (versi baharu) pada Apps Script, dan sheet BANGUNAN dikongsi.
+      <br><br><a href="${GAS_URL}?action=buildingdebug" target="_blank" style="color:#5fb8ff">🔍 Buka diagnostik (lihat nama sheet &amp; 15 baris pertama)</a>
       <br><br><button class="icon-btn" onclick="loadBuilding()"><i class="ti ti-refresh"></i> Cuba Lagi</button></div>`;
   }
 }
