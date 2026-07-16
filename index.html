@@ -14,10 +14,7 @@
 <meta name="theme-color" content="#1a3a5c">
 <meta name="description" content="Sistem Pemantauan Tenaga Elektrik USMKK - Kampus & HPUSM">
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json">
-
-<!-- App Icons -->
+<!-- App Icons (untuk "Add to Home Screen" manual melalui menu pelayar) -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -4104,54 +4101,24 @@ function renderBuildingCharts(sorted,d,rePct){
 
 loadData();
 </script>
-<!-- PWA Install Prompt -->
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a3a5c;color:white;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:none;align-items:center;gap:12px;font-size:13px;max-width:340px;width:calc(100% - 32px)">
-  <img src="icon-192.png" style="width:36px;height:36px;border-radius:8px">
-  <div style="flex:1">
-    <div style="font-weight:700;margin-bottom:2px">Pasang Sebagai App</div>
-    <div style="opacity:.8;font-size:11px">Tambah ke skrin utama Android anda</div>
-  </div>
-  <button id="pwa-install-btn" style="background:#4caf50;color:white;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Pasang</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:rgba(255,255,255,.15);color:white;border:none;padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer">✕</button>
-</div>
 
 <script>
-// ── Service Worker Registration ──
+// ── Bersihkan Service Worker/Cache lama (PWA telah dibuang) ──
+// Ini penting: jika peranti pernah "install" PWA versi lama, Service Worker
+// lama akan terus menyekat pelayar daripada memuat fail terkini (punca
+// paparan "Memuat data..." tersekat/tidak dikemaskini). Kod ini
+// nyahdaftar sebarang Service Worker sedia ada & kosongkan cache-nya
+// secara automatik supaya pelayar sentiasa ambil fail terkini dari server.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-      .catch(err => console.log('[PWA] SW registration failed:', err));
-  });
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  }).catch(()=>{});
 }
-
-// ── PWA Install Prompt ──
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'flex';
-});
-
-const installBtn = document.getElementById('pwa-install-btn');
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('[PWA] Install outcome:', outcome);
-    deferredPrompt = null;
-    document.getElementById('pwa-install-banner').style.display = 'none';
-  });
+if (window.caches && caches.keys) {
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
+  }).catch(()=>{});
 }
-
-// Hide banner if already installed
-window.addEventListener('appinstalled', () => {
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'none';
-  console.log('[PWA] App installed successfully');
-});
 </script>
 </body>
 </html>
