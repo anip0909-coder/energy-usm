@@ -490,6 +490,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
     <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
     <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
+    <div class="sidebar-sub-item" id="subside-building" onclick="switchSection('energy');switchTab('building')"><i class="ti ti-building"></i> Building</div>
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
@@ -632,6 +633,13 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div id="panel-kh" style="display:none">
     <div id="kh-content">
       <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>
+    </div>
+  </div>
+
+  <!-- BUILDING TAB PANEL -->
+  <div id="panel-building" style="display:none">
+    <div id="building-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data BUILDING...</div>
     </div>
   </div>
 
