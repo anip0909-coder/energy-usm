@@ -636,10 +636,80 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     </div>
   </div>
 
-  <!-- BUILDING TAB PANEL -->
+ <!-- BUILDING TAB PANEL (NEW) -->
   <div id="panel-building" style="display:none">
-    <div id="building-content">
-      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data BUILDING...</div>
+    <div class="dash-wrapper">
+      <div class="dash-head">
+        <div>
+          <h2><i class="ti ti-building"></i> BUILDING DASHBOARD</h2>
+          <p>Ringkasan Prestasi Tenaga Bangunan (Import TNB & JPPF)</p>
+        </div>
+        <div class="dash-filter">
+          <select id="bldg-sel-tahun" onchange="renderBuildingSection()"><option>-- Semua Tahun --</option></select>
+          <select id="bldg-sel-bulan" onchange="renderBuildingSection()"><option>-- Semua Bulan --</option></select>
+        </div>
+      </div>
+
+      <div class="dash-grid g5" id="bldg-metrics-top"></div>
+      <div class="dash-grid g5" id="bldg-metrics-bottom"></div>
+
+      <div class="dash-row3">
+        <div class="dpanel">
+          <div class="dpanel-title">TREND TENAGA (kWh)</div>
+          <div class="dpanel-sub">Import TNB · JPPF Consumption · Janaan Solar</div>
+          <div class="dlegend">
+            <span><span class="dot" style="background:#5fa8ff"></span>Import TNB</span>
+            <span><span class="dot" style="background:#7c3aed"></span>JPPF Consumption</span>
+            <span><span class="dot" style="background:#e8a020"></span>Janaan Solar</span>
+          </div>
+          <div style="position:relative;width:100%;height:230px"><canvas id="bldgChartTrend"></canvas></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-title">SUMBANGAN TENAGA</div>
+          <div class="dpanel-sub">Daripada jumlah penggunaan</div>
+          <div style="position:relative;width:100%;height:170px"><canvas id="bldgChartDonut"></canvas></div>
+          <div id="bldg-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-title">KPI RINGKAS</div>
+          <div class="dpanel-sub">Tempoh tapisan semasa</div>
+          <div class="dkpi-list" id="bldg-kpi-list"></div>
+        </div>
+      </div>
+
+      <div class="dash-row2">
+        <div class="dpanel">
+          <div class="dpanel-title">CARBON EMISSION TREND (kgCO₂e)</div>
+          <div class="dpanel-sub">Carbon Emission · Carbon Saving · Net Carbon</div>
+          <div class="dlegend">
+            <span><span class="dot" style="background:#c0392b"></span>Carbon Emission</span>
+            <span><span class="dot" style="background:#1e7e34"></span>Carbon Saving</span>
+            <span><span class="dot" style="background:#01DF01"></span>Net Carbon</span>
+          </div>
+          <div style="position:relative;width:100%;height:230px"><canvas id="bldgChartCarbon"></canvas></div>
+        </div>
+        <div>
+          <div class="dfact-card">
+            <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-cloud"></i></div>
+            <div>
+              <div class="dfact-title">FAKTOR PELEPASAN (EMISSION FACTOR)</div>
+              <div class="dfact-val">0.585 kgCO₂e/kWh</div>
+              <div class="dfact-sub">Sumber: Suruhanjaya Tenaga Malaysia (2023)</div>
+            </div>
+          </div>
+          <div class="dimpact-card">
+            <div class="dring" style="background:rgba(74,222,128,.12)"><i class="ti ti-leaf"></i></div>
+            <div>
+              <div class="dimpact-title">IMPAK POSITIF</div>
+              <div class="dimpact-text" id="bldg-impact-text">Memuatkan...</div>
+            </div>
+          </div>
+          <div class="dnbel-card">
+            <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
+            <div class="dnbel-body" id="bldg-nbel-body">Memuatkan...</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
