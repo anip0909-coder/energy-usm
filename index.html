@@ -5,15 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pemantauan Tenaga Elektrik USMKK</title>
 
+<!-- PWA Meta Tags -->
 <meta name="application-name" content="Tenaga USM">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tenaga USM">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a3a5c">
+<meta name="description" content="Sistem Pemantauan Tenaga Elektrik USMKK - Kampus & HPUSM">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- App Icons -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
@@ -145,6 +156,23 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .yoy-delta.flat{color:#888}
 .yoy-charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
+.yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
+/* Jadual YoY Kampus+HPUSM — paparan penuh tanpa scroll mendatar */
+.kh-yoy-table-box{overflow-x:visible!important;padding:14px 10px}
+.kh-yoy-table{table-layout:fixed;width:100%}
+.kh-yoy-table th,.kh-yoy-table td{white-space:normal!important;word-break:break-word;font-size:9.5px;padding:6px 3px;text-align:center;line-height:1.3}
+.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left;width:42px}
+body.dark .kh-yoy-table th{background:#0f172a}
+.yoy-table{width:100%;border-collapse:collapse;font-size:12px}
+.yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.yoy-table td{padding:8px 10px;border-bottom:1px solid #f4f6f9;color:#333;white-space:nowrap}
+.yoy-table tr:last-child td{border-bottom:none}
+.yoy-table tr:hover td{background:#fafbfc}
+.td-up{color:#c0392b!important;font-weight:700}
+.td-down{color:#1e7e34!important;font-weight:700}
+.td-num{text-align:right;font-weight:600}
+.td-total td{background:#f0f4f8!important;font-weight:700}
+.yoy-no-data{text-align:center;padding:30px;color:#bbb;font-size:13px;background:white;border-radius:12px;border:1px dashed #e0e6ed}
 
 /* ── STATES ── */
 .loading-state{text-align:center;padding:70px 20px;color:#bbb}
@@ -192,7 +220,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .placeholder-box p{font-size:12.5px}
 
 /* ── DASHBOARD EMS (dark theme, scoped) ── */
-.dash-wrapper{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+#section-dashboard{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 .dash-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 .dash-head h2{color:#fff;font-size:19px;font-weight:800;margin:0}
 .dash-head p{color:#7d93ad;font-size:12.5px;margin:3px 0 0}
@@ -239,12 +267,25 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .dnbel-info{flex:1}
 .dnbel-grade{color:#fff;font-size:15px;font-weight:800;margin-bottom:2px}
 .dnbel-bei{color:#7d93ad;font-size:11.5px}
+.dnbel-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:11px}
+.dnbel-table th{text-align:left;color:#7d93ad;font-weight:700;font-size:9.5px;letter-spacing:.3px;text-transform:uppercase;padding:5px 6px;border-bottom:1px solid #1c2f48}
+.dnbel-table td{padding:6px 6px;color:#c3d3e3;border-bottom:1px solid #16273d}
+.dnbel-table tr:last-child td{border-bottom:none}
+.dnbel-table tr.dnbel-active td{background:rgba(74,222,128,.08);color:#fff;font-weight:700}
+.dnbel-table tr.dnbel-active td:first-child{border-radius:6px 0 0 6px}
+.dnbel-table tr.dnbel-active td:last-child{border-radius:0 6px 6px 0}
 .dimpact-title{color:#4ade80;font-size:11px;font-weight:800;letter-spacing:.3px;margin-bottom:5px}
 .dimpact-text{color:#dce8f5;font-size:12.5px;line-height:1.6}
 .dimpact-text strong{color:#4ade80;font-size:15px}
 .dring{position:relative;width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dring i{color:#4ade80;font-size:20px}
-
+body.dark .sidebar{background:#020617}
+body.dark .sidebar-item{color:#8fa3b8}
+body.dark .sidebar-item:hover{background:rgba(255,255,255,.06)}
+body.dark .sidebar-item.active{background:#1e40af}
+body.dark .sidebar-sub{border-color:rgba(255,255,255,.1)}
+body.dark .placeholder-box{background:#1e293b;border-color:#334155;color:#94a3b8}
+body.dark .placeholder-box h3{color:#cbd5e1}
 @media(max-width:860px){
   .app-shell{flex-direction:column}
   .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:8px}
@@ -253,7 +294,153 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
   .sidebar-sub.open{display:flex}
 }
 
+/* ── JPPF DATA MANAGEMENT — no print ── */
+.jppf-mgmt{margin-bottom:22px}
+.jppf-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;user-select:none;transition:background .15s}
+body.dark .jppf-mgmt-header{background:#1e293b;border-color:#334155}
+.jppf-mgmt-header:hover{background:#f8fafc}
+body.dark .jppf-mgmt-header:hover{background:#0f172a}
+.jppf-mgmt-title{font-size:14px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px}
+body.dark .jppf-mgmt-title{color:#e2e8f0}
+.jppf-mgmt-chevron{font-size:18px;color:#888;transition:transform .25s}
+.jppf-mgmt-chevron.open{transform:rotate(180deg)}
+.jppf-mgmt-body{margin-top:10px}
+.epc-mgmt{margin-bottom:22px}
+.epc-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;user-select:none;transition:background .15s}
+body.dark .epc-mgmt-header{background:#1e293b;border-color:#334155}
+.epc-mgmt-header:hover{background:#f8fafc}
+body.dark .epc-mgmt-header:hover{background:#0f172a}
+.epc-mgmt-title{font-size:14px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px}
+body.dark .epc-mgmt-title{color:#e2e8f0}
+.epc-mgmt-chevron{font-size:18px;color:#888;transition:transform .25s}
+.epc-mgmt-chevron.open{transform:rotate(180deg)}
+.epc-mgmt-body{margin-top:10px}
+.epc-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed}
+body.dark .epc-tbl-filter{background:#1e293b;border-color:#334155}
+.epc-tbl-filter label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.epc-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer}
+body.dark .epc-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.epc-tbl-count{font-size:12px;color:#aaa;margin-left:auto}
+.jppf-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:white;border-radius:10px;border:1px solid #e0e6ed}
+body.dark .jppf-tbl-filter{background:#1e293b;border-color:#334155}
+.jppf-tbl-filter label{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.jppf-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#f8fafc;color:#333;cursor:pointer}
+body.dark .jppf-tbl-filter select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.jppf-tbl-count{font-size:12px;color:#aaa;margin-left:auto}
+@media print{.jppf-mgmt{display:none!important}.epc-mgmt{display:none!important}}
+
 footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px solid #e0e6ed;margin-top:10px}
+
+/* ── PRINT / PDF ── */
+@media print{
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  body{background:white!important}
+  .topbar{background:#1a3a5c!important}
+  .live-pill,.countdown-pill,.dm-btn,.tab-nav,.sidebar{display:none!important}
+  .status-bar,.filter-row,.btn-group,.range-box,.yoy-top,.modal-bg{display:none!important}
+  .app-shell{display:block!important}
+  .container{padding:0!important;max-width:100%!important}
+  .charts,.yoy-charts{grid-template-columns:1fr 1fr!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important}
+  .card,.chart-box,.trend-box,.hcard,.yoy-card,.yoy-chart-box,.yoy-table-box{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
+  .print-header{display:block!important}
+  canvas{max-width:100%}
+}
+.print-header{display:none;text-align:center;padding:18px 0 12px;border-bottom:3px solid #1a3a5c;margin-bottom:20px}
+.print-header h1{font-size:20px;color:#1a3a5c;font-weight:700;letter-spacing:.3px}
+.print-header p{font-size:12px;color:#666;margin-top:4px}
+
+@media(max-width:640px){.charts{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.yoy-charts{grid-template-columns:1fr}}
+
+/* ── DARK MODE ── */
+body.dark{background:#0f172a;color:#e2e8f0}
+body.dark .topbar{background:linear-gradient(135deg,#020617,#0f172a)}
+body.dark .tab-nav{background:#1e293b;border-color:#334155}
+body.dark .tab-btn{color:#94a3b8}
+body.dark .tab-btn.active{color:#93c5fd;border-bottom-color:#93c5fd}
+body.dark .filter-row,body.dark .card,body.dark .chart-box,body.dark .trend-box,
+body.dark .hcard,body.dark .yoy-card,body.dark .yoy-chart-box,body.dark .yoy-table-box,
+body.dark .range-box,body.dark .yoy-top,body.dark .modal,body.dark .edit-modal-box{background:#1e293b;border-color:#334155;color:#e2e8f0}
+body.dark .filter-row select,body.dark .yoy-top select,body.dark .edit-modal-box input,body.dark .edit-modal-box select{background:#0f172a;color:#e2e8f0;border-color:#475569}
+body.dark .card-label,body.dark .card-unit{color:#94a3b8}
+body.dark .card-value{color:#f1f5f9}
+body.dark .card.total{background:linear-gradient(135deg,#1e3a5f,#1e40af)}
+body.dark .yoy-table th{background:#0f172a;color:#94a3b8}
+body.dark .yoy-table td{color:#e2e8f0;border-color:#334155}
+body.dark .yoy-table tr:hover td{background:#0f172a}
+body.dark .icon-btn{background:#1e293b;border-color:#475569;color:#e2e8f0}
+body.dark .icon-btn:hover{background:#334155}
+body.dark .status-left{color:#94a3b8}
+body.dark .modal-bg{background:rgba(0,0,0,.8)}
+body.dark .hstat{color:#94a3b8}
+body.dark .bar-bg{background:#334155}
+body.dark .range-box-title{color:#94a3b8}
+body.dark .mpill{background:#0f172a;border-color:#475569;color:#94a3b8}
+body.dark .mpill:hover{border-color:#93c5fd;color:#93c5fd}
+body.dark .yoy-year-label{color:#64748b}
+body.dark footer{color:#475569;border-color:#334155}
+body.dark .error-state{background:#2d1515;border-color:#7f1d1d}
+body.dark .empty-state{background:#1e293b;border-color:#334155}
+body.dark .toggle-group .toggle-btn{background:#0f172a;border-color:#475569;color:#94a3b8}
+
+/* dark mode toggle button */
+.dm-btn{font-size:16px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;font-size:13px}
+.dm-btn:hover{background:rgba(255,255,255,.2)}
+
+/* ── EDIT / DELETE TABLE STYLES ── */
+.data-table-wrap{background:white;border-radius:12px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:22px}
+body.dark .data-table-wrap{background:#1e293b;border-color:#334155}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.data-table th{background:#f0f4f8;padding:9px 10px;text-align:left;font-weight:700;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;position:sticky;top:0}
+body.dark .data-table th{background:#0f172a;color:#94a3b8}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f0f4f8;color:#333;white-space:nowrap}
+body.dark .data-table td{border-color:#334155;color:#e2e8f0}
+.data-table tr:hover td{background:#f8fafc}
+body.dark .data-table tr:hover td{background:#0f172a}
+.btn-edit{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #1a5fa8;background:white;color:#1a5fa8;cursor:pointer;font-weight:600}
+.btn-edit:hover{background:#1a5fa8;color:white}
+body.dark .btn-edit{background:#1e293b;border-color:#3b82f6;color:#93c5fd}
+body.dark .btn-edit:hover{background:#3b82f6;color:white}
+.btn-del{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #c0392b;background:white;color:#c0392b;cursor:pointer;font-weight:600;margin-left:4px}
+.btn-del:hover{background:#c0392b;color:white}
+body.dark .btn-del{background:#1e293b;border-color:#ef4444;color:#fca5a5}
+body.dark .btn-del:hover{background:#ef4444;color:white}
+
+/* edit modal */
+.edit-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.edit-modal-bg.show{display:flex}
+.edit-modal-box{background:white;border-radius:16px;padding:28px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.edit-modal-box h2{font-size:16px;font-weight:700;color:#1a3a5c;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.edit-modal-box p{font-size:12px;color:#999;margin-bottom:16px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.edit-field label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.edit-field input{width:100%;padding:8px 10px;border-radius:7px;border:1.5px solid #c0cdd8;font-size:13px;outline:none;transition:border .2s}
+.edit-field input:focus{border-color:#1a3a5c}
+.edit-field input[readonly]{background:#f8fafc;color:#888}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.btn-save{padding:9px 20px;background:#1a3a5c;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:#0f2640}
+.btn-cancel{padding:9px 20px;background:white;color:#666;border:1px solid #c0cdd8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-cancel:hover{background:#f0f4f8}
+.modal-msg{font-size:13px;padding:8px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.modal-msg.ok{background:#e6f4ea;color:#1e7e34}
+.modal-msg.err{background:#fdecea;color:#c0392b}
+
+/* admin unlock strip */
+.admin-strip{display:flex;align-items:center;gap:10px;padding:10px 16px;background:white;border-radius:10px;border:1px solid #e0e6ed;margin-bottom:16px;flex-wrap:wrap}
+body.dark .admin-strip{background:#1e293b;border-color:#334155}
+.admin-strip label{font-size:12px;color:#888;font-weight:600;white-space:nowrap}
+.admin-strip input{padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;font-size:13px;width:180px;outline:none}
+body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#475569}
+.admin-strip button{padding:6px 14px;border-radius:7px;background:#1a3a5c;color:white;border:none;font-size:12px;font-weight:600;cursor:pointer}
+.admin-strip .lock-status{font-size:12px;font-weight:700}
+.lock-status.locked{color:#c0392b}
+.lock-status.unlocked{color:#1e7e34}
+
 </style>
 </head>
 <body>
@@ -285,6 +472,9 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
   <div class="topbar-right">
     <div class="live-pill"><span class="live-dot"></span> LIVE</div>
     <div class="countdown-pill"><i class="ti ti-refresh"></i> Refresh: <strong id="countdown-label">—</strong></div>
+    <button class="dm-btn" onclick="toggleDarkMode()" title="Mod Gelap/Cerah">
+      <i class="ti ti-moon" id="dm-icon"></i><span id="dm-label">Gelap</span>
+    </button>
   </div>
 </div>
 
@@ -297,11 +487,9 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 
   <div class="sidebar-item expanded active" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev"></i></div>
   <div class="sidebar-sub open" id="side-energy-sub">
-    <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
-    <div class="sidebar-sub-item" id="subside-epc" onclick="switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
-    <div class="sidebar-sub-item" id="subside-kh" onclick="switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
-    <!-- NEW BUILDING TAB -->
-    <div class="sidebar-sub-item" id="subside-building" onclick="switchTab('building')"><i class="ti ti-building"></i> Building</div>
+    <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
+    <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
+    <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
@@ -316,76 +504,74 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 
   <!-- ═══════ SECTION: DASHBOARD ═══════ -->
   <div class="content-section" id="section-dashboard">
-    <div class="dash-wrapper">
-      <div class="dash-head">
-        <div>
-          <h2><i class="ti ti-layout-dashboard"></i> DASHBOARD EMS</h2>
-          <p>Ringkasan Prestasi Tenaga &amp; Kelestarian</p>
-        </div>
-        <div class="dash-filter">
-          <select id="dash-sel-tahun" onchange="renderDashboardSection()"><option>-- Semua Tahun --</option></select>
-          <select id="dash-sel-bulan" onchange="renderDashboardSection()"><option>-- Semua Bulan --</option></select>
-        </div>
+    <div class="dash-head">
+      <div>
+        <h2><i class="ti ti-layout-dashboard"></i> DASHBOARD EMS</h2>
+        <p>Ringkasan Prestasi Tenaga &amp; Kelestarian</p>
       </div>
-
-      <div class="dash-grid g5" id="dash-metrics-top"></div>
-      <div class="dash-grid g5" id="dash-metrics-bottom"></div>
-
-      <div class="dash-row3">
-        <div class="dpanel">
-          <div class="dpanel-title">TREND TENAGA (kWh)</div>
-          <div class="dpanel-sub">SS-A kWh · SS-D kWh · Janaan Solar</div>
-          <div class="dlegend">
-            <span><span class="dot" style="background:#5fa8ff"></span>SS-A kWh</span>
-            <span><span class="dot" style="background:#7c3aed"></span>SS-D kWh</span>
-            <span><span class="dot" style="background:#e8a020"></span>Janaan Solar</span>
-          </div>
-          <div style="position:relative;width:100%;height:230px"><canvas id="dashChartTrend"></canvas></div>
-        </div>
-        <div class="dpanel">
-          <div class="dpanel-title">SUMBANGAN TENAGA</div>
-          <div class="dpanel-sub">Daripada jumlah penggunaan</div>
-          <div style="position:relative;width:100%;height:170px"><canvas id="dashChartDonut"></canvas></div>
-          <div id="dash-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
-        </div>
-        <div class="dpanel">
-          <div class="dpanel-title">KPI RINGKAS</div>
-          <div class="dpanel-sub">Tempoh tapisan semasa</div>
-          <div class="dkpi-list" id="dash-kpi-list"></div>
-        </div>
+      <div class="dash-filter">
+        <select id="dash-sel-tahun" onchange="renderDashboardSection()"><option>-- Semua Tahun --</option></select>
+        <select id="dash-sel-bulan" onchange="renderDashboardSection()"><option>-- Semua Bulan --</option></select>
       </div>
+    </div>
 
-      <div class="dash-row2">
-        <div class="dpanel">
-          <div class="dpanel-title">CARBON EMISSION TREND (kgCO₂e)</div>
-          <div class="dpanel-sub">Carbon Emission · Carbon Saving · Net Carbon</div>
-          <div class="dlegend">
-            <span><span class="dot" style="background:#c0392b"></span>Carbon Emission</span>
-            <span><span class="dot" style="background:#1e7e34"></span>Carbon Saving</span>
-            <span><span class="dot" style="background:#01DF01"></span>Net Carbon</span>
-          </div>
-          <div style="position:relative;width:100%;height:230px"><canvas id="dashChartCarbon"></canvas></div>
+    <div class="dash-grid g5" id="dash-metrics-top"></div>
+    <div class="dash-grid g5" id="dash-metrics-bottom"></div>
+
+    <div class="dash-row3">
+      <div class="dpanel">
+        <div class="dpanel-title">TREND TENAGA (kWh)</div>
+        <div class="dpanel-sub">SS-A kWh · SS-D kWh · Janaan Solar</div>
+        <div class="dlegend">
+          <span><span class="dot" style="background:#5fa8ff"></span>SS-A kWh</span>
+          <span><span class="dot" style="background:#7c3aed"></span>SS-D kWh</span>
+          <span><span class="dot" style="background:#e8a020"></span>Janaan Solar</span>
         </div>
-        <div>
-          <div class="dfact-card">
-            <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-cloud"></i></div>
-            <div>
-              <div class="dfact-title">FAKTOR PELEPASAN (EMISSION FACTOR)</div>
-              <div class="dfact-val">0.585 kgCO₂e/kWh</div>
-              <div class="dfact-sub">Sumber: Suruhanjaya Tenaga Malaysia (2023)</div>
-            </div>
+        <div style="position:relative;width:100%;height:230px"><canvas id="dashChartTrend"></canvas></div>
+      </div>
+      <div class="dpanel">
+        <div class="dpanel-title">SUMBANGAN TENAGA</div>
+        <div class="dpanel-sub">Daripada jumlah penggunaan</div>
+        <div style="position:relative;width:100%;height:170px"><canvas id="dashChartDonut"></canvas></div>
+        <div id="dash-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
+      </div>
+      <div class="dpanel">
+        <div class="dpanel-title">KPI RINGKAS</div>
+        <div class="dpanel-sub">Tempoh tapisan semasa</div>
+        <div class="dkpi-list" id="dash-kpi-list"></div>
+      </div>
+    </div>
+
+    <div class="dash-row2">
+      <div class="dpanel">
+        <div class="dpanel-title">CARBON EMISSION TREND (kgCO₂e)</div>
+        <div class="dpanel-sub">Carbon Emission · Carbon Saving · Net Carbon</div>
+        <div class="dlegend">
+          <span><span class="dot" style="background:#c0392b"></span>Carbon Emission</span>
+          <span><span class="dot" style="background:#1e7e34"></span>Carbon Saving</span>
+          <span><span class="dot" style="background:#01DF01"></span>Net Carbon</span>
+        </div>
+        <div style="position:relative;width:100%;height:230px"><canvas id="dashChartCarbon"></canvas></div>
+      </div>
+      <div>
+        <div class="dfact-card">
+          <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-cloud"></i></div>
+          <div>
+            <div class="dfact-title">FAKTOR PELEPASAN (EMISSION FACTOR)</div>
+            <div class="dfact-val">0.585 kgCO₂e/kWh</div>
+            <div class="dfact-sub">Sumber: Suruhanjaya Tenaga Malaysia (2023)</div>
           </div>
-          <div class="dimpact-card">
-            <div class="dring" style="background:rgba(74,222,128,.12)"><i class="ti ti-leaf"></i></div>
-            <div>
-              <div class="dimpact-title">IMPAK POSITIF</div>
-              <div class="dimpact-text" id="dash-impact-text">Memuatkan...</div>
-            </div>
+        </div>
+        <div class="dimpact-card">
+          <div class="dring" style="background:rgba(74,222,128,.12)"><i class="ti ti-leaf"></i></div>
+          <div>
+            <div class="dimpact-title">IMPAK POSITIF</div>
+            <div class="dimpact-text" id="dash-impact-text">Memuatkan...</div>
           </div>
-          <div class="dnbel-card">
-            <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
-            <div class="dnbel-body" id="dash-nbel-body">Memuatkan...</div>
-          </div>
+        </div>
+        <div class="dnbel-card" id="dash-nbel-card">
+          <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
+          <div class="dnbel-body" id="dash-nbel-body">Memuatkan...</div>
         </div>
       </div>
     </div>
@@ -397,34 +583,42 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
 
   <div class="sec-title" style="margin-bottom:14px"><i class="ti ti-bolt"></i> Energy Overview — <span id="energy-subtab-title">KWH USMKK</span></div>
 
+  <!-- print header (hidden on screen) -->
+  <div class="print-header">
+    <h1>Laporan Pemantauan Tenaga Elektrik USMKK</h1>
+    <p id="print-date"></p>
+    <p id="print-scope" style="font-size:13px;color:#1a3a5c;font-weight:600;margin-top:4px"></p>
+  </div>
+
   <div class="status-bar">
     <div class="status-left"><i class="ti ti-database"></i><span id="status-label">Memuat data...</span></div>
     <div class="btn-group">
       <button class="icon-btn" id="refresh-btn" onclick="manualRefresh()"><i class="ti ti-refresh"></i> Refresh</button>
+      <button class="icon-btn pdf-btn" onclick="printPDF()"><i class="ti ti-file-type-pdf"></i> Cetak / Simpan PDF</button>
       <button class="icon-btn" onclick="openAdmin()" title="Admin"><i class="ti ti-settings"></i></button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <label><i class="ti ti-filter"></i> Tapis:</label>
+    <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
+    <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
+    <div class="filter-divider"></div>
+    <label><i class="ti ti-building"></i> Paparan:</label>
+    <div class="toggle-group">
+      <button class="toggle-btn active ssa" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
+      <button class="toggle-btn active ssd" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
+      <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
     </div>
   </div>
 
   <!-- JPPF TAB PANEL -->
   <div id="panel-jppf">
-    <div class="filter-row">
-      <label><i class="ti ti-filter"></i> Tapis:</label>
-      <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
-      <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
-      <div class="filter-divider"></div>
-      <label><i class="ti ti-building"></i> Paparan:</label>
-      <div class="toggle-group">
-        <button class="toggle-btn active ssa" id="tog-ssa" onclick="toggleSS('ssa')">SS-A (Kampus)</button>
-        <button class="toggle-btn active ssd" id="tog-ssd" onclick="toggleSS('ssd')">SS-D (HPUSM)</button>
-        <button class="toggle-btn active solar" id="tog-solar" onclick="toggleSS('solar')">Solar</button>
-      </div>
-    </div>
-    <div id="main-content">
-      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
-    </div>
+
+  <div id="main-content">
+    <div class="loading-state"><i class="ti ti-loader"></i>Memuat data dari Google Sheets...</div>
   </div>
 
-  
   </div><!-- end panel-jppf -->
 
   <!-- EPC TAB PANEL -->
@@ -441,83 +635,6 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
     </div>
   </div>
 
-  <!-- BUILDING TAB PANEL (NEW) -->
-  <div id="panel-building" style="display:none">
-    <div class="dash-wrapper">
-      <div class="dash-head">
-        <div>
-          <h2><i class="ti ti-building"></i> BUILDING DASHBOARD</h2>
-          <p>Ringkasan Prestasi Tenaga Bangunan (Import TNB & JPPF)</p>
-        </div>
-        <div class="dash-filter">
-          <select id="bldg-sel-tahun" onchange="renderBuildingSection()"><option>-- Semua Tahun --</option></select>
-          <select id="bldg-sel-bulan" onchange="renderBuildingSection()"><option>-- Semua Bulan --</option></select>
-        </div>
-      </div>
-
-      <div class="dash-grid g5" id="bldg-metrics-top"></div>
-      <div class="dash-grid g5" id="bldg-metrics-bottom"></div>
-
-      <div class="dash-row3">
-        <div class="dpanel">
-          <div class="dpanel-title">TREND TENAGA (kWh)</div>
-          <div class="dpanel-sub">Import TNB · JPPF Consumption · Janaan Solar</div>
-          <div class="dlegend">
-            <span><span class="dot" style="background:#5fa8ff"></span>Import TNB</span>
-            <span><span class="dot" style="background:#7c3aed"></span>JPPF Consumption</span>
-            <span><span class="dot" style="background:#e8a020"></span>Janaan Solar</span>
-          </div>
-          <div style="position:relative;width:100%;height:230px"><canvas id="bldgChartTrend"></canvas></div>
-        </div>
-        <div class="dpanel">
-          <div class="dpanel-title">SUMBANGAN TENAGA</div>
-          <div class="dpanel-sub">Daripada jumlah penggunaan</div>
-          <div style="position:relative;width:100%;height:170px"><canvas id="bldgChartDonut"></canvas></div>
-          <div id="bldg-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
-        </div>
-        <div class="dpanel">
-          <div class="dpanel-title">KPI RINGKAS</div>
-          <div class="dpanel-sub">Tempoh tapisan semasa</div>
-          <div class="dkpi-list" id="bldg-kpi-list"></div>
-        </div>
-      </div>
-
-      <div class="dash-row2">
-        <div class="dpanel">
-          <div class="dpanel-title">CARBON EMISSION TREND (kgCO₂e)</div>
-          <div class="dpanel-sub">Carbon Emission · Carbon Saving · Net Carbon</div>
-          <div class="dlegend">
-            <span><span class="dot" style="background:#c0392b"></span>Carbon Emission</span>
-            <span><span class="dot" style="background:#1e7e34"></span>Carbon Saving</span>
-            <span><span class="dot" style="background:#01DF01"></span>Net Carbon</span>
-          </div>
-          <div style="position:relative;width:100%;height:230px"><canvas id="bldgChartCarbon"></canvas></div>
-        </div>
-        <div>
-          <div class="dfact-card">
-            <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-cloud"></i></div>
-            <div>
-              <div class="dfact-title">FAKTOR PELEPASAN (EMISSION FACTOR)</div>
-              <div class="dfact-val">0.585 kgCO₂e/kWh</div>
-              <div class="dfact-sub">Sumber: Suruhanjaya Tenaga Malaysia (2023)</div>
-            </div>
-          </div>
-          <div class="dimpact-card">
-            <div class="dring" style="background:rgba(74,222,128,.12)"><i class="ti ti-leaf"></i></div>
-            <div>
-              <div class="dimpact-title">IMPAK POSITIF</div>
-              <div class="dimpact-text" id="bldg-impact-text">Memuatkan...</div>
-            </div>
-          </div>
-          <div class="dnbel-card">
-            <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
-            <div class="dnbel-body" id="bldg-nbel-body">Memuatkan...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   </div><!-- end section-energy -->
 
   <!-- ═══════ SECTION: SOLAR MONITORING ═══════ -->
@@ -528,7 +645,7 @@ footer{text-align:center;font-size:11px;color:#bbb;padding:20px;border-top:1px s
     </div>
   </div>
 
- <!-- ═══════ SECTION: CARBON & SUSTAINABILITY ═══════ -->
+  <!-- ═══════ SECTION: CARBON & SUSTAINABILITY ═══════ -->
   <div class="content-section" id="section-carbon">
     <div class="sec-title" style="margin-bottom:14px"><i class="ti ti-leaf-2"></i> Carbon &amp; Sustainability</div>
     <div class="filter-row" style="margin-bottom:16px">
@@ -638,20 +755,14 @@ const DEFAULT_SHEET_NAME = 'JPPF';
 const REFRESH_SECONDS    = 1800;
 // ══════════════════════════════════════════════
 
-const footerSecEl = document.getElementById('footer-sec');
-if (footerSecEl) {
-  footerSecEl.textContent = REFRESH_SECONDS;
-}
-
-const printDateEl = document.getElementById('print-date');
-if (printDateEl) {
-  printDateEl.textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
-}
+document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
+document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
 
 function getConfig(){
   try{ const s=localStorage.getItem('usm_admin_config'); if(s)return JSON.parse(s); }catch(e){}
   return {sheetId:DEFAULT_SHEET_ID,sheetName:DEFAULT_SHEET_NAME};
 }
+let CONFIG=getConfig();
 let allRows=[],chartKwh,chartBil,chartTrend,countdownTimer,secondsLeft=REFRESH_SECONDS;
 
 const BULAN_ORDER=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
@@ -674,17 +785,8 @@ function printPDF(){
   else if(!tahun.includes('Semua')) scopeStr = `Tahun: ${tStr}`;
   else if(!bulan.includes('Semua')) scopeStr = `Bulan: ${bStr} (Semua Tahun)`;
   else scopeStr = 'Tempoh: Semua Data';
-  
-  const printDate = document.getElementById('print-date');
-  if (printDate) {
-    printDate.textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
-  }
-  
-  const printScope = document.getElementById('print-scope');
-  if (printScope) {
-    printScope.textContent = scopeStr;
-  }
-  
+  document.getElementById('print-date').textContent = 'Dicetak: ' + new Date().toLocaleString('ms-MY');
+  document.getElementById('print-scope').textContent = scopeStr;
   window.print();
 }
 
