@@ -601,7 +601,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     </div>
   </div>
 
-  <div class="filter-row">
+  <div class="filter-row" id="main-filter-row">
     <label><i class="ti ti-filter"></i> Tapis:</label>
     <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
     <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
@@ -1729,6 +1729,7 @@ function switchTab(tab){
   document.getElementById('tab-epc')?.classList.toggle('active',  tab==='epc');
   document.getElementById('tab-kh')?.classList.toggle('active',   tab==='kh');
   document.getElementById('tab-building')?.classList.toggle('active', tab==='building');
+  const mfr=document.getElementById('main-filter-row'); if(mfr) mfr.style.display = tab==='building' ? 'none' : '';
   const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh'),sb=document.getElementById('subside-building');
   if(sj)sj.classList.toggle('active', tab==='jppf');
   if(se)se.classList.toggle('active', tab==='epc');
@@ -3854,9 +3855,9 @@ function renderBuildingSection(){
   const netSpark=last8.map((r,i)=>emisSpark[i]-savSpark[i]);
   const billSpark=last8.map(r=>r.billRm), penjimatanSpark=last8.map(r=>r.penjimatanRm);
 
-  // BEI — guna GFA & piawaian rating yang sama seperti Dashboard/Carbon section
+  // BEI — GFA ditetapkan khusus 1200 m² untuk tab Building sahaja (tidak menjejaskan getCarbonGfa() Dashboard/Carbon)
   const bldT=document.getElementById('bld-sel-tahun'), bldB=document.getElementById('bld-sel-bulan');
-  const gfa=getCarbonGfa();
+  const gfa=1200;
   const beiWindow=bldComputeAnnualKwh(bldT?bldT.value:'', bldB?bldB.value:'');
   const beiKwh = beiWindow ? beiWindow.kwh : d.jppfKwh;
   const bei = gfa>0 ? beiKwh/gfa : 0;
