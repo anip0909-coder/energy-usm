@@ -3995,19 +3995,24 @@ function renderBuildingCharts(sorted, rePct){
   const canvasTrend=document.getElementById('bldChartTrend');
   if(canvasTrend){
     if(bldChartTrend) bldChartTrend.destroy();
+    const nz=v=>v>0?v:null; // hanya lukis garis pada bulan yang ada nilai
     bldChartTrend=new Chart(canvasTrend,{
       type:'line',
       data:{
         labels:lbl,
         datasets:[
-          {label:'Grid Import',data:sorted.map(r=>r.importKwh),borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',pointRadius:3,tension:.3,borderWidth:2},
-          {label:'Solar Generation',data:sorted.map(r=>r.solarKwh),borderColor:'#e8a020',backgroundColor:'#e8a020',pointRadius:3,tension:.3,borderWidth:2},
-          {label:'Building Consumption',data:sorted.map(r=>r.jppfKwh),borderColor:'#a78bfa',backgroundColor:'#a78bfa',pointRadius:3,tension:.3,borderWidth:2}
+          {label:'Grid Import',data:sorted.map(r=>nz(r.importKwh)),borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false,
+            datalabels:{align:'top',anchor:'end',color:'#5fa8ff',font:{size:9,weight:'700'},rotation:0,formatter:v=>v==null?'':fmt(v)}},
+          {label:'Solar Generation',data:sorted.map(r=>nz(r.solarKwh)),borderColor:'#e8a020',backgroundColor:'#e8a020',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false,
+            datalabels:{align:'bottom',anchor:'start',color:'#e8a020',font:{size:9,weight:'700'},rotation:0,formatter:v=>v==null?'':fmt(v)}},
+          {label:'Building Consumption',data:sorted.map(r=>nz(r.jppfKwh)),borderColor:'#a78bfa',backgroundColor:'#a78bfa',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false,
+            datalabels:{align:'top',anchor:'end',color:'#a78bfa',font:{size:9,weight:'700'},rotation:0,formatter:v=>v==null?'':fmt(v)}}
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},datalabels:{display:false},
+        layout:{padding:{top:16}},
+        plugins:{legend:{display:false},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kWh`}}},
         scales:{
           x:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10}}},
@@ -4066,14 +4071,16 @@ function renderBuildingCharts(sorted, rePct){
       data:{
         labels:lbl,
         datasets:[
-          {type:'bar',label:'Carbon Emission',data:emisArr,backgroundColor:'#c0392b',order:2,borderRadius:4},
-          {type:'bar',label:'Carbon Saving',data:savArr,backgroundColor:'#1e7e34',order:2,borderRadius:4},
-          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1}
+          {type:'bar',label:'Carbon Emission',data:emisArr,backgroundColor:'#c0392b',order:2,borderRadius:4,
+            datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmtKg(v):''}},
+          {type:'bar',label:'Carbon Saving',data:savArr,backgroundColor:'#1e7e34',order:2,borderRadius:4,
+            datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmtKg(v):''}},
+          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1,datalabels:{display:false}}
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},datalabels:{display:false},
+        plugins:{legend:{display:false},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtKg(ctx.parsed.y)} kgCO₂e`}}},
         scales:{
           x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
