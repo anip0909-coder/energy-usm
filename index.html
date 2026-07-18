@@ -3803,6 +3803,10 @@ function buildBuildingPage(){
               <div class="dimpact-text" id="bld-impact-text">Memuatkan...</div>
             </div>
           </div>
+          <div class="dnbel-card" id="bld-nbel-card">
+            <div class="dnbel-title">NATIONAL BUILDING ENERGY LABEL</div>
+            <div class="dnbel-body" id="bld-nbel-body">Memuatkan...</div>
+          </div>
         </div>
       </div>
 
@@ -3924,6 +3928,7 @@ function renderBuildingSection(){
 
   renderBuildingKPI(cur||d, saving, d.penjimatanRm, d.eksportKwh);
   renderBuildingImpact(saving);
+  renderBuildingNbel(bei, beiRating, beiWindow, gfa);
   renderBuildingCharts(sorted,rePct);
 }
 
@@ -3945,6 +3950,40 @@ function renderBuildingImpact(totalSaving){
   const el=document.getElementById('bld-impact-text');
   if(!el) return;
   el.innerHTML = `Setakat ini, sistem solar bangunan ini telah mengelakkan <strong>${fmtKg(totalSaving)} kgCO₂e</strong> daripada dilepaskan ke atmosfera bagi tempoh yang ditapis.`;
+}
+
+function renderBuildingNbel(bei, rating, beiWindow, gfa){
+  const el=document.getElementById('bld-nbel-body');
+  if(!el) return;
+  const tiers=[
+    {stars:5,label:'5-Star',range:'BEI ≤ 100'},
+    {stars:4,label:'4-Star',range:'100 < BEI ≤ 130'},
+    {stars:3,label:'3-Star',range:'130 < BEI ≤ 160'},
+    {stars:2,label:'2-Star',range:'160 < BEI ≤ 250'},
+    {stars:1,label:'1-Star',range:'BEI > 250'}
+  ];
+  const rowsHtml = tiers.map(t=>{
+    const starsHtml = Array.from({length:5},(_,i)=> i<t.stars ? '<i class="ti ti-star-filled" style="color:#f0c060;font-size:12px"></i>' : '<i class="ti ti-star" style="color:#3a4d66;font-size:12px"></i>').join('');
+    const active = t.stars===rating.stars;
+    return `<tr class="${active?'dnbel-active':''}">
+      <td>${starsHtml}</td>
+      <td>${t.label}</td>
+      <td>${t.range}</td>
+      <td style="text-align:center">${active?'<i class="ti ti-circle-check-filled" style="color:#4ade80"></i>':''}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="dnbel-row">
+      <div class="dnbel-stars">${rating.html}</div>
+      <div class="dnbel-info">
+        <div class="dnbel-grade">${rating.label} Rating</div>
+        <div class="dnbel-bei">BEI: ${bei.toFixed(2)} kWh/m²/tahun${beiWindow?' · '+beiWindow.label:''}</div>
+      </div>
+    </div>
+    <table class="dnbel-table">
+      <thead><tr><th>Rating</th><th>Gred</th><th>Julat BEI (kWh/m²/tahun)</th><th style="text-align:center">Semasa</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
 }
 
 function renderBuildingCharts(sorted, rePct){
