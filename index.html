@@ -221,6 +221,7 @@ body.dark .kh-yoy-table th{background:#0f172a}
 
 /* ── DASHBOARD EMS (dark theme, scoped) ── */
 #section-dashboard{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+#panel-building{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 .dash-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 .dash-head h2{color:#fff;font-size:19px;font-weight:800;margin:0}
 .dash-head p{color:#7d93ad;font-size:12.5px;margin:3px 0 0}
@@ -490,11 +491,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
     <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
     <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
-  </div>
-
-  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev"></i></div>
-  <div class="sidebar-sub" id="side-power-sub">
-    <div class="sidebar-sub-item" id="subside-building" onclick="switchSection('power')"><i class="ti ti-building"></i> Building</div>
+    <div class="sidebar-sub-item" id="subside-building" onclick="switchSection('energy');switchTab('building')"><i class="ti ti-building"></i> Building</div>
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
@@ -640,6 +637,13 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     </div>
   </div>
 
+  <!-- BUILDING TAB PANEL -->
+  <div id="panel-building" style="display:none">
+    <div id="building-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>
+    </div>
+  </div>
+
   </div><!-- end section-energy -->
 
   <!-- ═══════ SECTION: SOLAR MONITORING ═══════ -->
@@ -648,11 +652,6 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <h3>Solar Monitoring</h3>
       <p>Data pemantauan solar/PV akan dipaparkan di sini.</p>
     </div>
-  </div>
-
-  <!-- ═══════ SECTION: POWER MONITORING ═══════ -->
-  <div class="content-section" id="section-power">
-    <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building dari Google Sheets...</div>
   </div>
 
   <!-- ═══════ SECTION: CARBON & SUSTAINABILITY ═══════ -->
@@ -1725,18 +1724,22 @@ function switchTab(tab){
   document.getElementById('panel-jppf').style.display = tab==='jppf' ? 'block' : 'none';
   document.getElementById('panel-epc').style.display  = tab==='epc'  ? 'block' : 'none';
   document.getElementById('panel-kh').style.display   = tab==='kh'   ? 'block' : 'none';
+  const pb=document.getElementById('panel-building'); if(pb) pb.style.display = tab==='building' ? 'block' : 'none';
   document.getElementById('tab-jppf')?.classList.toggle('active', tab==='jppf');
   document.getElementById('tab-epc')?.classList.toggle('active',  tab==='epc');
   document.getElementById('tab-kh')?.classList.toggle('active',   tab==='kh');
-  const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh');
+  document.getElementById('tab-building')?.classList.toggle('active', tab==='building');
+  const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh'),sb=document.getElementById('subside-building');
   if(sj)sj.classList.toggle('active', tab==='jppf');
   if(se)se.classList.toggle('active', tab==='epc');
   if(sk)sk.classList.toggle('active', tab==='kh');
-  const titles={jppf:'KWH USMKK',epc:'EPC Chiller',kh:'Kampus+HPUSM'};
+  if(sb)sb.classList.toggle('active', tab==='building');
+  const titles={jppf:'KWH USMKK',epc:'EPC Chiller',kh:'Kampus+HPUSM',building:'Building'};
   const th=document.getElementById('energy-subtab-title');
   if(th) th.textContent=titles[tab]||'';
   if(tab==='epc' && epcRows.length===0) loadEPC();
   if(tab==='kh'  && khRows.length===0)  loadKH();
+  if(tab==='building' && typeof loadBuilding==='function' && typeof buildingRows!=='undefined' && buildingRows.length===0) loadBuilding();
 }
 
 // ══════════════════════════════════════════════
@@ -1745,7 +1748,7 @@ function switchTab(tab){
 let activeSection = 'energy';
 function switchSection(section){
   activeSection = section;
-  ['dashboard','energy','power','solar','carbon','analysis','settings'].forEach(s=>{
+  ['dashboard','energy','solar','carbon','analysis','settings'].forEach(s=>{
     const panel = document.getElementById('section-'+s);
     if(panel) panel.classList.toggle('active', s===section);
     const nav = document.getElementById('side-'+s);
@@ -1757,15 +1760,8 @@ function switchSection(section){
     energySub.classList.toggle('open', section==='energy');
     energyItem.classList.toggle('expanded', section==='energy');
   }
-  const powerSub = document.getElementById('side-power-sub');
-  const powerItem = document.getElementById('side-power');
-  if(powerSub){
-    powerSub.classList.toggle('open', section==='power');
-    powerItem.classList.toggle('expanded', section==='power');
-  }
   if(section==='carbon' && typeof allRows!=='undefined' && allRows.length) renderCarbonSection();
   if(section==='dashboard' && typeof allRows!=='undefined' && allRows.length) renderDashboardSection();
-  if(section==='power' && typeof loadBuilding==='function' && !buildingRows.length) loadBuilding();
 }
 
 // ══════════════════════════════════════════════
@@ -3636,10 +3632,9 @@ let buildingRows = [];
 let bldChartTrend=null, bldChartDonut=null, bldChartCarbon=null;
 
 async function loadBuilding(){
-  const el = document.getElementById('section-power');
+  const el = document.getElementById('building-content');
   if(!el) return;
-  const holder = document.getElementById('bld-content') || el;
-  holder.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>';
+  el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>';
   try{
     const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${BUILDING_SHEET_GID}&t=${Date.now()}`;
     const res = await fetch(url,{cache:'no-store'});
@@ -3649,7 +3644,7 @@ async function loadBuilding(){
     if(!buildingRows.length) throw new Error('Tiada data Building dijumpai. Semak nama tab dan GID.');
     buildBuildingPage();
   }catch(err){
-    holder.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul.</div>`;
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Building</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul.</div>`;
   }
 }
 
@@ -3718,9 +3713,23 @@ function bldYoY(){
   return {curRows,prevRows};
 }
 
+function bldComputeAnnualKwh(t,b){
+  // Trailing-12-month window ending at the selected month/year, same logic as computeAnnualKwhForBEI.
+  if(!t || !b) return null;
+  const sorted = sortByPeriod(buildingRows);
+  const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
+  if(idx===-1) return null;
+  let start = idx-11, end = idx;
+  if(start<0){ start = 0; end = Math.min(sorted.length-1, 11); }
+  const win = sorted.slice(start, end+1);
+  const kwh = win.reduce((s,r)=>s+r.jppfKwh,0);
+  const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
+  return {kwh, label, months:win.length};
+}
+
 // ── Build full page HTML (mirrors Dashboard EMS layout) ──
 function buildBuildingPage(){
-  const el=document.getElementById('section-power');
+  const el=document.getElementById('building-content');
   if(!el) return;
   const years=[...new Set(buildingRows.map(r=>r.tahun).filter(Boolean))].sort();
   const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
@@ -3729,7 +3738,7 @@ function buildBuildingPage(){
   el.innerHTML = `
     <div class="dash-head">
       <div>
-        <h2><i class="ti ti-plug"></i> POWER MONITORING — BUILDING</h2>
+        <h2><i class="ti ti-building"></i> BUILDING</h2>
         <p>Ringkasan Prestasi Tenaga Bangunan JPPF</p>
       </div>
       <div class="dash-filter">
@@ -3740,7 +3749,7 @@ function buildBuildingPage(){
     </div>
 
     <div id="bld-content">
-      <div class="dash-grid g4" id="bld-metrics-top"></div>
+      <div class="dash-grid g5" id="bld-metrics-top"></div>
       <div class="dash-grid g5" id="bld-metrics-bottom"></div>
 
       <div class="dash-row3">
@@ -3841,6 +3850,14 @@ function renderBuildingSection(){
   const netSpark=last8.map((r,i)=>emisSpark[i]-savSpark[i]);
   const billSpark=last8.map(r=>r.billRm), penjimatanSpark=last8.map(r=>r.penjimatanRm);
 
+  // BEI — guna GFA & piawaian rating yang sama seperti Dashboard/Carbon section
+  const bldT=document.getElementById('bld-sel-tahun'), bldB=document.getElementById('bld-sel-bulan');
+  const gfa=getCarbonGfa();
+  const beiWindow=bldComputeAnnualKwh(bldT?bldT.value:'', bldB?bldB.value:'');
+  const beiKwh = beiWindow ? beiWindow.kwh : d.jppfKwh;
+  const bei = gfa>0 ? beiKwh/gfa : 0;
+  const beiRating = beiStarRating(bei);
+
   topEl.innerHTML = `
     <div class="dcard">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-transmission-tower"></i></div><div class="dcard-label">Grid Import</div></div>
@@ -3865,6 +3882,12 @@ function renderBuildingSection(){
       <div class="dcard-value">${rePct.toFixed(1)}<span>%</span></div>
       ${deltaBadgePts(rePct, prevRePct)}
       <div class="dring-wrap">${ringGaugeWithLeaf(rePct,'#01DF01')}</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(8,145,178,.14);color:#0891b2"><i class="ti ti-building-warehouse"></i></div><div class="dcard-label">Building Energy Index (BEI)</div></div>
+      <div class="dcard-value">${bei.toFixed(2)}<span>kWh/m²/thn</span></div>
+      <div style="font-size:15px;letter-spacing:2px;margin-bottom:6px">${beiRating.html}</div>
+      <div style="font-size:10.5px;color:#8fa5bd">${beiRating.label} · GFA ${fmt(gfa)} m²${beiWindow?'<br>'+beiWindow.label:''}</div>
     </div>`;
 
   botEl.innerHTML = `
