@@ -4161,14 +4161,10 @@ function renderAnalysisBody(){
   const prevByMonth={}; prevRows.forEach(r=>prevByMonth[r.bulan]=(prevByMonth[r.bulan]||0)+anaMetricValue(r,metric));
 
   const curTotal=curRows.reduce((s,r)=>s+anaMetricValue(r,metric),0);
-  // Perbandingan "like-for-like": hadkan tahun sebelum kepada bulan yang sama sahaja
-  // seperti tahun semasa (cth: 2026 setakat Jun → 2025 dibandingkan setakat Jun sahaja).
-  const curMonthsSet=new Set(Object.keys(curByMonth));
-  const prevRowsAligned=prevRows.filter(r=>curMonthsSet.has(r.bulan));
-  const prevTotal=prevRowsAligned.length ? prevRowsAligned.reduce((s,r)=>s+anaMetricValue(r,metric),0) : null;
 
-  // ── bulan dengan lonjakan tertinggi (MoM) dalam tahun semasa ──
-  const monthsWithData=BULAN_ORDER.filter(b=>curByMonth[b]!==undefined);
+  // ── Bulan yang benar-benar ada data (nilai > 0) — bulan akan datang yang masih 0/kosong
+  // dalam sheet TIDAK dikira sebagai "berdata" ──
+  const monthsWithData=BULAN_ORDER.filter(b=>curByMonth[b]!==undefined && curByMonth[b]>0);
   let peakMonth=null, peakVal=-Infinity, lowMonth=null, lowVal=Infinity;
   monthsWithData.forEach(b=>{
     const v=curByMonth[b];
@@ -4176,6 +4172,12 @@ function renderAnalysisBody(){
     if(v<lowVal){lowVal=v;lowMonth=b;}
   });
   const avgVal = monthsWithData.length ? monthsWithData.reduce((s,b)=>s+curByMonth[b],0)/monthsWithData.length : 0;
+
+  // Perbandingan "like-for-like": hadkan tahun sebelum kepada bulan yang benar-benar berdata
+  // sahaja seperti tahun semasa (cth: 2026 setakat Jun → 2025 dibandingkan setakat Jun sahaja).
+  const curMonthsSet=new Set(monthsWithData);
+  const prevRowsAligned=prevRows.filter(r=>curMonthsSet.has(r.bulan));
+  const prevTotal=prevRowsAligned.length ? prevRowsAligned.reduce((s,r)=>s+anaMetricValue(r,metric),0) : null;
 
   body.innerHTML = `
     <div class="dash-grid g4" style="margin-bottom:18px">
@@ -4266,15 +4268,15 @@ function renderAnalysisBody(){
       </div>
     </div>
     <div style="margin-top:22px;padding-top:18px;border-top:1px solid #1c2f48">
-      <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 12px"><i class="ti ti-scale" style="color:#a78bfa;margin-right:6px"></i>Analisis Corak Beban — SS-A (Kampus) vs SS-D (HPUSM) — ${curYear}</h3>
+      <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 12px"><i class="ti ti-scale" style="color:#a78bfa;margin-right:6px"></i>Analisis Corak Beban — Kampus vs HPUSM — ${curYear}</h3>
       <div class="dash-grid g4" id="ana-load-cards" style="margin-bottom:14px"></div>
       <div class="dash-row2">
         <div class="dpanel">
           <div class="dpanel-title">NISBAH BEBAN BULANAN (%)</div>
           <div class="dpanel-sub">Peratusan SS-A vs SS-D daripada jumlah penggunaan setiap bulan · Sumber: tab Kampus+HPUSM</div>
           <div class="dlegend">
-            <span><span class="dot" style="background:#5fa8ff"></span>SS-A (Kampus)</span>
-            <span><span class="dot" style="background:#4ade80"></span>SS-D (HPUSM)</span>
+            <span><span class="dot" style="background:#5fa8ff"></span>Kampus</span>
+            <span><span class="dot" style="background:#4ade80"></span>HPUSM</span>
           </div>
           <div style="position:relative;width:100%;height:250px"><canvas id="anaChartLoad"></canvas></div>
         </div>
@@ -4576,22 +4578,22 @@ async function renderAnalysisLoadPattern(curYear){
 
   cardsEl.innerHTML = `
     <div class="dcard">
-      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-building"></i></div><div class="dcard-label">Nisbah SS-A (Kampus)</div></div>
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-building"></i></div><div class="dcard-label">Nisbah Kampus</div></div>
       <div class="dcard-value" style="font-size:18px">${pctSSA.toFixed(1)}<span>%</span></div>
       <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${fmt(totalSSA)} kWh</div>
     </div>
     <div class="dcard">
-      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-building-hospital"></i></div><div class="dcard-label">Nisbah SS-D (HPUSM)</div></div>
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-building-hospital"></i></div><div class="dcard-label">Nisbah HPUSM</div></div>
       <div class="dcard-value" style="font-size:18px">${pctSSD.toFixed(1)}<span>%</span></div>
       <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${fmt(totalSSD)} kWh</div>
     </div>
     <div class="dcard">
-      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">SS-A Nisbah Tertinggi</div></div>
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">Kampus Nisbah Tertinggi</div></div>
       <div class="dcard-value" style="font-size:18px">${maxSSAmonth||'—'}</div>
       <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${maxSSAmonth?maxSSAval.toFixed(1)+'%':''}</div>
     </div>
     <div class="dcard">
-      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">SS-D Nisbah Tertinggi</div></div>
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">HPUSM Nisbah Tertinggi</div></div>
       <div class="dcard-value" style="font-size:18px">${maxSSDmonth||'—'}</div>
       <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${maxSSDmonth?maxSSDval.toFixed(1)+'%':''}</div>
     </div>`;
@@ -4612,9 +4614,9 @@ async function renderAnalysisLoadPattern(curYear){
     data:{
       labels:BULAN_ORDER.map(b=>b.substring(0,3)),
       datasets:[
-        {label:'SS-A %',data:ssaPctArr,borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
+        {label:'Kampus %',data:ssaPctArr,borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
           datalabels:{color:'#5fa8ff',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':v.toFixed(0)+'%'}},
-        {label:'SS-D %',data:ssdPctArr,borderColor:'#4ade80',backgroundColor:'#4ade80',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
+        {label:'HPUSM %',data:ssdPctArr,borderColor:'#4ade80',backgroundColor:'#4ade80',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
           datalabels:{color:'#4ade80',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'bottom',formatter:v=>v==null?'':v.toFixed(0)+'%'}}
       ]
     },
@@ -4738,7 +4740,7 @@ function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
   if(totalBoth>0){
     const pctSSA=totalSSA/totalBoth*100;
     if(pctSSA>70 || pctSSA<30){
-      insights.push(`Beban tenaga tidak seimbang antara zon: <strong>${pctSSA>70?'SS-A (Kampus)':'SS-D (HPUSM)'}</strong> menyumbang majoriti penggunaan (${pctSSA>70?pctSSA.toFixed(1):(100-pctSSA).toFixed(1)}%).`);
+      insights.push(`Beban tenaga tidak seimbang antara zon: <strong>${pctSSA>70?'Kampus':'HPUSM'}</strong> menyumbang majoriti penggunaan (${pctSSA>70?pctSSA.toFixed(1):(100-pctSSA).toFixed(1)}%).`);
     }
   }
 
