@@ -222,6 +222,7 @@ body.dark .kh-yoy-table th{background:#0f172a}
 /* ── DASHBOARD EMS (dark theme, scoped) ── */
 #section-dashboard{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 #panel-building{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+#section-analysis{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 .dash-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 .dash-head h2{color:#fff;font-size:19px;font-weight:800;margin:0}
 .dash-head p{color:#7d93ad;font-size:12.5px;margin:3px 0 0}
@@ -708,10 +709,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
   <!-- ═══════ SECTION: ANALYSIS ═══════ -->
   <div class="content-section" id="section-analysis">
-    <div class="placeholder-box"><i class="ti ti-chart-line"></i>
-      <h3>Analysis</h3>
-      <p>Analisis lanjutan akan dipaparkan di sini.</p>
-    </div>
+    <div class="loading-state"><i class="ti ti-loader"></i>Memuat Analisis...</div>
   </div>
 
   <!-- ═══════ SECTION: SETTINGS ═══════ -->
@@ -1763,6 +1761,7 @@ function switchSection(section){
   }
   if(section==='carbon' && typeof allRows!=='undefined' && allRows.length) renderCarbonSection();
   if(section==='dashboard' && typeof allRows!=='undefined' && allRows.length) renderDashboardSection();
+  if(section==='analysis' && typeof renderAnalysisSection==='function') renderAnalysisSection();
 }
 
 // ══════════════════════════════════════════════
@@ -4089,6 +4088,216 @@ function renderBuildingCharts(sorted, rePct){
         }
       }
     });
+  }
+}
+
+// ══════════════════════════════════════════════
+// ANALYSIS MODULE — YoY/MoM + Trend Multi-Tahun
+// (Fasa 1: guna data keseluruhan KWH USMKK / allRows)
+// ══════════════════════════════════════════════
+let anaChartYoy=null, anaChartMulti=null;
+const ANA_YEAR_COLORS=['#5fa8ff','#e8a020','#4ade80','#a78bfa','#e05a4a','#22d3ee','#f472b6'];
+
+function anaMetricValue(r, metric){
+  if(metric==='rm') return r.totalRm;
+  if(metric==='carbon') return (r.ssaKwh+r.ssdKwh)*CARBON_EF;
+  return r.totalKwh; // kwh (default)
+}
+function anaMetricLabel(metric){
+  return metric==='rm' ? 'Kos (RM)' : metric==='carbon' ? 'Carbon Emission (kgCO₂e)' : 'Jumlah Tenaga (kWh)';
+}
+function anaMetricFmt(metric, v){
+  if(v==null) return '—';
+  if(metric==='rm') return fmtRM(v);
+  if(metric==='carbon') return fmtKg(v)+' kgCO₂e';
+  return fmt(v)+' kWh';
+}
+
+function renderAnalysisSection(){
+  const el=document.getElementById('section-analysis');
+  if(!el) return;
+  if(typeof allRows==='undefined' || !allRows.length){
+    el.innerHTML='<div class="loading-state"><i class="ti ti-loader"></i>Menunggu data KWH USMKK dimuat...</div>';
+    return;
+  }
+  const years=[...new Set(allRows.map(r=>parseInt(r.tahun)).filter(n=>!isNaN(n)))].sort((a,b)=>a-b);
+  if(!years.length){ el.innerHTML='<div class="empty-state">Tiada data.</div>'; return; }
+  const curYearDefault=years[years.length-1];
+  const yearOpts=years.map(y=>`<option value="${y}" ${y===curYearDefault?'selected':''}>${y}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="dash-head">
+      <div>
+        <h2><i class="ti ti-chart-line"></i> ANALYSIS — YoY / MoM &amp; Trend Multi-Tahun</h2>
+        <p>Perbandingan tahunan/bulanan dan corak musiman merentasi tahun (data keseluruhan KWH USMKK)</p>
+      </div>
+      <div class="dash-filter">
+        <select id="ana-sel-tahun" onchange="renderAnalysisBody()">${yearOpts}</select>
+        <select id="ana-sel-metrik" onchange="renderAnalysisBody()">
+          <option value="kwh">Tenaga (kWh)</option>
+          <option value="rm">Kos (RM)</option>
+          <option value="carbon">Carbon (kgCO₂e)</option>
+        </select>
+      </div>
+    </div>
+    <div id="ana-body"></div>
+    <p style="font-size:11px;color:#7d93ad;margin-top:14px">Nota: Fasa seterusnya akan menambah analisis kos &amp; penjimatan, carbon &amp; kelestarian, corak beban, jadual eksport, dan insight automatik.</p>
+  `;
+  renderAnalysisBody();
+}
+
+function renderAnalysisBody(){
+  const body=document.getElementById('ana-body');
+  if(!body) return;
+  const t=document.getElementById('ana-sel-tahun');
+  const m=document.getElementById('ana-sel-metrik');
+  const curYear=parseInt(t?t.value:'')||0;
+  const prevYear=curYear-1;
+  const metric=m?m.value:'kwh';
+
+  const curRows=allRows.filter(r=>parseInt(r.tahun)===curYear);
+  const prevRows=allRows.filter(r=>parseInt(r.tahun)===prevYear);
+  const curByMonth={}; curRows.forEach(r=>curByMonth[r.bulan]=(curByMonth[r.bulan]||0)+anaMetricValue(r,metric));
+  const prevByMonth={}; prevRows.forEach(r=>prevByMonth[r.bulan]=(prevByMonth[r.bulan]||0)+anaMetricValue(r,metric));
+
+  const curTotal=curRows.reduce((s,r)=>s+anaMetricValue(r,metric),0);
+  const prevTotal=prevRows.length ? prevRows.reduce((s,r)=>s+anaMetricValue(r,metric),0) : null;
+
+  // ── bulan dengan lonjakan tertinggi (MoM) dalam tahun semasa ──
+  const monthsWithData=BULAN_ORDER.filter(b=>curByMonth[b]!==undefined);
+  let peakMonth=null, peakVal=-Infinity, lowMonth=null, lowVal=Infinity;
+  monthsWithData.forEach(b=>{
+    const v=curByMonth[b];
+    if(v>peakVal){peakVal=v;peakMonth=b;}
+    if(v<lowVal){lowVal=v;lowMonth=b;}
+  });
+  const avgVal = monthsWithData.length ? monthsWithData.reduce((s,b)=>s+curByMonth[b],0)/monthsWithData.length : 0;
+
+  body.innerHTML = `
+    <div class="dash-grid g4" style="margin-bottom:18px">
+      <div class="dcard">
+        <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-calendar-stats"></i></div><div class="dcard-label">Jumlah ${curYear}</div></div>
+        <div class="dcard-value" style="font-size:18px">${anaMetricFmt(metric,curTotal)}</div>
+        ${deltaBadge(curTotal, prevTotal)}
+        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">Berbanding ${prevYear}: ${prevTotal!==null?anaMetricFmt(metric,prevTotal):'Tiada data'}</div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-arrow-up"></i></div><div class="dcard-label">Bulan Tertinggi</div></div>
+        <div class="dcard-value" style="font-size:18px">${peakMonth||'—'}</div>
+        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${peakMonth?anaMetricFmt(metric,peakVal):''}</div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#e8a020"><i class="ti ti-arrow-down"></i></div><div class="dcard-label">Bulan Terendah</div></div>
+        <div class="dcard-value" style="font-size:18px">${lowMonth||'—'}</div>
+        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${lowMonth?anaMetricFmt(metric,lowVal):''}</div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-top"><div class="dcard-icon" style="background:rgba(167,139,250,.14);color:#a78bfa"><i class="ti ti-chart-bar"></i></div><div class="dcard-label">Purata Bulanan ${curYear}</div></div>
+        <div class="dcard-value" style="font-size:18px">${anaMetricFmt(metric,avgVal)}</div>
+        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${monthsWithData.length} bulan berdata</div>
+      </div>
+    </div>
+
+    <div class="dash-row2" style="margin-bottom:18px">
+      <div class="dpanel">
+        <div class="dpanel-title">PERBANDINGAN BULANAN (YoY/MoM)</div>
+        <div class="dpanel-sub">${anaMetricLabel(metric)} — ${curYear} vs ${prevYear}</div>
+        <div class="dlegend">
+          <span><span class="dot" style="background:#5fa8ff"></span>${curYear}</span>
+          <span><span class="dot" style="background:#3a4d66"></span>${prevYear}</span>
+        </div>
+        <div style="position:relative;width:100%;height:260px"><canvas id="anaChartYoy"></canvas></div>
+      </div>
+      <div>
+        <div class="dfact-card">
+          <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-info-circle"></i></div>
+          <div>
+            <div class="dfact-title">RINGKASAN PERBANDINGAN</div>
+            <div class="dfact-val" style="font-size:14px">${prevTotal!==null ? (curTotal>=prevTotal?'Meningkat':'Menurun')+' berbanding '+prevYear : 'Tiada data ' + prevYear + ' untuk perbandingan'}</div>
+            <div class="dfact-sub">${prevTotal!==null ? Math.abs(curTotal-prevTotal).toLocaleString('ms-MY',{maximumFractionDigits:0})+' unit perbezaan' : ''}</div>
+          </div>
+        </div>
+        <div class="dimpact-card">
+          <div class="dring" style="background:rgba(95,168,255,.12)"><i class="ti ti-bulb"></i></div>
+          <div>
+            <div class="dimpact-title">INSIGHT RINGKAS</div>
+            <div class="dimpact-text">${peakMonth?`Penggunaan tertinggi tahun ${curYear} dicatatkan pada <strong>${peakMonth}</strong> (${anaMetricFmt(metric,peakVal)}), manakala terendah pada <strong>${lowMonth}</strong>.`:'Tiada data mencukupi untuk insight.'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dpanel">
+      <div class="dpanel-title">TREND MULTI-TAHUN</div>
+      <div class="dpanel-sub">${anaMetricLabel(metric)} — corak musiman merentasi semua tahun berdata</div>
+      <div id="ana-multi-legend" class="dlegend"></div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="anaChartMulti"></canvas></div>
+    </div>
+  `;
+
+  renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth);
+}
+
+function renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth){
+  const canvasYoy=document.getElementById('anaChartYoy');
+  if(canvasYoy){
+    if(anaChartYoy) anaChartYoy.destroy();
+    anaChartYoy=new Chart(canvasYoy,{
+      type:'bar',
+      data:{
+        labels:BULAN_ORDER.map(b=>b.substring(0,3)),
+        datasets:[
+          {label:String(curYear),data:BULAN_ORDER.map(b=>curByMonth[b]!==undefined?curByMonth[b]:null),backgroundColor:'#5fa8ff',borderRadius:4},
+          {label:String(prevYear),data:BULAN_ORDER.map(b=>prevByMonth[b]!==undefined?prevByMonth[b]:null),backgroundColor:'#3a4d66',borderRadius:4}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${anaMetricFmt(metric,ctx.parsed.y)}`}}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
+          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmt(v)}}
+        }
+      }
+    });
+  }
+
+  const canvasMulti=document.getElementById('anaChartMulti');
+  const legendEl=document.getElementById('ana-multi-legend');
+  if(canvasMulti){
+    if(anaChartMulti) anaChartMulti.destroy();
+    const years=[...new Set(allRows.map(r=>parseInt(r.tahun)).filter(n=>!isNaN(n)))].sort((a,b)=>a-b);
+    const byYearMonth={};
+    allRows.forEach(r=>{
+      const y=parseInt(r.tahun); if(isNaN(y)) return;
+      byYearMonth[y]=byYearMonth[y]||{};
+      byYearMonth[y][r.bulan]=(byYearMonth[y][r.bulan]||0)+anaMetricValue(r,metric);
+    });
+    const datasets=years.map((y,i)=>{
+      const color=ANA_YEAR_COLORS[i%ANA_YEAR_COLORS.length];
+      const data=BULAN_ORDER.map(b=>{
+        const v=byYearMonth[y] ? byYearMonth[y][b] : undefined;
+        return (v!==undefined && v>0) ? v : null;
+      });
+      return {label:String(y),data,borderColor:color,backgroundColor:color,pointRadius:3,tension:.3,borderWidth:2,spanGaps:false};
+    });
+    anaChartMulti=new Chart(canvasMulti,{
+      type:'line',
+      data:{labels:BULAN_ORDER.map(b=>b.substring(0,3)),datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${anaMetricFmt(metric,ctx.parsed.y)}`}}},
+        scales:{
+          x:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10}}},
+          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmt(v)}}
+        }
+      }
+    });
+    if(legendEl){
+      legendEl.innerHTML=years.map((y,i)=>`<span><span class="dot" style="background:${ANA_YEAR_COLORS[i%ANA_YEAR_COLORS.length]}"></span>${y}</span>`).join('');
+    }
   }
 }
 </script>
