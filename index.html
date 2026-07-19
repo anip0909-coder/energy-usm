@@ -1205,8 +1205,8 @@ function renderCharts(filtered,d){
     } : {display:false};
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
       data:{labels:lbl,datasets:[
-        {label:'Total kWh',data:sorted.map(r=>r.totalKwh),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',datalabels:dlTrendKwh},
-        {label:'Total RM',data:sorted.map(r=>r.totalRm),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',datalabels:dlTrendRM}
+        {label:'Total kWh',data:sorted.map(r=>r.totalKwh>0?r.totalKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',spanGaps:false,datalabels:dlTrendKwh},
+        {label:'Total RM',data:sorted.map(r=>r.totalRm>0?r.totalRm:null),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',spanGaps:false,datalabels:dlTrendRM}
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
@@ -1883,7 +1883,7 @@ function renderCarbonCharts(filtered, d, rePct){
 
   const emissionArr = sorted.map(r=>(r.ssaKwh+r.ssdKwh)*CARBON_EF);
   const savingArr    = sorted.map(r=>r.solarKwh*CARBON_EF);
-  const netArr       = sorted.map((r,i)=>emissionArr[i]-savingArr[i]);
+  const netArr       = sorted.map((r,i)=>(r.ssaKwh+r.ssdKwh)>0||r.solarKwh>0 ? emissionArr[i]-savingArr[i] : null);
 
   const canvasMain=document.getElementById('carbonChartMain');
   if(canvasMain){
@@ -1899,7 +1899,7 @@ function renderCarbonCharts(filtered, d, rePct){
         datasets:[
           {type:'bar',label:'Carbon Emission',data:emissionArr,backgroundColor:gradEmission,stack:'s1',borderRadius:4,borderSkipped:false,order:2},
           {type:'bar',label:'Carbon Saving (Solar)',data:savingArr,backgroundColor:gradSaving,stack:'s1',borderRadius:4,borderSkipped:false,order:2},
-          {type:'line',label:'Net Carbon Emission',data:netArr,borderColor:'#7c3aed',backgroundColor:'#7c3aed',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#7c3aed',tension:.3,fill:false,order:1}
+          {type:'line',label:'Net Carbon Emission',data:netArr,borderColor:'#7c3aed',backgroundColor:'#7c3aed',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#7c3aed',tension:.3,fill:false,order:1,spanGaps:false}
         ]
       },
       options:{
@@ -2248,14 +2248,15 @@ function renderDashboardCharts(sorted,d,rePct,cur,emissionTotal,savingTotal,netT
   const canvasTrend=document.getElementById('dashChartTrend');
   if(canvasTrend){
     if(dashChartTrend) dashChartTrend.destroy();
+    const dnz=v=>v>0?v:null;
     dashChartTrend=new Chart(canvasTrend,{
       type:'line',
       data:{
         labels:lbl,
         datasets:[
-          {label:'SS-A kWh',data:sorted.map(r=>r.ssaKwh),borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',pointRadius:3,tension:.3,borderWidth:2},
-          {label:'SS-D kWh',data:sorted.map(r=>r.ssdKwh),borderColor:'#a78bfa',backgroundColor:'#a78bfa',pointRadius:3,tension:.3,borderWidth:2},
-          {label:'Janaan Solar',data:sorted.map(r=>r.solarKwh),borderColor:'#e8a020',backgroundColor:'#e8a020',pointRadius:3,tension:.3,borderWidth:2}
+          {label:'SS-A kWh',data:sorted.map(r=>dnz(r.ssaKwh)),borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false},
+          {label:'SS-D kWh',data:sorted.map(r=>dnz(r.ssdKwh)),borderColor:'#a78bfa',backgroundColor:'#a78bfa',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false},
+          {label:'Janaan Solar',data:sorted.map(r=>dnz(r.solarKwh)),borderColor:'#e8a020',backgroundColor:'#e8a020',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false}
         ]
       },
       options:{
@@ -2314,14 +2315,14 @@ function renderDashboardCharts(sorted,d,rePct,cur,emissionTotal,savingTotal,netT
     if(dashChartCarbon) dashChartCarbon.destroy();
     const emisArr=sorted.map(r=>(r.ssaKwh+r.ssdKwh)*CARBON_EF);
     const savArr=sorted.map(r=>r.solarKwh*CARBON_EF);
-    const netArr=sorted.map((r,i)=>emisArr[i]-savArr[i]);
+    const netArr=sorted.map((r,i)=>(r.ssaKwh+r.ssdKwh)>0||r.solarKwh>0 ? emisArr[i]-savArr[i] : null);
     dashChartCarbon=new Chart(canvasCarbon,{
       data:{
         labels:lbl,
         datasets:[
           {type:'bar',label:'Carbon Emission',data:emisArr,backgroundColor:'#c0392b',order:2,borderRadius:4},
           {type:'bar',label:'Carbon Saving',data:savArr,backgroundColor:'#1e7e34',order:2,borderRadius:4},
-          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1}
+          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1,spanGaps:false}
         ]
       },
       options:{
@@ -3855,9 +3856,9 @@ function renderBuildingSection(){
   const netSpark=last8.map((r,i)=>emisSpark[i]-savSpark[i]);
   const billSpark=last8.map(r=>r.billRm), penjimatanSpark=last8.map(r=>r.penjimatanRm);
 
-  // BEI — GFA ditetapkan khusus 1200 m² untuk tab Building sahaja (tidak menjejaskan getCarbonGfa() Dashboard/Carbon)
+  // BEI — GFA ditetapkan khusus 1700 m² untuk tab Building sahaja (tidak menjejaskan getCarbonGfa() Dashboard/Carbon)
   const bldT=document.getElementById('bld-sel-tahun'), bldB=document.getElementById('bld-sel-bulan');
-  const gfa=1200;
+  const gfa=1700;
   const beiWindow=bldComputeAnnualKwh(bldT?bldT.value:'', bldB?bldB.value:'');
   const beiKwh = beiWindow ? beiWindow.kwh : d.jppfKwh;
   const bei = gfa>0 ? beiKwh/gfa : 0;
@@ -4066,7 +4067,7 @@ function renderBuildingCharts(sorted, rePct){
     if(bldChartCarbon) bldChartCarbon.destroy();
     const emisArr=sorted.map(r=>r.importKwh*CARBON_EF);
     const savArr=sorted.map(r=>r.solarKwh*CARBON_EF);
-    const netArr=sorted.map((r,i)=>emisArr[i]-savArr[i]);
+    const netArr=sorted.map((r,i)=>r.importKwh>0||r.solarKwh>0 ? emisArr[i]-savArr[i] : null);
     bldChartCarbon=new Chart(canvasCarbon,{
       data:{
         labels:lbl,
@@ -4075,7 +4076,7 @@ function renderBuildingCharts(sorted, rePct){
             datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmtKg(v):''}},
           {type:'bar',label:'Carbon Saving',data:savArr,backgroundColor:'#1e7e34',order:2,borderRadius:4,
             datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmtKg(v):''}},
-          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1,datalabels:{display:false}}
+          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1,spanGaps:false,datalabels:{display:false}}
         ]
       },
       options:{
