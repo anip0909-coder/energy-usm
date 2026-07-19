@@ -4161,7 +4161,11 @@ function renderAnalysisBody(){
   const prevByMonth={}; prevRows.forEach(r=>prevByMonth[r.bulan]=(prevByMonth[r.bulan]||0)+anaMetricValue(r,metric));
 
   const curTotal=curRows.reduce((s,r)=>s+anaMetricValue(r,metric),0);
-  const prevTotal=prevRows.length ? prevRows.reduce((s,r)=>s+anaMetricValue(r,metric),0) : null;
+  // Perbandingan "like-for-like": hadkan tahun sebelum kepada bulan yang sama sahaja
+  // seperti tahun semasa (cth: 2026 setakat Jun → 2025 dibandingkan setakat Jun sahaja).
+  const curMonthsSet=new Set(Object.keys(curByMonth));
+  const prevRowsAligned=prevRows.filter(r=>curMonthsSet.has(r.bulan));
+  const prevTotal=prevRowsAligned.length ? prevRowsAligned.reduce((s,r)=>s+anaMetricValue(r,metric),0) : null;
 
   // ── bulan dengan lonjakan tertinggi (MoM) dalam tahun semasa ──
   const monthsWithData=BULAN_ORDER.filter(b=>curByMonth[b]!==undefined);
@@ -4179,7 +4183,7 @@ function renderAnalysisBody(){
         <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-calendar-stats"></i></div><div class="dcard-label">Jumlah ${curYear}</div></div>
         <div class="dcard-value" style="font-size:18px">${anaMetricFmt(metric,curTotal)}</div>
         ${deltaBadge(curTotal, prevTotal)}
-        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">Berbanding ${prevYear}: ${prevTotal!==null?anaMetricFmt(metric,prevTotal):'Tiada data'}</div>
+        <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">Berbanding ${prevYear} (${curMonthsSet.size} bulan setara): ${prevTotal!==null?anaMetricFmt(metric,prevTotal):'Tiada data'}</div>
       </div>
       <div class="dcard">
         <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-arrow-up"></i></div><div class="dcard-label">Bulan Tertinggi</div></div>
@@ -4267,7 +4271,7 @@ function renderAnalysisBody(){
       <div class="dash-row2">
         <div class="dpanel">
           <div class="dpanel-title">NISBAH BEBAN BULANAN (%)</div>
-          <div class="dpanel-sub">Peratusan SS-A vs SS-D daripada jumlah penggunaan setiap bulan</div>
+          <div class="dpanel-sub">Peratusan SS-A vs SS-D daripada jumlah penggunaan setiap bulan · Sumber: tab Kampus+HPUSM</div>
           <div class="dlegend">
             <span><span class="dot" style="background:#5fa8ff"></span>SS-A (Kampus)</span>
             <span><span class="dot" style="background:#4ade80"></span>SS-D (HPUSM)</span>
@@ -4302,9 +4306,9 @@ function renderAnalysisBody(){
   renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth);
   renderAnalysisCostSavings(curYear, curRows);
   renderAnalysisCarbonSus(curYear, curRows);
-  renderAnalysisLoadPattern(curYear, curRows);
+  renderAnalysisLoadPattern(curYear);
   renderAnalysisSummaryTable(curYear, curRows);
-  renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric);
+  renderAnalysisInsights(curYear, prevYear, curRows, prevRowsAligned, metric);
 }
 
 function renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth){
@@ -4531,26 +4535,44 @@ function renderAnalysisCarbonSus(curYear, curRows){
 
 // ── Analisis Corak Beban: SS-A vs SS-D ──
 let anaChartLoad=null;
-function renderAnalysisLoadPattern(curYear, curRows){
+async function renderAnalysisLoadPattern(curYear){
   const cardsEl=document.getElementById('ana-load-cards');
   const canvas=document.getElementById('anaChartLoad');
   const tbEl=document.getElementById('ana-topbottom');
   if(!cardsEl || !canvas) return;
 
-  const sorted=sortByPeriod(curRows);
-  const totalSSA=sorted.reduce((s,r)=>s+r.ssaKwh,0);
-  const totalSSD=sorted.reduce((s,r)=>s+r.ssdKwh,0);
+  // Sumber data: tab Kampus+HPUSM (khRows) — muat lazy jika belum dimuat, tanpa ubah loadKH() sedia ada
+  if(!khRows.length){
+    cardsEl.innerHTML='<div class="loading-state" style="grid-column:1/-1"><i class="ti ti-loader"></i>Memuat data Kampus+HPUSM...</div>';
+    await loadKH();
+    if(!khRows.length){
+      cardsEl.innerHTML='<div class="empty-state" style="grid-column:1/-1;color:#8fa5bd">Tiada data Kampus+HPUSM tersedia.</div>';
+      return;
+    }
+  }
+
+  const khCurRows=khRows.filter(r=>parseInt(r.tahun)===curYear);
+  const sorted=sortByPeriod(khCurRows);
+  const totalSSA=sorted.reduce((s,r)=>s+r.kampusKwh,0);
+  const totalSSD=sorted.reduce((s,r)=>s+r.hpusmKwh,0);
   const totalBoth=totalSSA+totalSSD;
   const pctSSA=totalBoth>0?(totalSSA/totalBoth*100):0;
   const pctSSD=100-pctSSA;
 
   let maxSSAmonth=null,maxSSAval=-Infinity,maxSSDmonth=null,maxSSDval=-Infinity;
   sorted.forEach(r=>{
-    const t=r.ssaKwh+r.ssdKwh;
-    const pA=t>0?(r.ssaKwh/t*100):0, pD=t>0?(r.ssdKwh/t*100):0;
+    const t=r.kampusKwh+r.hpusmKwh;
+    const pA=t>0?(r.kampusKwh/t*100):0, pD=t>0?(r.hpusmKwh/t*100):0;
     if(t>0 && pA>maxSSAval){maxSSAval=pA;maxSSAmonth=r.bulan;}
     if(t>0 && pD>maxSSDval){maxSSDval=pD;maxSSDmonth=r.bulan;}
   });
+
+  if(!sorted.length){
+    cardsEl.innerHTML='<div class="empty-state" style="grid-column:1/-1;color:#8fa5bd">Tiada data Kampus+HPUSM untuk tahun ini.</div>';
+    if(tbEl) tbEl.innerHTML='';
+    if(anaChartLoad){anaChartLoad.destroy();anaChartLoad=null;}
+    return;
+  }
 
   cardsEl.innerHTML = `
     <div class="dcard">
@@ -4577,13 +4599,13 @@ function renderAnalysisLoadPattern(curYear, curRows){
   if(anaChartLoad) anaChartLoad.destroy();
   const ssaPctArr=BULAN_ORDER.map(b=>{
     const r=sorted.find(x=>x.bulan===b);
-    if(!r || (r.ssaKwh+r.ssdKwh)<=0) return null;
-    return (r.ssaKwh/(r.ssaKwh+r.ssdKwh))*100;
+    if(!r || (r.kampusKwh+r.hpusmKwh)<=0) return null;
+    return (r.kampusKwh/(r.kampusKwh+r.hpusmKwh))*100;
   });
   const ssdPctArr=BULAN_ORDER.map(b=>{
     const r=sorted.find(x=>x.bulan===b);
-    if(!r || (r.ssaKwh+r.ssdKwh)<=0) return null;
-    return (r.ssdKwh/(r.ssaKwh+r.ssdKwh))*100;
+    if(!r || (r.kampusKwh+r.hpusmKwh)<=0) return null;
+    return (r.hpusmKwh/(r.kampusKwh+r.hpusmKwh))*100;
   });
   anaChartLoad=new Chart(canvas,{
     type:'line',
