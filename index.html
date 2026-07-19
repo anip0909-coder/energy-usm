@@ -4141,7 +4141,7 @@ function renderAnalysisSection(){
       </div>
     </div>
     <div id="ana-body"></div>
-    <p style="font-size:11px;color:#7d93ad;margin-top:14px">Nota: Fasa seterusnya akan menambah analisis corak beban (SS-A vs SS-D), jadual ringkasan boleh eksport, dan insight automatik lanjut.</p>
+    <p style="font-size:11px;color:#7d93ad;margin-top:14px">Analisis merangkumi: perbandingan YoY/MoM, trend multi-tahun, kos &amp; penjimatan, carbon &amp; kelestarian, corak beban SS-A/SS-D, jadual boleh eksport, dan insight automatik.</p>
   `;
   renderAnalysisBody();
 }
@@ -4261,11 +4261,50 @@ function renderAnalysisBody(){
         <div style="position:relative;width:100%;height:260px"><canvas id="anaChartCarbonSus"></canvas></div>
       </div>
     </div>
+    <div style="margin-top:22px;padding-top:18px;border-top:1px solid #1c2f48">
+      <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 12px"><i class="ti ti-scale" style="color:#a78bfa;margin-right:6px"></i>Analisis Corak Beban — SS-A (Kampus) vs SS-D (HPUSM) — ${curYear}</h3>
+      <div class="dash-grid g4" id="ana-load-cards" style="margin-bottom:14px"></div>
+      <div class="dash-row2">
+        <div class="dpanel">
+          <div class="dpanel-title">NISBAH BEBAN BULANAN (%)</div>
+          <div class="dpanel-sub">Peratusan SS-A vs SS-D daripada jumlah penggunaan setiap bulan</div>
+          <div class="dlegend">
+            <span><span class="dot" style="background:#5fa8ff"></span>SS-A (Kampus)</span>
+            <span><span class="dot" style="background:#4ade80"></span>SS-D (HPUSM)</span>
+          </div>
+          <div style="position:relative;width:100%;height:250px"><canvas id="anaChartLoad"></canvas></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-title">TOP 5 / BOTTOM 5 BULAN</div>
+          <div class="dpanel-sub">Berdasarkan jumlah tenaga (kWh) tertinggi &amp; terendah — ${curYear}</div>
+          <div id="ana-topbottom"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;padding-top:18px;border-top:1px solid #1c2f48">
+      <div class="dash-head" style="margin-bottom:10px">
+        <div>
+          <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0"><i class="ti ti-table" style="color:#f0c060;margin-right:6px"></i>Jadual Ringkasan — ${curYear}</h3>
+          <p style="color:#7d93ad;font-size:12px;margin:3px 0 0">Data bulanan penuh, boleh dieksport ke CSV</p>
+        </div>
+        <div class="dash-filter"><button class="icon-btn" onclick="anaExportCSV(${curYear})"><i class="ti ti-download"></i> Eksport CSV</button></div>
+      </div>
+      <div class="dpanel" style="overflow-x:auto"><div id="ana-summary-table"></div></div>
+    </div>
+
+    <div style="margin-top:22px;padding-top:18px;border-top:1px solid #1c2f48">
+      <h3 style="color:#fff;font-size:15px;font-weight:800;margin:0 0 12px"><i class="ti ti-bulb" style="color:#facc15;margin-right:6px"></i>Insight Automatik</h3>
+      <div class="dpanel" id="ana-insights"></div>
+    </div>
   `;
 
   renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth);
   renderAnalysisCostSavings(curYear, curRows);
   renderAnalysisCarbonSus(curYear, curRows);
+  renderAnalysisLoadPattern(curYear, curRows);
+  renderAnalysisSummaryTable(curYear, curRows);
+  renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric);
 }
 
 function renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth){
@@ -4476,6 +4515,214 @@ function renderAnalysisCarbonSus(curYear, curRows){
       }
     }
   });
+}
+
+// ── Analisis Corak Beban: SS-A vs SS-D ──
+let anaChartLoad=null;
+function renderAnalysisLoadPattern(curYear, curRows){
+  const cardsEl=document.getElementById('ana-load-cards');
+  const canvas=document.getElementById('anaChartLoad');
+  const tbEl=document.getElementById('ana-topbottom');
+  if(!cardsEl || !canvas) return;
+
+  const sorted=sortByPeriod(curRows);
+  const totalSSA=sorted.reduce((s,r)=>s+r.ssaKwh,0);
+  const totalSSD=sorted.reduce((s,r)=>s+r.ssdKwh,0);
+  const totalBoth=totalSSA+totalSSD;
+  const pctSSA=totalBoth>0?(totalSSA/totalBoth*100):0;
+  const pctSSD=100-pctSSA;
+
+  let maxSSAmonth=null,maxSSAval=-Infinity,maxSSDmonth=null,maxSSDval=-Infinity;
+  sorted.forEach(r=>{
+    const t=r.ssaKwh+r.ssdKwh;
+    const pA=t>0?(r.ssaKwh/t*100):0, pD=t>0?(r.ssdKwh/t*100):0;
+    if(t>0 && pA>maxSSAval){maxSSAval=pA;maxSSAmonth=r.bulan;}
+    if(t>0 && pD>maxSSDval){maxSSDval=pD;maxSSDmonth=r.bulan;}
+  });
+
+  cardsEl.innerHTML = `
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-building"></i></div><div class="dcard-label">Nisbah SS-A (Kampus)</div></div>
+      <div class="dcard-value" style="font-size:18px">${pctSSA.toFixed(1)}<span>%</span></div>
+      <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${fmt(totalSSA)} kWh</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-building-hospital"></i></div><div class="dcard-label">Nisbah SS-D (HPUSM)</div></div>
+      <div class="dcard-value" style="font-size:18px">${pctSSD.toFixed(1)}<span>%</span></div>
+      <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${fmt(totalSSD)} kWh</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(95,168,255,.14);color:#5fa8ff"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">SS-A Nisbah Tertinggi</div></div>
+      <div class="dcard-value" style="font-size:18px">${maxSSAmonth||'—'}</div>
+      <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${maxSSAmonth?maxSSAval.toFixed(1)+'%':''}</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(74,222,128,.14);color:#4ade80"><i class="ti ti-alert-triangle"></i></div><div class="dcard-label">SS-D Nisbah Tertinggi</div></div>
+      <div class="dcard-value" style="font-size:18px">${maxSSDmonth||'—'}</div>
+      <div style="font-size:10.5px;color:#7d93ad;margin-top:4px">${maxSSDmonth?maxSSDval.toFixed(1)+'%':''}</div>
+    </div>`;
+
+  if(anaChartLoad) anaChartLoad.destroy();
+  const ssaPctArr=BULAN_ORDER.map(b=>{
+    const r=sorted.find(x=>x.bulan===b);
+    if(!r || (r.ssaKwh+r.ssdKwh)<=0) return null;
+    return (r.ssaKwh/(r.ssaKwh+r.ssdKwh))*100;
+  });
+  const ssdPctArr=BULAN_ORDER.map(b=>{
+    const r=sorted.find(x=>x.bulan===b);
+    if(!r || (r.ssaKwh+r.ssdKwh)<=0) return null;
+    return (r.ssdKwh/(r.ssaKwh+r.ssdKwh))*100;
+  });
+  anaChartLoad=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:BULAN_ORDER.map(b=>b.substring(0,3)),
+      datasets:[
+        {label:'SS-A %',data:ssaPctArr,borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false},
+        {label:'SS-D %',data:ssdPctArr,borderColor:'#4ade80',backgroundColor:'#4ade80',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
+        y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>v+'%'},min:0,max:100}
+      }
+    }
+  });
+
+  if(tbEl){
+    const withData=sorted.filter(r=>r.totalKwh>0);
+    const top5=[...withData].sort((a,b)=>b.totalKwh-a.totalKwh).slice(0,5);
+    const bottom5=[...withData].sort((a,b)=>a.totalKwh-b.totalKwh).slice(0,5);
+    const rowHtml=(r,rank,color)=>`<div class="dkpi-item"><span style="color:${color};font-weight:800;margin-right:4px">#${rank}</span>${r.bulan} ${r.tahun} <span class="v">${fmt(r.totalKwh)} kWh</span></div>`;
+    tbEl.innerHTML = `
+      <div style="font-size:10.5px;color:#4ade80;font-weight:800;letter-spacing:.3px;margin-bottom:4px">TOP 5 TERTINGGI</div>
+      <div class="dkpi-list">${top5.map((r,i)=>rowHtml(r,i+1,'#4ade80')).join('') || '<div class="dkpi-item">Tiada data</div>'}</div>
+      <div style="font-size:10.5px;color:#e8a020;font-weight:800;letter-spacing:.3px;margin:12px 0 4px">BOTTOM 5 TERENDAH</div>
+      <div class="dkpi-list">${bottom5.map((r,i)=>rowHtml(r,i+1,'#e8a020')).join('') || '<div class="dkpi-item">Tiada data</div>'}</div>`;
+  }
+}
+
+// ── Jadual Ringkasan Boleh Eksport ──
+let anaLastTableRows=[];
+function renderAnalysisSummaryTable(curYear, curRows){
+  const el=document.getElementById('ana-summary-table');
+  if(!el) return;
+  const sorted=sortByPeriod(curRows);
+  anaLastTableRows = sorted;
+  if(!sorted.length){ el.innerHTML='<div class="empty-state" style="color:#8fa5bd">Tiada data untuk tahun ini.</div>'; return; }
+
+  const rowsHtml = sorted.map(r=>{
+    const emission=r.totalKwh*CARBON_EF, saving=r.solarKwh*CARBON_EF, net=emission-saving;
+    return `<tr>
+      <td>${r.bulan} ${r.tahun}</td>
+      <td style="text-align:right">${fmt(r.ssaKwh)}</td>
+      <td style="text-align:right">${fmt(r.ssdKwh)}</td>
+      <td style="text-align:right">${fmt(r.solarKwh)}</td>
+      <td style="text-align:right">${fmt(r.totalKwh)}</td>
+      <td style="text-align:right">${fmtRM(r.totalRm)}</td>
+      <td style="text-align:right">${fmtKg(emission)}</td>
+      <td style="text-align:right">${fmtKg(saving)}</td>
+      <td style="text-align:right">${fmtKg(net)}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <table class="dnbel-table" style="min-width:820px">
+      <thead><tr>
+        <th>Bulan</th><th style="text-align:right">SS-A kWh</th><th style="text-align:right">SS-D kWh</th>
+        <th style="text-align:right">Solar kWh</th><th style="text-align:right">Total kWh</th>
+        <th style="text-align:right">Total RM</th><th style="text-align:right">Emission (kg)</th>
+        <th style="text-align:right">Saving (kg)</th><th style="text-align:right">Net (kg)</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+}
+
+function anaExportCSV(curYear){
+  if(!anaLastTableRows.length){ alert('Tiada data untuk dieksport.'); return; }
+  const header=['Bulan','Tahun','SS-A kWh','SS-D kWh','Solar kWh','Total kWh','Total RM','Carbon Emission (kg)','Carbon Saving (kg)','Net Carbon (kg)'];
+  const lines=[header.join(',')];
+  anaLastTableRows.forEach(r=>{
+    const emission=r.totalKwh*CARBON_EF, saving=r.solarKwh*CARBON_EF, net=emission-saving;
+    lines.push([r.bulan,r.tahun,r.ssaKwh.toFixed(2),r.ssdKwh.toFixed(2),r.solarKwh.toFixed(2),r.totalKwh.toFixed(2),r.totalRm.toFixed(2),emission.toFixed(2),saving.toFixed(2),net.toFixed(2)].join(','));
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`Analisis_USMKK_${curYear}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Insight Automatik Lanjut (berasaskan peraturan, bukan AI generatif) ──
+function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
+  const el=document.getElementById('ana-insights');
+  if(!el) return;
+  const sorted=sortByPeriod(curRows);
+  const insights=[];
+
+  // 1. Trend menaik/menurun berturut-turut
+  const vals=sorted.map(r=>anaMetricValue(r,metric)).filter(v=>v>0);
+  let streak=1,streakDir=0,maxStreak=1,maxDir=0;
+  for(let i=1;i<vals.length;i++){
+    const dir=vals[i]>vals[i-1]?1:(vals[i]<vals[i-1]?-1:0);
+    if(dir!==0 && dir===streakDir){ streak++; } else { streak=1; streakDir=dir; }
+    if(streak>maxStreak){maxStreak=streak;maxDir=streakDir;}
+  }
+  if(maxStreak>=3){
+    insights.push(`${anaMetricLabel(metric)} mencatatkan trend ${maxDir>0?'meningkat':'menurun'} secara konsisten selama <strong>${maxStreak} bulan berturut-turut</strong> pada ${curYear}.`);
+  }
+
+  // 2. Perbandingan YoY keseluruhan
+  const curTotal=sorted.reduce((s,r)=>s+anaMetricValue(r,metric),0);
+  if(prevRows.length){
+    const prevTotal=prevRows.reduce((s,r)=>s+anaMetricValue(r,metric),0);
+    if(prevTotal>0){
+      const chg=((curTotal-prevTotal)/prevTotal*100);
+      insights.push(`Jumlah ${anaMetricLabel(metric).toLowerCase()} ${curYear} ${chg>=0?'meningkat':'menurun'} <strong>${Math.abs(chg).toFixed(1)}%</strong> berbanding ${prevYear}.`);
+    }
+  }
+
+  // 3. Carbon saving momentum
+  const totalSolar=sorted.reduce((s,r)=>s+r.solarKwh,0);
+  const totalGrid=sorted.reduce((s,r)=>s+r.totalKwh,0);
+  const rePct=(totalSolar+totalGrid)>0?(totalSolar/(totalSolar+totalGrid)*100):0;
+  if(rePct>0){
+    insights.push(`Sumbangan tenaga boleh baharu (solar) bagi ${curYear} berada pada <strong>${rePct.toFixed(1)}%</strong> daripada jumlah penggunaan keseluruhan.`);
+  }
+
+  // 4. Load imbalance
+  const totalSSA=sorted.reduce((s,r)=>s+r.ssaKwh,0), totalSSD=sorted.reduce((s,r)=>s+r.ssdKwh,0);
+  const totalBoth=totalSSA+totalSSD;
+  if(totalBoth>0){
+    const pctSSA=totalSSA/totalBoth*100;
+    if(pctSSA>70 || pctSSA<30){
+      insights.push(`Beban tenaga tidak seimbang antara zon: <strong>${pctSSA>70?'SS-A (Kampus)':'SS-D (HPUSM)'}</strong> menyumbang majoriti penggunaan (${pctSSA>70?pctSSA.toFixed(1):(100-pctSSA).toFixed(1)}%).`);
+    }
+  }
+
+  // 5. Kos per kWh berbanding tahun lepas
+  const totalRm=sorted.reduce((s,r)=>s+r.totalRm,0), totalKwh=sorted.reduce((s,r)=>s+r.totalKwh,0);
+  if(prevRows.length && totalKwh>0){
+    const prevRm=prevRows.reduce((s,r)=>s+r.totalRm,0), prevKwh=prevRows.reduce((s,r)=>s+r.totalKwh,0);
+    if(prevKwh>0){
+      const curRate=totalRm/totalKwh, prevRate=prevRm/prevKwh;
+      const chg=((curRate-prevRate)/prevRate*100);
+      if(Math.abs(chg)>=2){
+        insights.push(`Kos purata seunit (RM/kWh) ${chg>=0?'meningkat':'menurun'} <strong>${Math.abs(chg).toFixed(1)}%</strong> berbanding ${prevYear} — mungkin disebabkan perubahan tarif atau corak penggunaan.`);
+      }
+    }
+  }
+
+  if(!insights.length){
+    el.innerHTML = '<div style="color:#8fa5bd;font-size:12.5px">Tiada insight ketara buat masa ini — data mencukupi diperlukan untuk analisis lanjut.</div>';
+    return;
+  }
+  el.innerHTML = `<ul style="margin:0;padding-left:18px;color:#c3d3e3;font-size:13px;line-height:1.9">${insights.map(t=>`<li>${t}</li>`).join('')}</ul>`;
 }
 </script>
 <!-- PWA Install Prompt -->
