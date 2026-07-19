@@ -4316,12 +4316,15 @@ function renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth
       data:{
         labels:BULAN_ORDER.map(b=>b.substring(0,3)),
         datasets:[
-          {label:String(curYear),data:BULAN_ORDER.map(b=>curByMonth[b]!==undefined?curByMonth[b]:null),backgroundColor:'#5fa8ff',borderRadius:4},
-          {label:String(prevYear),data:BULAN_ORDER.map(b=>prevByMonth[b]!==undefined?prevByMonth[b]:null),backgroundColor:'#3a4d66',borderRadius:4}
+          {label:String(curYear),data:BULAN_ORDER.map(b=>curByMonth[b]!==undefined?curByMonth[b]:null),backgroundColor:'#5fa8ff',borderRadius:4,
+            datalabels:{color:'#eaf4ff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmt(v):''}},
+          {label:String(prevYear),data:BULAN_ORDER.map(b=>prevByMonth[b]!==undefined?prevByMonth[b]:null),backgroundColor:'#3a4d66',borderRadius:4,
+            datalabels:{color:'#b8c8dc',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmt(v):''}}
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
+        layout:{padding:{top:14}},
         plugins:{legend:{display:false},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${anaMetricFmt(metric,ctx.parsed.y)}`}}},
         scales:{
@@ -4343,19 +4346,22 @@ function renderAnalysisCharts(metric, curYear, prevYear, curByMonth, prevByMonth
       byYearMonth[y]=byYearMonth[y]||{};
       byYearMonth[y][r.bulan]=(byYearMonth[y][r.bulan]||0)+anaMetricValue(r,metric);
     });
+    const showMultiDL = years.length<=3;
     const datasets=years.map((y,i)=>{
       const color=ANA_YEAR_COLORS[i%ANA_YEAR_COLORS.length];
       const data=BULAN_ORDER.map(b=>{
         const v=byYearMonth[y] ? byYearMonth[y][b] : undefined;
         return (v!==undefined && v>0) ? v : null;
       });
-      return {label:String(y),data,borderColor:color,backgroundColor:color,pointRadius:3,tension:.3,borderWidth:2,spanGaps:false};
+      return {label:String(y),data,borderColor:color,backgroundColor:color,pointRadius:3,tension:.3,borderWidth:2,spanGaps:false,
+        datalabels: showMultiDL ? {color:color,font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':fmt(v)} : {display:false}};
     });
     anaChartMulti=new Chart(canvasMulti,{
       type:'line',
       data:{labels:BULAN_ORDER.map(b=>b.substring(0,3)),datasets},
       options:{
         responsive:true,maintainAspectRatio:false,
+        layout:{padding:{top:16}},
         plugins:{legend:{display:false},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${anaMetricFmt(metric,ctx.parsed.y)}`}}},
         scales:{
@@ -4418,12 +4424,15 @@ function renderAnalysisCostSavings(curYear, curRows){
     data:{
       labels:BULAN_ORDER.map(b=>b.substring(0,3)),
       datasets:[
-        {type:'bar',label:'Kos/kWh (RM)',data:costPerKwh,backgroundColor:'#f0c060',yAxisID:'y',order:2,borderRadius:4},
-        {type:'line',label:'Penjimatan Kumulatif (RM)',data:cumSaving,borderColor:'#22d3ee',backgroundColor:'#22d3ee',borderWidth:2.5,pointRadius:3,tension:.3,yAxisID:'y2',order:1,spanGaps:false}
+        {type:'bar',label:'Kos/kWh (RM)',data:costPerKwh,backgroundColor:'#f0c060',yAxisID:'y',order:2,borderRadius:4,
+          datalabels:{color:'#3a2c00',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?v.toFixed(2):''}},
+        {type:'line',label:'Penjimatan Kumulatif (RM)',data:cumSaving,borderColor:'#22d3ee',backgroundColor:'#22d3ee',borderWidth:2.5,pointRadius:3,tension:.3,yAxisID:'y2',order:1,spanGaps:false,
+          datalabels:{color:'#22d3ee',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':fmtRM(v)}}
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:16}},
       plugins:{legend:{display:false},
         tooltip:{callbacks:{label:ctx=>ctx.dataset.yAxisID==='y2'?`${ctx.dataset.label}: ${fmtRM(ctx.parsed.y)}`:`${ctx.dataset.label}: RM ${ctx.parsed.y.toFixed(3)}`}}},
       scales:{
@@ -4500,12 +4509,15 @@ function renderAnalysisCarbonSus(curYear, curRows){
     data:{
       labels:BULAN_ORDER.map(b=>b.substring(0,3)),
       datasets:[
-        {type:'line',label:'RE %',data:reArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:3,tension:.3,yAxisID:'y',order:1,spanGaps:false},
-        {type:'line',label:'Net Carbon Kumulatif',data:netArr,borderColor:'#e05a4a',backgroundColor:'rgba(224,90,74,.12)',borderWidth:2,pointRadius:2,tension:.3,fill:true,yAxisID:'y2',order:2,spanGaps:false}
+        {type:'line',label:'RE %',data:reArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:3,tension:.3,yAxisID:'y',order:1,spanGaps:false,
+          datalabels:{color:'#01DF01',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+        {type:'line',label:'Net Carbon Kumulatif',data:netArr,borderColor:'#e05a4a',backgroundColor:'rgba(224,90,74,.12)',borderWidth:2,pointRadius:2,tension:.3,fill:true,yAxisID:'y2',order:2,spanGaps:false,
+          datalabels:{color:'#f0897c',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'bottom',formatter:v=>v==null?'':fmtKg(v)}}
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:16,bottom:6}},
       plugins:{legend:{display:false},
         tooltip:{callbacks:{label:ctx=>ctx.dataset.yAxisID==='y'?`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`:`${ctx.dataset.label}: ${fmtKg(ctx.parsed.y)} kgCO₂e`}}},
       scales:{
@@ -4578,12 +4590,15 @@ function renderAnalysisLoadPattern(curYear, curRows){
     data:{
       labels:BULAN_ORDER.map(b=>b.substring(0,3)),
       datasets:[
-        {label:'SS-A %',data:ssaPctArr,borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false},
-        {label:'SS-D %',data:ssdPctArr,borderColor:'#4ade80',backgroundColor:'#4ade80',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false}
+        {label:'SS-A %',data:ssaPctArr,borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
+          datalabels:{color:'#5fa8ff',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':v.toFixed(0)+'%'}},
+        {label:'SS-D %',data:ssdPctArr,borderColor:'#4ade80',backgroundColor:'#4ade80',borderWidth:2,pointRadius:3,tension:.3,spanGaps:false,
+          datalabels:{color:'#4ade80',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'bottom',formatter:v=>v==null?'':v.toFixed(0)+'%'}}
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:14,bottom:6}},
       plugins:{legend:{display:false},
         tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}}},
       scales:{
