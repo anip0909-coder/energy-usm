@@ -4844,7 +4844,7 @@ function buildBuildingTable(rows){
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
       <td>${fmt(r.jppfKwh)}</td><td>${fmt(r.importKwh)}</td><td>${fmt(r.solarKwh)}</td>
       <td>${fmt(r.eksportKwh)}</td><td>${fmtRM(r.billRm)}</td><td>${fmtRM(r.penjimatanRm)}</td>
-      <td class="edit-action-col" style="display:none">
+      <td class="edit-action-col" style="display:${adminUnlocked?'':'none'}">
         <button class="btn-edit" onclick="openEditModal('building',buildingRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
         <button class="btn-del"  onclick="openDelModal('building','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
       </td>
@@ -4883,7 +4883,7 @@ function buildBuildingTable(rows){
             <th>Bulan</th><th>Tahun</th>
             <th>JPPF kWh</th><th>Import TNB kWh</th><th>Janaan Solar kWh</th>
             <th>Eksport kWh</th><th>Bil Elektrik RM</th><th>Penjimatan RM</th>
-            <th class="edit-action-col" style="display:none">Tindakan</th>
+            <th class="edit-action-col" style="display:${adminUnlocked?'':'none'}">Tindakan</th>
           </tr></thead>
           <tbody id="bld-tbl-body">${rowsHtml}</tbody>
         </table>
