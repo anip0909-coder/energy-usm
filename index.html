@@ -223,6 +223,26 @@ body.dark .kh-yoy-table th{background:#0f172a}
 #section-dashboard{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 #panel-building{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 #section-analysis{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+
+/* ── Pengurusan Data Building (tema gelap, khas dalam #panel-building) ── */
+#panel-building .bld-mgmt{margin-top:20px}
+#panel-building .bld-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:#0f1e34;border-radius:10px;border:1px solid #1c2f48;user-select:none;transition:background .15s}
+#panel-building .bld-mgmt-header:hover{background:#132741}
+#panel-building .bld-mgmt-title{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+#panel-building .bld-mgmt-chevron{font-size:18px;color:#7d93ad;transition:transform .25s}
+#panel-building .bld-mgmt-chevron.open{transform:rotate(180deg)}
+#panel-building .bld-mgmt-body{margin-top:10px}
+#panel-building .bld-tbl-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:10px 14px;background:#0f1e34;border-radius:10px;border:1px solid #1c2f48}
+#panel-building .bld-tbl-filter label{font-size:12px;color:#7d93ad;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+#panel-building .bld-tbl-filter select{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;cursor:pointer}
+#panel-building .bld-tbl-count{font-size:12px;color:#7d93ad;font-weight:600;margin-left:auto}
+#panel-building .bld-data-table-wrap{background:#0f1e34;border-radius:12px;border:1px solid #1c2f48;overflow-x:auto;margin-bottom:10px}
+#panel-building .bld-data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:920px}
+#panel-building .bld-data-table th{background:#0a1526;padding:9px 10px;text-align:left;font-weight:700;color:#7d93ad;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+#panel-building .bld-data-table td{padding:8px 10px;border-bottom:1px solid #16273f;color:#dbe7f3;white-space:nowrap}
+#panel-building .bld-data-table tr:hover td{background:#0d1c30}
+.btn-add-bld{font-size:12px;padding:6px 14px;border-radius:7px;border:none;background:#22c55e;color:#062012;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.btn-add-bld:hover{background:#16a34a}
 .dash-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 .dash-head h2{color:#fff;font-size:19px;font-weight:800;margin:0}
 .dash-head p{color:#7d93ad;font-size:12.5px;margin:3px 0 0}
@@ -747,6 +767,25 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeDelModal()">Batal</button>
       <button class="btn-save" style="background:#c0392b" onclick="submitDelete()"><i class="ti ti-trash"></i> Ya, Padam</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD RECORD MODAL (Building) -->
+<div class="edit-modal-bg" id="add-bld-modal">
+  <div class="edit-modal-box">
+    <h2><i class="ti ti-circle-plus" style="color:#1a3a5c"></i> Tambah Rekod Baharu — Building</h2>
+    <p>Isi maklumat bulan/tahun dan nilai di bawah, kemudian klik Simpan.</p>
+    <div class="modal-msg" id="add-bld-msg"></div>
+    <div class="edit-grid" id="add-bld-fields">
+      <div class="edit-field"><label>Bulan</label>
+        <select id="add-bld-bulan" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #c0cdd8;font-size:13px;outline:none"></select>
+      </div>
+      <div class="edit-field"><label>Tahun</label><input type="number" id="add-bld-tahun" step="1" placeholder="cth: 2026"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddBuildingModal()">Batal</button>
+      <button class="btn-save" onclick="submitAddBuilding()"><i class="ti ti-device-floppy"></i> Simpan ke Google Sheets</button>
     </div>
   </div>
 </div>
@@ -2784,6 +2823,8 @@ function unlockAdmin(pw){
   document.querySelectorAll('.lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
   // rebuild KH table to show edit buttons if on KH tab
   if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
+  // rebuild Building management table to show edit buttons if data already loaded
+  if(typeof refreshBuildingMgmt === 'function' && buildingRows.length > 0) refreshBuildingMgmt();
 }
 
 // ══════════════════════════════════════════════
@@ -2807,6 +2848,14 @@ const EPC_EDIT_FIELDS=[
   {key:'baselineTrauma', label:'Baseline Trauma kWh'},
   {key:'baselineGeneral',label:'Baseline General OT kWh'},
 ];
+const BUILDING_EDIT_FIELDS=[
+  {key:'jppfKwh',      label:'JPPF kWh'},
+  {key:'importKwh',    label:'Import TNB kWh'},
+  {key:'solarKwh',     label:'Janaan Solar JPPF kWh'},
+  {key:'eksportKwh',   label:'Eksport ke Grid kWh'},
+  {key:'billRm',       label:'Bil Elektrik JPPF RM'},
+  {key:'penjimatanRm', label:'Penjimatan RM'},
+];
 
 let editRow=null, delRow=null;
 function closeEditModal(){document.getElementById('edit-modal').classList.remove('show');}
@@ -2815,7 +2864,7 @@ function closeDelModal(){document.getElementById('del-modal').classList.remove('
 function openEditModal(tab,row){
   if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
   editRow={tab,...row};
-  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS;
+  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:tab==='building'?BUILDING_EDIT_FIELDS:EPC_EDIT_FIELDS;
   document.getElementById('edit-modal-title').textContent=`Kemaskini — ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-modal-sub').textContent=`Tab: ${tab.toUpperCase()} | ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-msg').style.display='none';
@@ -2841,7 +2890,7 @@ async function gasRequest(payload){
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
-  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:editRow.tab==='building'?BUILDING_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
 
   // ── Auto-kira Total kWh, Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
   if(editRow.tab==='jppf'){
@@ -2910,6 +2959,7 @@ async function submitEdit(){
             if (editRow.tab === 'jppf') loadData(true);
             else if (editRow.tab === 'epc') loadEPC();
             else if (editRow.tab === 'kh') loadKH();
+            else if (editRow.tab === 'building') loadBuilding();
         },1500);
     }
     else showEditMsg('⚠ '+data.error,'err');
@@ -2938,6 +2988,7 @@ async function submitDelete(){
             if (delRow.tab === 'jppf') loadData(true);
             else if (delRow.tab === 'epc') loadEPC();
             else if (delRow.tab === 'kh') loadKH();
+            else if (delRow.tab === 'building') loadBuilding();
         },1500);
     }
     else showDelMsg('⚠ '+data.error,'err');
@@ -3812,9 +3863,12 @@ function buildBuildingPage(){
       </div>
 
       <p style="font-size:11px;color:#7d93ad;margin-top:14px">Nota: Data disegerakkan terus daripada Google Sheets (tab Building, GID ${BUILDING_SHEET_GID}) dan dikemaskini setiap kali segar semula.</p>
+
+      <div id="bld-mgmt-container"></div>
     </div>`;
 
   renderBuildingSection();
+  refreshBuildingMgmt();
 }
 
 function renderBuildingSection(){
@@ -4763,6 +4817,158 @@ function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
   }
   el.innerHTML = `<ul style="margin:0;padding-left:18px;color:#c3d3e3;font-size:13px;line-height:1.9">${insights.map(t=>`<li>${t}</li>`).join('')}</ul>`;
 }
+
+// ══════════════════════════════════════════════
+// PENGURUSAN DATA — BUILDING (CRUD ke Google Sheets)
+// Guna semula infrastruktur GAS_URL / gasRequest / adminUnlocked /
+// openEditModal / submitEdit / openDelModal / submitDelete sedia ada
+// (kini turut menyokong tab:'building' — lihat BUILDING_EDIT_FIELDS).
+// ══════════════════════════════════════════════
+function refreshBuildingMgmt(){
+  const c=document.getElementById('bld-mgmt-container');
+  if(!c) return;
+  c.innerHTML = buildBuildingTable(buildingRows);
+}
+
+function buildBuildingTable(rows){
+  if(!rows || !rows.length) return '';
+  const years=[...new Set(rows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yearOpts=['<option value="">-- Semua Tahun --</option>',...years.map(y=>`<option value="${y}">${y}</option>`)].join('');
+  const monthOpts=['<option value="">-- Semua Bulan --</option>',...BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`)].join('');
+
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+
+  let rowsHtml='';
+  sorted.forEach(r=>{
+    rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
+      <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
+      <td>${fmt(r.jppfKwh)}</td><td>${fmt(r.importKwh)}</td><td>${fmt(r.solarKwh)}</td>
+      <td>${fmt(r.eksportKwh)}</td><td>${fmtRM(r.billRm)}</td><td>${fmtRM(r.penjimatanRm)}</td>
+      <td class="edit-action-col" style="display:none">
+        <button class="btn-edit" onclick="openEditModal('building',buildingRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+        <button class="btn-del"  onclick="openDelModal('building','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+
+  return `<div class="bld-mgmt" id="bld-mgmt-wrap">
+    <!-- HEADER — klik untuk minimize -->
+    <div class="bld-mgmt-header" onclick="toggleBuildingMgmt(event)">
+      <div class="bld-mgmt-title">
+        <i class="ti ti-table" style="color:#5fa8ff"></i>
+        Pengurusan Data Building
+        <span style="font-size:11px;font-weight:400;color:#7d93ad;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
+      </div>
+      <i class="ti ti-chevron-down bld-mgmt-chevron open" id="bld-chevron"></i>
+    </div>
+
+    <!-- BODY — collapsible -->
+    <div class="bld-mgmt-body" id="bld-mgmt-body">
+      ${buildAdminStrip()}
+
+      <!-- FILTER BAR + TAMBAH REKOD -->
+      <div class="bld-tbl-filter">
+        <label><i class="ti ti-filter"></i> Filter:</label>
+        <select id="bld-tbl-tahun" onchange="filterBuildingTable()">${yearOpts}</select>
+        <select id="bld-tbl-bulan" onchange="filterBuildingTable()">${monthOpts}</select>
+        <button onclick="clearBuildingFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #29456b;background:#0a1526;color:#9fb3c8;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
+        <button class="btn-add-bld" onclick="openAddBuildingModal()"><i class="ti ti-circle-plus"></i> Tambah Rekod</button>
+        <span class="bld-tbl-count" id="bld-tbl-count">${sorted.length} rekod</span>
+      </div>
+
+      <!-- TABLE -->
+      <div class="bld-data-table-wrap">
+        <table class="bld-data-table" id="bld-data-tbl">
+          <thead><tr>
+            <th>Bulan</th><th>Tahun</th>
+            <th>JPPF kWh</th><th>Import TNB kWh</th><th>Janaan Solar kWh</th>
+            <th>Eksport kWh</th><th>Bil Elektrik RM</th><th>Penjimatan RM</th>
+            <th class="edit-action-col" style="display:none">Tindakan</th>
+          </tr></thead>
+          <tbody id="bld-tbl-body">${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Minimize toggle ──
+function toggleBuildingMgmt(evt){
+  if(evt && evt.target && evt.target.closest('button,select,input')) return; // elak konflik klik dgn kawalan dalam header
+  const body=document.getElementById('bld-mgmt-body');
+  const chev=document.getElementById('bld-chevron');
+  if(!body||!chev) return;
+  const isOpen=chev.classList.contains('open');
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
+}
+
+// ── Filter table ──
+function filterBuildingTable(){
+  const t=document.getElementById('bld-tbl-tahun')?.value||'';
+  const b=document.getElementById('bld-tbl-bulan')?.value||'';
+  const rows=document.querySelectorAll('#bld-tbl-body tr');
+  let visible=0;
+  rows.forEach(row=>{
+    const rb=row.dataset.bulan||'', rt=row.dataset.tahun||'';
+    const show=(!t||rt===t)&&(!b||rb===b);
+    row.style.display=show?'':'none';
+    if(show) visible++;
+  });
+  const cnt=document.getElementById('bld-tbl-count');
+  if(cnt) cnt.textContent=visible+' rekod';
+}
+function clearBuildingFilter(){
+  const st=document.getElementById('bld-tbl-tahun');
+  const sb=document.getElementById('bld-tbl-bulan');
+  if(st) st.value=''; if(sb) sb.value='';
+  filterBuildingTable();
+}
+
+// ── Tambah Rekod Baharu ──
+function openAddBuildingModal(){
+  if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
+  const sel=document.getElementById('add-bld-bulan');
+  if(sel && !sel.options.length){
+    sel.innerHTML = BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`).join('');
+  }
+  document.getElementById('add-bld-tahun').value=new Date().getFullYear();
+  BUILDING_EDIT_FIELDS.forEach(f=>{
+    const wrap=document.getElementById('add-bld-fields');
+    let el=document.getElementById('af-'+f.key);
+    if(!el && wrap){
+      const div=document.createElement('div');
+      div.className='edit-field';
+      div.innerHTML=`<label>${f.label}</label><input type="number" id="af-${f.key}" step="any" placeholder="0">`;
+      wrap.appendChild(div);
+      el=document.getElementById('af-'+f.key);
+    }
+    if(el) el.value='';
+  });
+  document.getElementById('add-bld-msg').style.display='none';
+  document.getElementById('add-bld-modal').classList.add('show');
+}
+function closeAddBuildingModal(){document.getElementById('add-bld-modal').classList.remove('show');}
+
+async function submitAddBuilding(){
+  const pw=localStorage.getItem('usm_admin_pw')||'';
+  const bulan=document.getElementById('add-bld-bulan').value;
+  const tahun=document.getElementById('add-bld-tahun').value;
+  if(!bulan || !tahun){ showAddBldMsg('⚠ Sila isi Bulan dan Tahun.','err'); return; }
+  const fields={bulan,tahun};
+  BUILDING_EDIT_FIELDS.forEach(f=>{const el=document.getElementById('af-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+
+  const btn=document.querySelector('#add-bld-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
+  try{
+    const data=await gasRequest({action:'add',password:pw,tab:'building',fields});
+    if(data.ok){
+      showAddBldMsg(data.message||'Rekod berjaya ditambah.','ok');
+      setTimeout(()=>{ closeAddBuildingModal(); loadBuilding(); },1500);
+    } else showAddBldMsg('⚠ '+data.error,'err');
+  }catch(e){ showAddBldMsg('⚠ '+e.message,'err'); }
+  finally{ btn.textContent='Simpan ke Google Sheets'; btn.disabled=false; }
+}
+function showAddBldMsg(msg,type){const el=document.getElementById('add-bld-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
 </script>
 <!-- PWA Install Prompt -->
 <div id="pwa-install-banner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a3a5c;color:white;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:none;align-items:center;gap:12px;font-size:13px;max-width:340px;width:calc(100% - 32px)">
