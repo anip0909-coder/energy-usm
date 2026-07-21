@@ -5041,6 +5041,7 @@ const PM_DEMO = {
   arus:{L1:1250,L2:1230,L3:1210,N:45},
   voltageDetail:{L1L2:415,L2L3:415,L3L1:415},
   bebanSeimbang:96,
+  kwh:{importKwh:18420,exportKwh:1280},
   harmonic:{thdV:4.2,thdI:4.6}
 };
 
@@ -5071,6 +5072,7 @@ function renderPowerMonitoring(){
         <div class="pm-filter-field"><label>Parameter</label>
           <select id="pm-f-param" onchange="pmApplyFilter()">
             <option value="">All</option><option value="kw">kW</option><option value="kvar">kVAr</option><option value="kva">kVA</option><option value="pf">PF</option>
+            <option value="kwh">kWh</option><option value="voltage">Voltage (V)</option><option value="current">Current (I)</option>
           </select>
         </div>
         <button class="pm-reset-btn" onclick="pmResetFilter()"><i class="ti ti-refresh"></i> Reset</button>
@@ -5129,6 +5131,16 @@ function renderPowerMonitoring(){
                 <div class="row"><span>L2-L3</span><b>${PM_DEMO.voltageDetail.L2L3} V</b></div>
                 <div class="row"><span>L3-L1</span><b>${PM_DEMO.voltageDetail.L3L1} V</b></div>
                 <div class="row"><span>Frequency</span><b>${PM_DEMO.freq.toFixed(1)} Hz</b></div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #1c2f48">
+              <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
+                <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> kWh Import</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px">${fmt(PM_DEMO.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+              </div>
+              <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
+                <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> kWh Export</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px">${fmt(PM_DEMO.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
             </div>
           </div>
