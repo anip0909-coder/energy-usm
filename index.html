@@ -223,6 +223,43 @@ body.dark .kh-yoy-table th{background:#0f172a}
 #section-dashboard{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 #panel-building{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
 #section-analysis{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+#section-power{background:#0a1526;margin:-22px -16px;padding:22px 16px;border-radius:14px}
+
+/* ── Power Monitoring (Main Switchboard) ── */
+.pm-layout{display:grid;grid-template-columns:190px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.pm-layout{grid-template-columns:1fr}}
+.pm-filter-card{background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;padding:16px}
+.pm-filter-title{font-size:11px;font-weight:800;color:#7d93ad;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.pm-filter-field{margin-bottom:14px}
+.pm-filter-field label{display:block;font-size:11px;color:#7d93ad;font-weight:600;margin-bottom:5px}
+.pm-filter-field select{width:100%;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;cursor:pointer}
+.pm-reset-btn{width:100%;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:transparent;color:#c3d3e3;cursor:pointer;font-weight:600}
+.pm-reset-btn:hover{background:#16273f}
+.pm-main{min-width:0}
+.pm-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:900px){.pm-kpi-row{grid-template-columns:repeat(2,1fr)}}
+.pm-kpi-card{background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;padding:14px 16px}
+.pm-kpi-label{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px}
+.pm-kpi-value{font-size:22px;font-weight:800;color:#fff}
+.pm-kpi-value span{font-size:12px;color:#7d93ad;font-weight:600;margin-left:3px}
+.pm-row2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:900px){.pm-row2{grid-template-columns:1fr}}
+.pm-dist-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;font-size:12.5px;color:#c3d3e3;border-bottom:1px solid #16273f}
+.pm-dist-row:last-child{border-bottom:none}
+.pm-dist-dot{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:8px}
+.pm-dist-total{display:flex;align-items:center;justify-content:space-between;padding-top:10px;margin-top:4px;border-top:1.5px solid #29456b;font-size:13px;font-weight:800;color:#f0c060}
+.pm-eq-table-wrap{background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;overflow-x:auto;margin-bottom:16px}
+.pm-eq-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+.pm-eq-table th{background:#0a1526;padding:10px 14px;text-align:left;font-weight:700;color:#7d93ad;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.pm-eq-table td{padding:9px 14px;border-bottom:1px solid #16273f;color:#dbe7f3;white-space:nowrap}
+.pm-eq-table tr:last-child td{border-bottom:none}
+.pm-eq-table tr:hover td{background:#0d1c30}
+.pm-status-badge{font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:rgba(74,222,128,.15);color:#4ade80}
+.pm-detail-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.pm-detail-col div.row{display:flex;justify-content:space-between;font-size:12.5px;color:#c3d3e3;padding:5px 0}
+.pm-detail-col div.row b{color:#fff;font-weight:700}
+.pm-gauge-label{font-size:24px;font-weight:800;color:#fff}
+.pm-gauge-sub{font-size:10.5px;color:#7d93ad;text-align:center;margin-top:2px}
 
 /* ── Pengurusan Data Building (tema gelap, khas dalam #panel-building) ── */
 #panel-building .bld-mgmt{margin-top:20px}
@@ -516,6 +553,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
+  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring</div>
   <div class="sidebar-item" id="side-carbon" onclick="switchSection('carbon')"><i class="ti ti-leaf-2"></i> Carbon &amp; Sustainability</div>
   <div class="sidebar-item" id="side-analysis" onclick="switchSection('analysis')"><i class="ti ti-chart-line"></i> Analysis</div>
   <div class="sidebar-item" id="side-settings" onclick="switchSection('settings')"><i class="ti ti-settings"></i> Settings</div>
@@ -673,6 +711,11 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <h3>Solar Monitoring</h3>
       <p>Data pemantauan solar/PV akan dipaparkan di sini.</p>
     </div>
+  </div>
+
+  <!-- ═══════ SECTION: POWER MONITORING (Main Switchboard) ═══════ -->
+  <div class="content-section" id="section-power">
+    <div class="loading-state"><i class="ti ti-loader"></i>Memuat Power Monitoring...</div>
   </div>
 
   <!-- ═══════ SECTION: CARBON & SUSTAINABILITY ═══════ -->
@@ -1786,7 +1829,7 @@ function switchTab(tab){
 let activeSection = 'energy';
 function switchSection(section){
   activeSection = section;
-  ['dashboard','energy','solar','carbon','analysis','settings'].forEach(s=>{
+  ['dashboard','energy','solar','power','carbon','analysis','settings'].forEach(s=>{
     const panel = document.getElementById('section-'+s);
     if(panel) panel.classList.toggle('active', s===section);
     const nav = document.getElementById('side-'+s);
@@ -1801,6 +1844,7 @@ function switchSection(section){
   if(section==='carbon' && typeof allRows!=='undefined' && allRows.length) renderCarbonSection();
   if(section==='dashboard' && typeof allRows!=='undefined' && allRows.length) renderDashboardSection();
   if(section==='analysis' && typeof renderAnalysisSection==='function') renderAnalysisSection();
+  if(section==='power' && typeof renderPowerMonitoring==='function') renderPowerMonitoring();
 }
 
 // ══════════════════════════════════════════════
@@ -4969,6 +5013,227 @@ async function submitAddBuilding(){
   finally{ btn.textContent='Simpan ke Google Sheets'; btn.disabled=false; }
 }
 function showAddBldMsg(msg,type){const el=document.getElementById('add-bld-msg');el.textContent=msg;el.className='modal-msg '+type;el.style.display='block';}
+
+// ══════════════════════════════════════════════
+// POWER MONITORING — Main Switchboard (MSB)
+// Nota: Belum ada integrasi Digital Power Meter (DPM) sebenar setakat ini,
+// jadi paparan ini guna data demo/placeholder mengikut struktur yang
+// dicadangkan. Sedia untuk disambungkan ke backend DPM/Modbus TCP kelak.
+// ══════════════════════════════════════════════
+const PM_DEMO = {
+  jumlahBeban: 2947, voltage: 415, freq: 50.0, pf: 0.92,
+  trend: [1450,1400,1380,1420,1500,1650,1980,2400,2750,3050,3300,3500,
+          3650,3700,3680,3600,3550,3400,3150,2850,2500,2100,1800,1550,1450],
+  distribusi: [
+    {label:'Bilik Akademik',   kw:1250, pct:42.4, color:'#5fa8ff'},
+    {label:'Bilik Pentadbiran',kw:730,  pct:24.8, color:'#5fa8ff'},
+    {label:'Klinik Kesihatan', kw:360,  pct:12.1, color:'#5fa8ff'},
+    {label:'Kemudahan Sukan',  kw:260,  pct:8.8,  color:'#5fa8ff'},
+    {label:'Lain-lain',        kw:147,  pct:5.0,  color:'#5fa8ff'}
+  ],
+  equipment: [
+    {name:'Transformer 1', lokasi:'MSB 1',         panel:'Main Switchboard', kw:1250, kvar:420, kva:1320, pf:0.95, status:'Normal'},
+    {name:'Transformer 2', lokasi:'MSB 2',         panel:'Main Switchboard', kw:850,  kvar:310, kva:905,  pf:0.94, status:'Normal'},
+    {name:'Chiller Plant', lokasi:'Bilik Mesin',   panel:'Sub Switchboard',  kw:430,  kvar:180, kva:456,  pf:0.92, status:'Normal'},
+    {name:'AHU',           lokasi:'Bilik Akademik',panel:'Sub Switchboard',  kw:230,  kvar:190, kva:341,  pf:0.94, status:'Normal'},
+    {name:'Pam Utama',     lokasi:'Bilik Pam 1',   panel:'Sub Switchboard',  kw:107,  kvar:35,  kva:112,  pf:0.95, status:'Normal'}
+  ],
+  arus:{L1:1250,L2:1230,L3:1210,N:45},
+  voltageDetail:{L1L2:415,L2L3:415,L3L1:415},
+  bebanSeimbang:96,
+  harmonic:{thdV:4.2,thdI:4.6}
+};
+
+let pmChartTrend=null, pmChartGauge=null, pmChartHarmonic=null;
+
+function renderPowerMonitoring(){
+  const el=document.getElementById('section-power');
+  if(!el) return;
+  const lokasiSet=[...new Set(PM_DEMO.equipment.map(e=>e.lokasi))];
+  const panelSet=[...new Set(PM_DEMO.equipment.map(e=>e.panel))];
+  const lokasiOpts=['<option value="">All</option>',...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
+  const panelOpts=['<option value="">All</option>',...panelSet.map(p=>`<option value="${p}">${p}</option>`)].join('');
+
+  el.innerHTML = `
+    <div class="dash-head">
+      <div>
+        <h2><i class="ti ti-bolt"></i> POWER MONITORING</h2>
+        <p>Pemantauan Kuasa Main Switchboard</p>
+      </div>
+      <div class="dash-filter"><span class="live-pill"><span class="live-dot"></span> LIVE</span></div>
+    </div>
+
+    <div class="pm-layout">
+      <div class="pm-filter-card">
+        <div class="pm-filter-title"><i class="ti ti-filter"></i> Filter</div>
+        <div class="pm-filter-field"><label>Lokasi</label><select id="pm-f-lokasi" onchange="pmApplyFilter()">${lokasiOpts}</select></div>
+        <div class="pm-filter-field"><label>Panel</label><select id="pm-f-panel" onchange="pmApplyFilter()">${panelOpts}</select></div>
+        <div class="pm-filter-field"><label>Parameter</label>
+          <select id="pm-f-param" onchange="pmApplyFilter()">
+            <option value="">All</option><option value="kw">kW</option><option value="kvar">kVAr</option><option value="kva">kVA</option><option value="pf">PF</option>
+          </select>
+        </div>
+        <button class="pm-reset-btn" onclick="pmResetFilter()"><i class="ti ti-refresh"></i> Reset</button>
+      </div>
+
+      <div class="pm-main">
+        <div class="pm-kpi-row">
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#5fa8ff">Jumlah Beban</div><div class="pm-kpi-value" id="pm-kpi-beban">${fmt(PM_DEMO.jumlahBeban)}<span>kW</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value">${PM_DEMO.voltage}<span>V</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#f0c060">Frequency</div><div class="pm-kpi-value">${PM_DEMO.freq.toFixed(1)}<span>Hz</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Power Factor</div><div class="pm-kpi-value">${PM_DEMO.pf.toFixed(2)}</div></div>
+        </div>
+
+        <div class="pm-row2">
+          <div class="dpanel">
+            <div class="dpanel-title">TREND BEBAN (kW)</div>
+            <div style="position:relative;width:100%;height:230px"><canvas id="pmChartTrend"></canvas></div>
+          </div>
+          <div class="dpanel">
+            <div class="dpanel-title">DISTRIBUSI BEBAN (kW)</div>
+            <div id="pm-dist-body"></div>
+          </div>
+        </div>
+
+        <div class="dpanel" style="margin-bottom:16px">
+          <div class="dpanel-title">SENARAI PE/MSB</div>
+          <div class="dpanel-sub">Peralatan Elektrik / Main Switchboard</div>
+          <div class="pm-eq-table-wrap" style="margin-top:10px">
+            <table class="pm-eq-table">
+              <thead><tr><th>Peralatan</th><th>Lokasi</th><th>kW</th><th>kVAr</th><th>kVA</th><th>PF</th><th>Status</th></tr></thead>
+              <tbody id="pm-eq-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pm-row2">
+          <div class="dpanel">
+            <div class="dpanel-title">DETAIL MAIN SWITCHBOARD (REAL-TIME)</div>
+            <div class="pm-detail-grid" style="margin-top:12px">
+              <div class="pm-detail-col">
+                <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">ARUS (A)</div>
+                <div class="row"><span>L1</span><b>${fmt(PM_DEMO.arus.L1)} A</b></div>
+                <div class="row"><span>L2</span><b>${fmt(PM_DEMO.arus.L2)} A</b></div>
+                <div class="row"><span>L3</span><b>${fmt(PM_DEMO.arus.L3)} A</b></div>
+                <div class="row"><span>Neutral</span><b>${fmt(PM_DEMO.arus.N)} A</b></div>
+              </div>
+              <div style="position:relative;width:120px;height:120px"><canvas id="pmChartGauge"></canvas>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <div class="pm-gauge-label">${PM_DEMO.bebanSeimbang}%</div>
+                  <div class="pm-gauge-sub">Beban<br>Seimbang</div>
+                </div>
+              </div>
+              <div class="pm-detail-col">
+                <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">VOLTAGE (V)</div>
+                <div class="row"><span>L1-L2</span><b>${PM_DEMO.voltageDetail.L1L2} V</b></div>
+                <div class="row"><span>L2-L3</span><b>${PM_DEMO.voltageDetail.L2L3} V</b></div>
+                <div class="row"><span>L3-L1</span><b>${PM_DEMO.voltageDetail.L3L1} V</b></div>
+                <div class="row"><span>Frequency</span><b>${PM_DEMO.freq.toFixed(1)} Hz</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="dpanel">
+            <div class="dpanel-title">HARMONIC DISTORTION</div>
+            <div style="position:relative;width:100%;height:200px"><canvas id="pmChartHarmonic"></canvas></div>
+          </div>
+        </div>
+
+        <p style="font-size:11px;color:#7d93ad;margin-top:4px">Nota: Paparan ini menggunakan data demo sementara menunggu integrasi Digital Power Meter (DPM) sebenar di Main Switchboard.</p>
+      </div>
+    </div>
+  `;
+
+  pmRenderCharts();
+  pmRenderDistribusi(PM_DEMO.distribusi);
+  pmRenderEquipment(PM_DEMO.equipment);
+}
+
+function pmRenderDistribusi(list){
+  const el=document.getElementById('pm-dist-body');
+  if(!el) return;
+  const total=list.reduce((s,d)=>s+d.kw,0);
+  el.innerHTML = list.map(d=>`
+    <div class="pm-dist-row">
+      <span><span class="pm-dist-dot" style="background:${d.color}"></span>${d.label}</span>
+      <span>${fmt(d.kw)} (${d.pct.toFixed(1)}%)</span>
+    </div>`).join('') +
+    `<div class="pm-dist-total"><span>Jumlah</span><span>${fmt(total)} (100%)</span></div>`;
+}
+
+function pmRenderEquipment(list){
+  const el=document.getElementById('pm-eq-body');
+  if(!el) return;
+  if(!list.length){ el.innerHTML='<tr><td colspan="7" style="text-align:center;color:#7d93ad">Tiada peralatan sepadan dengan filter.</td></tr>'; return; }
+  el.innerHTML = list.map(e=>`
+    <tr>
+      <td><strong>${e.name}</strong></td><td>${e.lokasi}</td>
+      <td>${fmt(e.kw)}</td><td>${fmt(e.kvar)}</td><td>${fmt(e.kva)}</td><td>${e.pf.toFixed(2)}</td>
+      <td><span class="pm-status-badge">${e.status}</span></td>
+    </tr>`).join('');
+}
+
+function pmApplyFilter(){
+  const lokasi=document.getElementById('pm-f-lokasi')?.value||'';
+  const panel=document.getElementById('pm-f-panel')?.value||'';
+  const filtered=PM_DEMO.equipment.filter(e=>(!lokasi||e.lokasi===lokasi)&&(!panel||e.panel===panel));
+  pmRenderEquipment(filtered);
+  const totalKw=filtered.reduce((s,e)=>s+e.kw,0);
+  const kpiEl=document.getElementById('pm-kpi-beban');
+  if(kpiEl) kpiEl.innerHTML = (lokasi||panel) ? `${fmt(totalKw)}<span>kW (ditapis)</span>` : `${fmt(PM_DEMO.jumlahBeban)}<span>kW</span>`;
+}
+function pmResetFilter(){
+  const l=document.getElementById('pm-f-lokasi'), p=document.getElementById('pm-f-panel'), pr=document.getElementById('pm-f-param');
+  if(l)l.value=''; if(p)p.value=''; if(pr)pr.value='';
+  pmApplyFilter();
+}
+
+function pmRenderCharts(){
+  const canvasTrend=document.getElementById('pmChartTrend');
+  if(canvasTrend){
+    if(pmChartTrend) pmChartTrend.destroy();
+    const labels=PM_DEMO.trend.map((v,i)=>i%4===0?String(i).padStart(2,'0')+':00':'');
+    pmChartTrend=new Chart(canvasTrend,{
+      type:'line',
+      data:{labels,datasets:[{label:'Beban (kW)',data:PM_DEMO.trend,borderColor:'#5fa8ff',backgroundColor:'rgba(95,168,255,.12)',pointRadius:2,tension:.35,borderWidth:2,fill:true}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Beban: ${fmt(ctx.parsed.y)} kW`}}},
+        scales:{
+          x:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},autoSkip:false,maxRotation:0}},
+          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmt(v)}}
+        }
+      }
+    });
+  }
+
+  const canvasGauge=document.getElementById('pmChartGauge');
+  if(canvasGauge){
+    if(pmChartGauge) pmChartGauge.destroy();
+    pmChartGauge=new Chart(canvasGauge,{
+      type:'doughnut',
+      data:{labels:['L1','L2','L3'],datasets:[{data:[PM_DEMO.arus.L1,PM_DEMO.arus.L2,PM_DEMO.arus.L3],backgroundColor:['#e05a4a','#5fa8ff','#f0c060'],borderWidth:2,borderColor:'#0f1e34'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.parsed)} A`}}}}
+    });
+  }
+
+  const canvasHarmonic=document.getElementById('pmChartHarmonic');
+  if(canvasHarmonic){
+    if(pmChartHarmonic) pmChartHarmonic.destroy();
+    pmChartHarmonic=new Chart(canvasHarmonic,{
+      type:'bar',
+      data:{labels:['THD Voltage','THD Current'],datasets:[{data:[PM_DEMO.harmonic.thdV,PM_DEMO.harmonic.thdI],backgroundColor:['#7c3aed','#7c3aed'],borderRadius:6,maxBarThickness:60,
+        datalabels:{color:'#fff',font:{size:10,weight:'700'},anchor:'end',align:'top',formatter:v=>v+'%'}}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.y}%`}}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
+          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>v+'%'},max:6}
+        }
+      }
+    });
+  }
+}
 </script>
 <!-- PWA Install Prompt -->
 <div id="pwa-install-banner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a3a5c;color:white;padding:12px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:none;align-items:center;gap:12px;font-size:13px;max-width:340px;width:calc(100% - 32px)">
