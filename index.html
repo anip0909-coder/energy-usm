@@ -4553,7 +4553,7 @@ async function renderAnalysisCostSavings(curYear){
   if(anaChartCost) anaChartCost.destroy();
   const kadarArr=BULAN_ORDER.map(b=>{
     const r=sorted.find(x=>x.bulan===b);
-    return (r && r.kadarSurcaj>0) ? r.kadarSurcaj : null;
+    return r ? r.kadarSurcaj : null;
   });
   const ssaArr=BULAN_ORDER.map(b=>{const r=sorted.find(x=>x.bulan===b);return r?r.surcajSSA:0;});
   const ssdArr=BULAN_ORDER.map(b=>{const r=sorted.find(x=>x.bulan===b);return r?r.surcajSSD:0;});
@@ -4563,9 +4563,9 @@ async function renderAnalysisCostSavings(curYear){
       labels:BULAN_ORDER.map(b=>b.substring(0,3)),
       datasets:[
         {type:'bar',label:'Surcaj SS-A (RM)',data:ssaArr,backgroundColor:'#5fa8ff',yAxisID:'y2',order:2,borderRadius:3,
-          datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmt(v):''}},
+          datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:v=>v.dataset.data[v.dataIndex]<0?'end':'start',formatter:v=>v!==0?fmt(v):''}},
         {type:'bar',label:'Surcaj SS-D (RM)',data:ssdArr,backgroundColor:'#16283f',yAxisID:'y2',order:2,borderRadius:3,
-          datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:'start',formatter:v=>v>0?fmt(v):''}},
+          datalabels:{color:'#fff',font:{size:9,weight:'700'},rotation:270,anchor:'end',align:v=>v.dataset.data[v.dataIndex]<0?'end':'start',formatter:v=>v!==0?fmt(v):''}},
         {type:'line',label:'Kadar Surcaj (RM/kWh)',data:kadarArr,borderColor:'#f0c060',backgroundColor:'#f0c060',borderWidth:2.5,pointRadius:3,tension:.3,yAxisID:'y',order:1,spanGaps:false,
           datalabels:{color:'#f0c060',font:{size:9,weight:'700'},rotation:0,anchor:'end',align:'top',formatter:v=>v==null?'':v.toFixed(4)}}
       ]
