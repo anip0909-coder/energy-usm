@@ -550,6 +550,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
     <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
     <div class="sidebar-sub-item" id="subside-building" onclick="switchSection('energy');switchTab('building')"><i class="ti ti-building"></i> Building</div>
+    <div class="sidebar-sub-item" id="subside-surcaj" onclick="switchSection('energy');switchTab('surcaj')"><i class="ti ti-receipt-2"></i> Surcaj</div>
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
@@ -700,6 +701,13 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div id="panel-building" style="display:none">
     <div id="building-content">
       <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Building...</div>
+    </div>
+  </div>
+
+  <!-- SURCAJ TAB PANEL -->
+  <div id="panel-surcaj" style="display:none">
+    <div id="surcaj-content">
+      <div class="loading-state"><i class="ti ti-loader"></i>Memuat data Surcaj...</div>
     </div>
   </div>
 
@@ -1805,22 +1813,26 @@ function switchTab(tab){
   document.getElementById('panel-epc').style.display  = tab==='epc'  ? 'block' : 'none';
   document.getElementById('panel-kh').style.display   = tab==='kh'   ? 'block' : 'none';
   const pb=document.getElementById('panel-building'); if(pb) pb.style.display = tab==='building' ? 'block' : 'none';
+  const ps=document.getElementById('panel-surcaj'); if(ps) ps.style.display = tab==='surcaj' ? 'block' : 'none';
   document.getElementById('tab-jppf')?.classList.toggle('active', tab==='jppf');
   document.getElementById('tab-epc')?.classList.toggle('active',  tab==='epc');
   document.getElementById('tab-kh')?.classList.toggle('active',   tab==='kh');
   document.getElementById('tab-building')?.classList.toggle('active', tab==='building');
-  const mfr=document.getElementById('main-filter-row'); if(mfr) mfr.style.display = tab==='building' ? 'none' : '';
-  const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh'),sb=document.getElementById('subside-building');
+  document.getElementById('tab-surcaj')?.classList.toggle('active', tab==='surcaj');
+  const mfr=document.getElementById('main-filter-row'); if(mfr) mfr.style.display = (tab==='building'||tab==='surcaj') ? 'none' : '';
+  const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh'),sb=document.getElementById('subside-building'),ss=document.getElementById('subside-surcaj');
   if(sj)sj.classList.toggle('active', tab==='jppf');
   if(se)se.classList.toggle('active', tab==='epc');
   if(sk)sk.classList.toggle('active', tab==='kh');
   if(sb)sb.classList.toggle('active', tab==='building');
-  const titles={jppf:'KWH USMKK',epc:'EPC Chiller',kh:'Kampus+HPUSM',building:'Building'};
+  if(ss)ss.classList.toggle('active', tab==='surcaj');
+  const titles={jppf:'KWH USMKK',epc:'EPC Chiller',kh:'Kampus+HPUSM',building:'Building',surcaj:'Surcaj'};
   const th=document.getElementById('energy-subtab-title');
   if(th) th.textContent=titles[tab]||'';
   if(tab==='epc' && epcRows.length===0) loadEPC();
   if(tab==='kh'  && khRows.length===0)  loadKH();
   if(tab==='building' && typeof loadBuilding==='function' && typeof buildingRows!=='undefined' && buildingRows.length===0) loadBuilding();
+  if(tab==='surcaj' && typeof loadSurcaj==='function' && typeof surcajRows!=='undefined' && surcajRows.length===0) loadSurcaj();
 }
 
 // ══════════════════════════════════════════════
@@ -2869,6 +2881,8 @@ function unlockAdmin(pw){
   if(typeof khBuildTableRows === 'function' && khRows.length > 0) khBuildTableRows();
   // rebuild Building management table to show edit buttons if data already loaded
   if(typeof refreshBuildingMgmt === 'function' && buildingRows.length > 0) refreshBuildingMgmt();
+  // rebuild Surcaj table to show edit buttons if data already loaded
+  if(typeof surcajBuildTableRows === 'function' && typeof surcajRows!=='undefined' && surcajRows.length > 0) surcajBuildTableRows();
 }
 
 // ══════════════════════════════════════════════
@@ -2908,7 +2922,7 @@ function closeDelModal(){document.getElementById('del-modal').classList.remove('
 function openEditModal(tab,row){
   if(!adminUnlocked){alert('Sila unlock mod admin dahulu.');return;}
   editRow={tab,...row};
-  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:tab==='building'?BUILDING_EDIT_FIELDS:EPC_EDIT_FIELDS;
+  const fields=tab==='jppf'?JPPF_EDIT_FIELDS:tab==='kh'?KH_EDIT_FIELDS:tab==='building'?BUILDING_EDIT_FIELDS:tab==='surcaj'?SURCAJ_EDIT_FIELDS:EPC_EDIT_FIELDS;
   document.getElementById('edit-modal-title').textContent=`Kemaskini — ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-modal-sub').textContent=`Tab: ${tab.toUpperCase()} | ${row.bulan} ${row.tahun}`;
   document.getElementById('edit-msg').style.display='none';
@@ -2934,7 +2948,7 @@ async function gasRequest(payload){
 async function submitEdit(){
   const pw=localStorage.getItem('usm_admin_pw')||'';
   const fields={bulan:editRow.bulan,tahun:editRow.tahun};
-  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:editRow.tab==='building'?BUILDING_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+  (editRow.tab==='jppf'?JPPF_EDIT_FIELDS:editRow.tab==='kh'?KH_EDIT_FIELDS:editRow.tab==='building'?BUILDING_EDIT_FIELDS:editRow.tab==='surcaj'?SURCAJ_EDIT_FIELDS:EPC_EDIT_FIELDS).forEach(f=>{const el=document.getElementById('ef-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
 
   // ── Auto-kira Total kWh, Total RM & Penjimatan USM (RM) — khas tab JPPF sahaja ──
   if(editRow.tab==='jppf'){
@@ -3004,6 +3018,7 @@ async function submitEdit(){
             else if (editRow.tab === 'epc') loadEPC();
             else if (editRow.tab === 'kh') loadKH();
             else if (editRow.tab === 'building') loadBuilding();
+            else if (editRow.tab === 'surcaj') loadSurcaj();
         },1500);
     }
     else showEditMsg('⚠ '+data.error,'err');
@@ -3033,6 +3048,7 @@ async function submitDelete(){
             else if (delRow.tab === 'epc') loadEPC();
             else if (delRow.tab === 'kh') loadKH();
             else if (delRow.tab === 'building') loadBuilding();
+            else if (delRow.tab === 'surcaj') loadSurcaj();
         },1500);
     }
     else showDelMsg('⚠ '+data.error,'err');
@@ -3716,6 +3732,11 @@ const KH_EDIT_FIELDS=[
   {key:'hpusmKwh',  label:'HPUSM kWh'},
   {key:'kampusRm',  label:'Kampus RM'},
   {key:'hospitalRm',label:'Hospital RM'},
+];
+const SURCAJ_EDIT_FIELDS=[
+  {key:'kadarSurcaj', label:'Kadar Surcaj RM/kWh'},
+  {key:'surcajSSA',   label:'Surcaj SS-A RM'},
+  {key:'surcajSSD',   label:'Surcaj SS-D RM'},
 ];
 
 loadData();
@@ -5245,6 +5266,261 @@ function pmRenderCharts(){
       }
     });
   }
+}
+
+// ══════════════════════════════════════════════
+// SURCAJ MODULE (Energy Overview → Surcaj)
+// Paparan sama gaya dengan tab KWH USMKK/Kampus+HPUSM (tema terang,
+// kad metrik, carta, jadual pengurusan data + CRUD ke Google Sheets).
+// ══════════════════════════════════════════════
+const SURCAJ_SHEET_GID = '91765396';
+let surcajRows = [];
+let surcajChart1=null, surcajChart2=null, surcajChart3=null;
+
+async function loadSurcaj(){
+  const el = document.getElementById('surcaj-content');
+  if(!el) return;
+  el.innerHTML = '<div class="loading-state"><i class="ti ti-loader"></i>Memuat data Surcaj...</div>';
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&gid=${SURCAJ_SHEET_GID}&t=${Date.now()}`;
+    const res = await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+    surcajRows = parseSurcaj(csv);
+    if(!surcajRows.length) throw new Error('Tiada data Surcaj dijumpai. Semak nama tab dan GID.');
+    buildSurcajPage();
+  }catch(err){
+    el.innerHTML = `<div class="error-state"><strong><i class="ti ti-wifi-off"></i> Gagal memuat tab Surcaj</strong>${err.message}<br><br>Pastikan sheet dikongsi dan GID betul.</div>`;
+  }
+}
+
+function parseSurcaj(csv){
+  const lines = csv.split('\n').map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(const ch of line){if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=ch;}
+    cols.push(cur.trim());return cols.map(c=>c.replace(/"/g,'').trim());
+  });
+  let hi=-1, m={};
+  for(let i=0;i<Math.min(lines.length,15);i++){
+    const row=lines[i].map(c=>c.toLowerCase());
+    if(!row.some(c=>c.includes('bulan'))) continue;
+    hi=i;
+    row.forEach((h,idx)=>{
+      if(h.includes('bulan'))                                     m.bulan=idx;
+      else if(h.includes('tahun'))                                m.tahun=idx;
+      else if(h.includes('kadar'))                                m.kadarSurcaj=idx; // Kadar Surcaj RM/kWh
+      else if(h.includes('ss-a')||h.includes('ssa'))              m.surcajSSA=idx;   // Surcaj SS-A RM
+      else if(h.includes('ss-d')||h.includes('ssd'))              m.surcajSSD=idx;   // Surcaj SS-D RM
+    });
+    break;
+  }
+  if(hi<0) return [];
+  const rows=[];
+  for(let i=hi+1;i<lines.length;i++){
+    const row=lines[i];
+    const bRaw=row[m.bulan];
+    if(!bRaw||bRaw==='') continue;
+    const n=k=>{const v=parseFloat((row[m[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    rows.push({
+      bulan:normBulan(bRaw), tahun:String(m.tahun!==undefined?row[m.tahun]:'').trim(),
+      kadarSurcaj:n('kadarSurcaj'), surcajSSA:n('surcajSSA'), surcajSSD:n('surcajSSD')
+    });
+  }
+  return rows;
+}
+
+function buildSurcajPage(){
+  const el=document.getElementById('surcaj-content');
+  if(!el) return;
+  const years=[...new Set(surcajRows.map(r=>r.tahun).filter(Boolean))].sort();
+  const yOptsFull='<option value="">-- Semua --</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  const mOptsFull='<option value="">-- Semua --</option>'+BULAN_ORDER.map(b=>`<option value="${b}">${b}</option>`).join('');
+
+  el.innerHTML = `
+  <!-- TAPIS UTAMA -->
+  <div class="filter-row" style="margin-top:18px">
+    <label><i class="ti ti-filter"></i> Tapis:</label>
+    <select id="surcaj-f-tahun" onchange="surcajUpdateMain()">${yOptsFull}</select>
+    <select id="surcaj-f-bulan" onchange="surcajUpdateMain()">${mOptsFull}</select>
+    <button class="icon-btn" style="margin-left:auto" onclick="loadSurcaj()"><i class="ti ti-refresh"></i> Refresh</button>
+  </div>
+
+  <!-- KAD METRIK -->
+  <div class="metrics" id="surcaj-metrics"></div>
+
+  <!-- CARTA -->
+  <div class="charts" style="margin-bottom:22px">
+    <div class="chart-box">
+      <div class="chart-title">Kadar Surcaj (RM/kWh)</div>
+      <div class="chart-sub" id="surcaj-sub1">—</div>
+      <div class="legend"><span><span class="leg-dot" style="background:#c2410c"></span>Kadar Surcaj RM/kWh</span></div>
+      <div style="position:relative;width:100%;height:250px"><canvas id="surcaj-c1"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Surcaj (RM) — SS-A vs SS-D</div>
+      <div class="chart-sub" id="surcaj-sub2">—</div>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#1a5fa8"></span>Surcaj SS-A</span>
+        <span><span class="leg-dot" style="background:#1e7e34"></span>Surcaj SS-D</span>
+      </div>
+      <div style="position:relative;width:100%;height:250px"><canvas id="surcaj-c2"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts" style="margin-bottom:22px">
+    <div class="chart-box">
+      <div class="chart-title">Carta Pai — Bahagian Surcaj (RM)</div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="surcaj-c3"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Ringkasan</div>
+      <div class="health-row" id="surcaj-health" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- ══ PENGURUSAN DATA ══ -->
+  <div class="jppf-mgmt" id="surcaj-mgmt-outer" style="margin-top:22px">
+    <div class="jppf-mgmt-header" onclick="surcajToggleMgmt()">
+      <div class="jppf-mgmt-title"><i class="ti ti-table" style="color:#1a3a5c"></i> Pengurusan Data Surcaj <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span></div>
+      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="surcaj-mgmt-chev"></i>
+    </div>
+    <div class="jppf-mgmt-body" id="surcaj-mgmt-body">
+      <div id="surcaj-admin-strip"></div>
+      <div class="jppf-tbl-filter">
+        <label><i class="ti ti-filter"></i> Filter:</label>
+        <select id="surcaj-t-tahun" onchange="surcajFilterTable()">${yOptsFull}</select>
+        <select id="surcaj-t-bulan" onchange="surcajFilterTable()">${mOptsFull}</select>
+        <button onclick="surcajClearFilter()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#666;cursor:pointer"><i class="ti ti-x"></i> Clear</button>
+        <span class="jppf-tbl-count" id="surcaj-tbl-count">${surcajRows.length} rekod</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th>Bulan</th><th>Tahun</th>
+            <th>Kadar Surcaj RM/kWh</th><th>Surcaj SS-A RM</th><th>Surcaj SS-D RM</th><th>Jumlah RM</th>
+            <th class="edit-action-col" style="display:none">Tindakan</th>
+          </tr></thead>
+          <tbody id="surcaj-tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('surcaj-admin-strip').innerHTML=buildAdminStrip();
+  if(adminUnlocked){
+    document.querySelectorAll('#surcaj-mgmt-body .edit-action-col').forEach(el=>el.style.display='');
+    document.querySelectorAll('#surcaj-mgmt-body .lock-status').forEach(el=>{el.textContent='✓ Mod Admin Aktif';el.className='lock-status unlocked';});
+  }
+
+  surcajUpdateMain();
+  surcajBuildTableRows();
+}
+
+function surcajUpdateMain(){
+  const t=document.getElementById('surcaj-f-tahun')?.value||'';
+  const b=document.getElementById('surcaj-f-bulan')?.value||'';
+  let rows=surcajRows;
+  if(t) rows=rows.filter(r=>r.tahun===t);
+  if(b) rows=rows.filter(r=>r.bulan===b);
+  if(!rows.length){document.getElementById('surcaj-metrics').innerHTML='<div class="empty-state" style="grid-column:1/-1">Tiada data</div>';return;}
+
+  const d=rows.reduce((a,r)=>({surcajSSA:a.surcajSSA+r.surcajSSA,surcajSSD:a.surcajSSD+r.surcajSSD,kadarSum:a.kadarSum+r.kadarSurcaj}),{surcajSSA:0,surcajSSD:0,kadarSum:0});
+  const total=d.surcajSSA+d.surcajSSD;
+  const avgKadar=rows.length?d.kadarSum/rows.length:0;
+  const label=rows.length===1?(rows[0].bulan+' '+rows[0].tahun):rows.length+' rekod';
+  const ssaPct=total>0?(d.surcajSSA/total*100).toFixed(1):'0';
+  const ssdPct=total>0?(d.surcajSSD/total*100).toFixed(1):'0';
+
+  document.getElementById('surcaj-metrics').innerHTML=`
+    <div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-building"></i></div><div class="card-label" style="color:#1a5fa8">Surcaj SS-A</div><div class="card-value" style="color:#1a5fa8">${fmtRM2d(d.surcajSSA)}</div><div class="card-unit">${ssaPct}% daripada jumlah</div></div>
+    <div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-building-hospital"></i></div><div class="card-label" style="color:#1e7e34">Surcaj SS-D</div><div class="card-value" style="color:#1e7e34">${fmtRM2d(d.surcajSSD)}</div><div class="card-unit">${ssdPct}% daripada jumlah</div></div>
+    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Surcaj</div><div class="card-value">${fmtRM2d(total)}</div><div class="card-unit">${label}</div></div>
+    <div class="card total"><div class="card-icon" style="color:#c2410c"><i class="ti ti-percentage"></i></div><div class="card-label" style="color:#c2410c">Purata Kadar Surcaj</div><div class="card-value" style="color:#c2410c">RM ${avgKadar.toFixed(4)}</div><div class="card-unit">per kWh</div></div>`;
+
+  const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
+  const sub=sorted.length>1?sorted[0].bulan+' '+sorted[0].tahun+' — '+sorted[sorted.length-1].bulan+' '+sorted[sorted.length-1].tahun:label;
+  const el1=document.getElementById('surcaj-sub1');if(el1)el1.textContent=sub;
+  const el2=document.getElementById('surcaj-sub2');if(el2)el2.textContent=sub;
+
+  const tck={color:'#999',font:{size:10}};
+  const nz=v=>v>0?v:null;
+
+  if(surcajChart1) surcajChart1.destroy();
+  surcajChart1=new Chart(document.getElementById('surcaj-c1'),{
+    type:'line',
+    data:{labels:lbl,datasets:[{label:'Kadar Surcaj RM/kWh',data:sorted.map(r=>nz(r.kadarSurcaj)),borderColor:'#c2410c',backgroundColor:'rgba(194,65,12,.08)',pointRadius:3,tension:.3,borderWidth:2,fill:true,spanGaps:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`RM ${ctx.parsed.y.toFixed(4)}/kWh`}}},
+      scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>'RM '+v.toFixed(2)},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
+
+  const barOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>'RM '+v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}}};
+  if(surcajChart2) surcajChart2.destroy();
+  surcajChart2=new Chart(document.getElementById('surcaj-c2'),{
+    type:'bar',
+    data:{labels:lbl,datasets:[
+      {label:'Surcaj SS-A',data:sorted.map(r=>r.surcajSSA),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},
+      {label:'Surcaj SS-D',data:sorted.map(r=>r.surcajSSD),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}
+    ]},
+    options:barOpts
+  });
+
+  const pieDL={display:true,formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(1)+'%':'';},color:'white',font:{size:13,weight:'700'}};
+  const pieOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:12},boxWidth:12,padding:16}},datalabels:pieDL}};
+  if(surcajChart3) surcajChart3.destroy();
+  surcajChart3=new Chart(document.getElementById('surcaj-c3'),{
+    type:'pie',
+    data:{labels:['Surcaj SS-A','Surcaj SS-D'],datasets:[{data:[d.surcajSSA,d.surcajSSD],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]},
+    options:pieOpts
+  });
+
+  const healthEl=document.getElementById('surcaj-health');
+  if(healthEl){
+    healthEl.innerHTML = `
+      <div class="hcard"><div class="hhead"><div class="hname" style="color:#1a5fa8"><i class="ti ti-building"></i> SS-A</div></div><div class="hstat">Surcaj<span>${fmtRM2d(d.surcajSSA)}</span></div><div class="hstat">%<span>${ssaPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${ssaPct}%;background:#1a5fa8"></div></div></div>
+      <div class="hcard"><div class="hhead"><div class="hname" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> SS-D</div></div><div class="hstat">Surcaj<span>${fmtRM2d(d.surcajSSD)}</span></div><div class="hstat">%<span>${ssdPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${ssdPct}%;background:#1e7e34"></div></div></div>
+      <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Ringkasan</div></div><div class="hstat">Jumlah Rekod<span>${rows.length}</span></div><div class="hstat">Jumlah Surcaj<span>${fmtRM2d(total)}</span></div><div class="hstat">Purata Kadar<span>RM ${avgKadar.toFixed(4)}</span></div></div>`;
+  }
+}
+
+function surcajBuildTableRows(){
+  const tbody=document.getElementById('surcaj-tbl-body');
+  if(!tbody) return;
+  const sorted=[...surcajRows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
+  tbody.innerHTML=sorted.map(r=>`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
+    <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
+    <td>RM ${r.kadarSurcaj.toFixed(4)}</td><td>${fmtRM2d(r.surcajSSA)}</td><td>${fmtRM2d(r.surcajSSD)}</td><td>${fmtRM2d(r.surcajSSA+r.surcajSSD)}</td>
+    <td class="edit-action-col" style="display:${adminUnlocked?'':'none'}">
+      <button class="btn-edit" onclick="openEditModal('surcaj',surcajRows.find(x=>x.bulan==='${r.bulan}'&&x.tahun==='${r.tahun}'))"><i class="ti ti-pencil"></i> Edit</button>
+      <button class="btn-del" onclick="openDelModal('surcaj','${r.bulan}','${r.tahun}')"><i class="ti ti-trash"></i></button>
+    </td>
+  </tr>`).join('');
+  const cnt=document.getElementById('surcaj-tbl-count');if(cnt)cnt.textContent=sorted.length+' rekod';
+}
+
+function surcajFilterTable(){
+  const t=document.getElementById('surcaj-t-tahun')?.value||'';
+  const b=document.getElementById('surcaj-t-bulan')?.value||'';
+  const rows=document.querySelectorAll('#surcaj-tbl-body tr');
+  let vis=0;
+  rows.forEach(row=>{
+    const show=(!t||row.dataset.tahun===t)&&(!b||row.dataset.bulan===b);
+    row.style.display=show?'':'none'; if(show) vis++;
+  });
+  const cnt=document.getElementById('surcaj-tbl-count'); if(cnt) cnt.textContent=vis+' rekod';
+}
+function surcajClearFilter(){
+  const st=document.getElementById('surcaj-t-tahun'), sb=document.getElementById('surcaj-t-bulan');
+  if(st) st.value=''; if(sb) sb.value='';
+  surcajFilterTable();
+}
+function surcajToggleMgmt(){
+  const body=document.getElementById('surcaj-mgmt-body');
+  const chev=document.getElementById('surcaj-mgmt-chev');
+  if(!body||!chev) return;
+  const isOpen=chev.classList.contains('open');
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
 }
 </script>
 <!-- PWA Install Prompt -->
