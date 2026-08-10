@@ -1293,8 +1293,8 @@ function renderCharts(filtered,d){
     } : {display:false};
     chartTrend=new Chart(document.getElementById('chartTrend'),{type:'line',
       data:{labels:lbl,datasets:[
-        {label:'Total kWh',data:sorted.map(r=>r.totalKwh>0?r.totalKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',spanGaps:false,datalabels:dlTrendKwh},
-        {label:'Total RM',data:sorted.map(r=>r.totalRm>0?r.totalRm:null),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',spanGaps:false,datalabels:dlTrendRM}
+        {label:'Total kWh',data:sorted.map(r=>{const v=(showSSA?r.ssaKwh:0)+(showSSD?r.ssdKwh:0)+(showSolar?r.solarKwh:0);return v>0?v:null;}),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,yAxisID:'y',spanGaps:false,datalabels:dlTrendKwh},
+        {label:'Total RM',data:sorted.map(r=>{const v=(showSSA?r.ssaRm:0)+(showSSD?r.ssdRm:0);return v>0?v:null;}),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#e8a020',borderWidth:2,borderDash:[5,4],yAxisID:'y2',spanGaps:false,datalabels:dlTrendRM}
       ]},
       options:{
         responsive:true, maintainAspectRatio:false,
