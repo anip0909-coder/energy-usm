@@ -188,7 +188,7 @@ body.dark .kh-yoy-table th{background:#0f172a}
 
 /* ── SIDEBAR ── */
 .app-shell{display:flex;align-items:stretch;min-height:calc(100vh - 68px)}
-.sidebar{width:230px;flex-shrink:0;background:#0f2640;color:#cfe0f0;padding:16px 10px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto}
+.sidebar{width:230px;flex-shrink:0;background:#0f2640;color:#cfe0f0;padding:16px 10px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;align-self:stretch}
 .sidebar-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:#b9cede;transition:all .15s;user-select:none}
 .sidebar-item i{font-size:17px;width:18px;text-align:center}
 .sidebar-item:hover{background:rgba(255,255,255,.08);color:#fff}
@@ -842,7 +842,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 300;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
