@@ -532,10 +532,10 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-item" id="side-dashboard" onclick="switchSection('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+  <div class="sidebar-item active" id="side-dashboard" onclick="switchSection('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
 
-  <div class="sidebar-item expanded active" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev"></i></div>
-  <div class="sidebar-sub open" id="side-energy-sub">
+  <div class="sidebar-item" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev"></i></div>
+  <div class="sidebar-sub" id="side-energy-sub">
     <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
     <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
     <div class="sidebar-sub-item" id="subside-kh" onclick="switchSection('energy');switchTab('kh')"><i class="ti ti-building-community"></i> Kampus+HPUSM</div>
@@ -555,7 +555,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 <div class="container">
 
   <!-- ═══════ SECTION: DASHBOARD ═══════ -->
-  <div class="content-section" id="section-dashboard">
+  <div class="content-section active" id="section-dashboard">
     <div class="dash-head">
       <div>
         <h2><i class="ti ti-layout-dashboard"></i> DASHBOARD EMS</h2>
@@ -570,17 +570,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="dash-grid g5" id="dash-metrics-top"></div>
     <div class="dash-grid g5" id="dash-metrics-bottom"></div>
 
-    <div class="dash-row3">
-      <div class="dpanel">
-        <div class="dpanel-title">TREND TENAGA (kWh)</div>
-        <div class="dpanel-sub">SS-A kWh · SS-D kWh · Janaan Solar</div>
-        <div class="dlegend">
-          <span><span class="dot" style="background:#5fa8ff"></span>SS-A kWh</span>
-          <span><span class="dot" style="background:#7c3aed"></span>SS-D kWh</span>
-          <span><span class="dot" style="background:#e8a020"></span>Janaan Solar</span>
-        </div>
-        <div style="position:relative;width:100%;height:230px"><canvas id="dashChartTrend"></canvas></div>
-      </div>
+    <div class="dash-row3" style="grid-template-columns:1fr 1fr">
       <div class="dpanel">
         <div class="dpanel-title">SUMBANGAN TENAGA</div>
         <div class="dpanel-sub">Daripada jumlah penggunaan</div>
@@ -594,17 +584,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       </div>
     </div>
 
-    <div class="dash-row2">
-      <div class="dpanel">
-        <div class="dpanel-title">CARBON EMISSION TREND (kgCO₂e)</div>
-        <div class="dpanel-sub">Carbon Emission · Carbon Saving · Net Carbon</div>
-        <div class="dlegend">
-          <span><span class="dot" style="background:#c0392b"></span>Carbon Emission</span>
-          <span><span class="dot" style="background:#1e7e34"></span>Carbon Saving</span>
-          <span><span class="dot" style="background:#01DF01"></span>Net Carbon</span>
-        </div>
-        <div style="position:relative;width:100%;height:230px"><canvas id="dashChartCarbon"></canvas></div>
-      </div>
+    <div class="dash-row2" style="grid-template-columns:1fr">
       <div>
         <div class="dfact-card">
           <div class="dcard-icon" style="color:#5fb8ff"><i class="ti ti-cloud"></i></div>
@@ -631,7 +611,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
 
   <!-- ═══════ SECTION: ENERGY OVERVIEW ═══════ -->
-  <div class="content-section active" id="section-energy">
+  <div class="content-section" id="section-energy">
 
   <div class="sec-title" style="margin-bottom:14px"><i class="ti ti-bolt"></i> Energy Overview — <span id="energy-subtab-title">KWH USMKK</span></div>
 
@@ -985,7 +965,7 @@ async function loadData(isManual=false){
     const isFirst=allRows.length===0;
     allRows=rows;
     document.getElementById('status-label').textContent=`✓ ${rows.length} rekod | ${new Date().toLocaleTimeString('ms-MY')} | Sheet: ${CONFIG.sheetName}`;
-    if(isFirst){buildDropdowns();renderShell();}else{buildDropdowns();updateDisplay();}
+    if(isFirst){buildDropdowns();renderShell();if(typeof renderDashboardSection==='function')renderDashboardSection();}else{buildDropdowns();updateDisplay();}
   }catch(err){
     document.getElementById('status-label').textContent='⚠ '+err.message;
     if(allRows.length===0){
@@ -1834,7 +1814,7 @@ function switchTab(tab){
 // ══════════════════════════════════════════════
 // SIDEBAR SECTION NAVIGATION
 // ══════════════════════════════════════════════
-let activeSection = 'energy';
+let activeSection = 'dashboard';
 function switchSection(section){
   activeSection = section;
   ['dashboard','energy','solar','power','carbon','analysis','settings'].forEach(s=>{
@@ -2357,32 +2337,6 @@ function renderDashboardCharts(sorted,d,rePct,cur,emissionTotal,savingTotal,netT
   const multi=sorted.length>1;
   const lbl=multi?sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');}):[(sorted[0]?sorted[0].bulan.substring(0,3):'')];
 
-  const canvasTrend=document.getElementById('dashChartTrend');
-  if(canvasTrend){
-    if(dashChartTrend) dashChartTrend.destroy();
-    const dnz=v=>v>0?v:null;
-    dashChartTrend=new Chart(canvasTrend,{
-      type:'line',
-      data:{
-        labels:lbl,
-        datasets:[
-          {label:'SS-A kWh',data:sorted.map(r=>dnz(r.ssaKwh)),borderColor:'#5fa8ff',backgroundColor:'#5fa8ff',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false},
-          {label:'SS-D kWh',data:sorted.map(r=>dnz(r.ssdKwh)),borderColor:'#a78bfa',backgroundColor:'#a78bfa',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false},
-          {label:'Janaan Solar',data:sorted.map(r=>dnz(r.solarKwh)),borderColor:'#e8a020',backgroundColor:'#e8a020',pointRadius:3,tension:.3,borderWidth:2,spanGaps:false}
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},datalabels:{display:false},
-          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kWh`}}},
-        scales:{
-          x:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10}}},
-          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmt(v)}}
-        }
-      }
-    });
-  }
-
   const canvasDonut=document.getElementById('dashChartDonut');
   if(canvasDonut){
     if(dashChartDonut) dashChartDonut.destroy();
@@ -2420,33 +2374,6 @@ function renderDashboardCharts(sorted,d,rePct,cur,emissionTotal,savingTotal,netT
       <div style="font-size:11px;color:#7d93ad;margin-left:18px">${fmt(d.solarKwh)} kWh</div>
       <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#5fa8ff;display:inline-block"></span>Grid <strong style="margin-left:auto">${gridPct.toFixed(1)}%</strong></div>
       <div style="font-size:11px;color:#7d93ad;margin-left:18px">${fmt(d.totalKwh)} kWh</div>`;
-  }
-
-  const canvasCarbon=document.getElementById('dashChartCarbon');
-  if(canvasCarbon){
-    if(dashChartCarbon) dashChartCarbon.destroy();
-    const emisArr=sorted.map(r=>(r.ssaKwh+r.ssdKwh)*CARBON_EF);
-    const savArr=sorted.map(r=>r.solarKwh*CARBON_EF);
-    const netArr=sorted.map((r,i)=>(r.ssaKwh+r.ssdKwh)>0||r.solarKwh>0 ? emisArr[i]-savArr[i] : null);
-    dashChartCarbon=new Chart(canvasCarbon,{
-      data:{
-        labels:lbl,
-        datasets:[
-          {type:'bar',label:'Carbon Emission',data:emisArr,backgroundColor:'#c0392b',order:2,borderRadius:4},
-          {type:'bar',label:'Carbon Saving',data:savArr,backgroundColor:'#1e7e34',order:2,borderRadius:4},
-          {type:'line',label:'Net Carbon',data:netArr,borderColor:'#01DF01',backgroundColor:'#01DF01',borderWidth:2.5,pointRadius:4,tension:.3,order:1,spanGaps:false}
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},datalabels:{display:false},
-          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtKg(ctx.parsed.y)} kgCO₂e`}}},
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
-          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmtKg(v)}}
-        }
-      }
-    });
   }
 }
 
