@@ -607,6 +607,12 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
         </div>
       </div>
     </div>
+
+    <div class="dpanel" style="margin-top:14px">
+      <div class="dpanel-title"><i class="ti ti-bulb" style="color:#facc15"></i> INSIGHT AUTOMATIK — KEWANGAN</div>
+      <div class="dpanel-sub">Cadangan &amp; analisis kewangan berasaskan data semasa (dijana automatik)</div>
+      <div id="dash-insights" style="margin-top:10px"></div>
+    </div>
   </div>
 
 
@@ -1795,7 +1801,7 @@ function switchTab(tab){
   document.getElementById('tab-kh')?.classList.toggle('active',   tab==='kh');
   document.getElementById('tab-building')?.classList.toggle('active', tab==='building');
   document.getElementById('tab-surcaj')?.classList.toggle('active', tab==='surcaj');
-  const mfr=document.getElementById('main-filter-row'); if(mfr) mfr.style.display = (tab==='building'||tab==='surcaj') ? 'none' : '';
+  const mfr=document.getElementById('main-filter-row'); if(mfr) mfr.style.display = (tab==='jppf') ? '' : 'none';
   const sj=document.getElementById('subside-jppf'),se=document.getElementById('subside-epc'),sk=document.getElementById('subside-kh'),sb=document.getElementById('subside-building'),ss=document.getElementById('subside-surcaj');
   if(sj)sj.classList.toggle('active', tab==='jppf');
   if(se)se.classList.toggle('active', tab==='epc');
@@ -2278,6 +2284,63 @@ function renderDashboardSection(){
   renderDashboardKPI(cur||d, saving, costSaving);
   renderDashboardImpact(saving);
   renderDashboardNbel(bei, beiRating, beiWindow, gfa);
+  renderDashboardInsights(sorted, d, prevAgg, costElec, prevCostElec, costSaving, prevCostSaving, rePct, cur);
+}
+
+function renderDashboardInsights(sorted, d, prevAgg, costElec, prevCostElec, costSaving, prevCostSaving, rePct, cur){
+  const el=document.getElementById('dash-insights');
+  if(!el) return;
+  const insights=[];
+  const yearLabel = cur ? cur.tahun : '';
+
+  // 1. Trend kos elektrik berbanding tempoh sebelum
+  if(prevAgg && prevCostElec>0){
+    const chg=((costElec-prevCostElec)/prevCostElec*100);
+    if(Math.abs(chg)>=2){
+      insights.push(`Kos elektrik keseluruhan ${chg>=0?'meningkat':'menurun'} <strong>${Math.abs(chg).toFixed(1)}%</strong> (${fmtRM(costElec)}) berbanding tempoh sebelum (${fmtRM(prevCostElec)}) — ${chg>=0?'cadangan semak punca lonjakan penggunaan atau tarif':'trend positif, teruskan amalan penjimatan semasa'}.`);
+    }
+  }
+
+  // 2. Sumbangan penjimatan solar terhadap kos
+  if(costElec>0 && costSaving>0){
+    const savPct=(costSaving/(costElec+costSaving)*100);
+    insights.push(`Penjimatan solar (${fmtRM(costSaving)}) mengimbangi lebih kurang <strong>${savPct.toFixed(1)}%</strong> daripada anggaran kos elektrik tanpa solar — sistem PV kekal memberi nilai kewangan yang ketara.`);
+  }
+
+  // 3. Cadangan jika sumbangan RE rendah
+  if(rePct>0 && rePct<15){
+    insights.push(`Sumbangan tenaga boleh baharu (solar) hanya <strong>${rePct.toFixed(1)}%</strong> daripada jumlah penggunaan — cadangan nilai semula kapasiti pemasangan PV sedia ada atau kenal pasti isu prestasi (bayang, kotoran panel, inverter).`);
+  }
+
+  // 4. Bulan kos tertinggi (potensi lonjakan luar biasa)
+  const withCost=sorted.filter(r=>(r.ssaRm+r.ssdRm)>0);
+  if(withCost.length>=2){
+    const sortedByCost=[...withCost].sort((a,b)=>(b.ssaRm+b.ssdRm)-(a.ssaRm+a.ssdRm));
+    const top=sortedByCost[0];
+    const avgCost=withCost.reduce((s,r)=>s+r.ssaRm+r.ssdRm,0)/withCost.length;
+    const topCost=top.ssaRm+top.ssdRm;
+    if(avgCost>0 && topCost>avgCost*1.25){
+      insights.push(`Kos elektrik tertinggi dicatatkan pada <strong>${top.bulan} ${top.tahun}</strong> (${fmtRM(topCost)}), ${((topCost/avgCost-1)*100).toFixed(0)}% lebih tinggi daripada purata bulanan — disyorkan semak bil/rekod bulan tersebut untuk kenal pasti punca.`);
+    }
+  }
+
+  // 5. Unjuran kos elektrik tahun penuh (jika data belum lengkap 12 bulan)
+  const monthsReported=sorted.filter(r=>(r.ssaRm+r.ssdRm)>0).length;
+  if(monthsReported>0 && monthsReported<12){
+    const projCost=(withCost.reduce((s,r)=>s+r.ssaRm+r.ssdRm,0)/monthsReported)*12;
+    insights.push(`Berdasarkan purata ${monthsReported} bulan berdata, anggaran unjuran kos elektrik tahun penuh ${yearLabel} ialah <strong>${fmtRM(projCost)}</strong> — guna anggaran ini untuk perancangan bajet tenaga.`);
+  }
+
+  // 6. Hasil eksport tenaga solar (jika ada)
+  if(d.eksportRm>0){
+    insights.push(`Hasil jualan eksport tenaga solar ke grid menyumbang <strong>${fmtRM(d.eksportRm)}</strong> tambahan kepada penjimatan keseluruhan USM.`);
+  }
+
+  if(!insights.length){
+    el.innerHTML = '<div style="color:#8fa5bd;font-size:12.5px">Tiada insight kewangan ketara buat masa ini — data mencukupi diperlukan untuk analisis lanjut.</div>';
+    return;
+  }
+  el.innerHTML = `<ul style="margin:0;padding-left:18px;color:#c3d3e3;font-size:13px;line-height:1.9">${insights.map(t=>`<li>${t}</li>`).join('')}</ul>`;
 }
 
 function renderDashboardKPI(cur, saving, costSaving){
