@@ -4777,7 +4777,7 @@ function anaExportCSV(curYear){
 }
 
 // ── Insight Automatik Lanjut (berasaskan peraturan, bukan AI generatif) ──
-function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
+async function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
   const el=document.getElementById('ana-insights');
   if(!el) return;
   const sorted=sortByPeriod(curRows);
@@ -4823,17 +4823,37 @@ function renderAnalysisInsights(curYear, prevYear, curRows, prevRows, metric){
     }
   }
 
-  // 5. Kos per kWh berbanding tahun lepas
-  const totalRm=sorted.reduce((s,r)=>s+r.totalRm,0), totalKwh=sorted.reduce((s,r)=>s+r.totalKwh,0);
-  if(prevRows.length && totalKwh>0){
-    const prevRm=prevRows.reduce((s,r)=>s+r.totalRm,0), prevKwh=prevRows.reduce((s,r)=>s+r.totalKwh,0);
-    if(prevKwh>0){
-      const curRate=totalRm/totalKwh, prevRate=prevRm/prevKwh;
-      const chg=((curRate-prevRate)/prevRate*100);
-      if(Math.abs(chg)>=2){
-        insights.push(`Kos purata seunit (RM/kWh) ${chg>=0?'meningkat':'menurun'} <strong>${Math.abs(chg).toFixed(1)}%</strong> berbanding ${prevYear} — mungkin disebabkan perubahan tarif atau corak penggunaan.`);
+  // 5. Analisa Kadar Surcaj berbanding tahun lepas (guna semula loadSurcaj() sedia ada, lazy-load)
+  if(!surcajRows.length){ await loadSurcaj(); }
+  if(surcajRows.length){
+    const curSurcaj=surcajRows.filter(r=>parseInt(r.tahun)===curYear && r.kadarSurcaj>0);
+    const prevSurcaj=surcajRows.filter(r=>parseInt(r.tahun)===prevYear && r.kadarSurcaj>0);
+    if(curSurcaj.length){
+      const curAvgKadar=curSurcaj.reduce((s,r)=>s+r.kadarSurcaj,0)/curSurcaj.length;
+      if(prevSurcaj.length){
+        const prevAvgKadar=prevSurcaj.reduce((s,r)=>s+r.kadarSurcaj,0)/prevSurcaj.length;
+        if(prevAvgKadar>0){
+          const chg=((curAvgKadar-prevAvgKadar)/prevAvgKadar*100);
+          if(Math.abs(chg)>=2){
+            insights.push(`Purata Kadar Surcaj RM/kWh bagi ${curYear} <strong>${chg>=0?'meningkat':'menurun'} ${Math.abs(chg).toFixed(1)}%</strong> berbanding ${prevYear} (RM ${curAvgKadar.toFixed(4)} vs RM ${prevAvgKadar.toFixed(4)}) — mungkin disebabkan perubahan tarif TNB.`);
+          } else {
+            insights.push(`Purata Kadar Surcaj RM/kWh bagi ${curYear} kekal stabil berbanding ${prevYear} (RM ${curAvgKadar.toFixed(4)}/kWh).`);
+          }
+        }
+      } else {
+        insights.push(`Purata Kadar Surcaj bagi ${curYear} setakat ini ialah <strong>RM ${curAvgKadar.toFixed(4)}/kWh</strong>.`);
       }
     }
+  }
+
+  // 6. Unjuran (projek) jumlah tahun penuh — SS-A & SS-D (kWh dan RM), berdasarkan purata bulan berdata setakat ini
+  const monthsReported=sorted.filter(r=>r.ssaKwh>0||r.ssdKwh>0).length;
+  if(monthsReported>0 && monthsReported<12){
+    const projSsaKwh=(sorted.reduce((s,r)=>s+r.ssaKwh,0)/monthsReported)*12;
+    const projSsdKwh=(sorted.reduce((s,r)=>s+r.ssdKwh,0)/monthsReported)*12;
+    const projSsaRm=(sorted.reduce((s,r)=>s+r.ssaRm,0)/monthsReported)*12;
+    const projSsdRm=(sorted.reduce((s,r)=>s+r.ssdRm,0)/monthsReported)*12;
+    insights.push(`Unjuran jumlah tahun penuh ${curYear} (berdasarkan purata ${monthsReported} bulan berdata): SS-A ≈ <strong>${fmt(projSsaKwh)} kWh</strong> (${fmtRM(projSsaRm)}), SS-D ≈ <strong>${fmt(projSsdKwh)} kWh</strong> (${fmtRM(projSsdRm)}).`);
   }
 
   if(!insights.length){
