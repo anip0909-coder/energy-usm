@@ -251,6 +251,23 @@ body.dark .kh-yoy-table th{background:#0f172a}
 .pm-gauge-label{font-size:24px;font-weight:800;color:#fff}
 .pm-gauge-sub{font-size:10.5px;color:#7d93ad;text-align:center;margin-top:2px}
 
+/* ── Power Monitoring: Billing sub-tab ── */
+.pm-billing-toolbar{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.4fr auto;gap:16px;align-items:start;background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;padding:16px;margin-bottom:16px}
+@media(max-width:900px){.pm-billing-toolbar{grid-template-columns:1fr 1fr}}
+.pm-billing-toolbar label{display:block;font-size:11px;font-weight:800;color:#7d93ad;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px}
+.pm-meter-list{width:100%;height:110px;background:#0a1526;border:1px solid #29456b;border-radius:8px;color:#dbe7f3;font-size:12.5px;padding:4px}
+.pm-meter-list option{padding:4px 6px}
+.pm-billing-toolbar select,.pm-billing-toolbar input[type=text]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px;cursor:pointer}
+.pm-view-btn{margin-top:22px;background:#5fa8ff;color:#04203f;border:none;padding:9px 22px;border-radius:8px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+.pm-view-btn:hover{background:#7fbaff}
+.pm-billing-table-wrap{background:#0f1e34;border:1px solid #1c2f48;border-radius:14px;overflow-x:auto}
+.pm-billing-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+.pm-billing-table th{background:#0a1526;padding:10px 14px;text-align:left;font-weight:700;color:#7d93ad;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.pm-billing-table td{padding:9px 14px;border-bottom:1px solid #16273f;color:#dbe7f3;white-space:nowrap}
+.pm-billing-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.pm-billing-table tr:last-child td{border-bottom:none}
+.pm-billing-table tr:hover td{background:#0d1c30}
+
 /* ── Pengurusan Data Building (tema gelap, khas dalam #panel-building) ── */
 #panel-building .bld-mgmt{margin-top:20px}
 #panel-building .bld-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:#0f1e34;border-radius:10px;border:1px solid #1c2f48;user-select:none;transition:background .15s}
@@ -544,7 +561,14 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
-  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring</div>
+
+  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev"></i></div>
+  <div class="sidebar-sub" id="side-power-sub">
+    <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
+    <div class="sidebar-sub-item" id="subside-pm-billing" onclick="switchSection('power');switchPowerTab('billing')"><i class="ti ti-receipt"></i> Billing</div>
+    <div class="sidebar-sub-item" id="subside-pm-adddevice" onclick="switchSection('power');switchPowerTab('adddevice')"><i class="ti ti-circle-plus"></i> Add Device</div>
+  </div>
+
   <div class="sidebar-item" id="side-carbon" onclick="switchSection('carbon')"><i class="ti ti-leaf-2"></i> Carbon &amp; Sustainability</div>
   <div class="sidebar-item" id="side-analysis" onclick="switchSection('analysis')"><i class="ti ti-chart-line"></i> Analysis</div>
   <div class="sidebar-item" id="side-settings" onclick="switchSection('settings')"><i class="ti ti-settings"></i> Settings</div>
@@ -775,6 +799,11 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
         <span style="font-size:12px;color:#888">m²</span>
         <button type="button" id="carbon-gfa-hpusm-edit-btn" onclick="editCarbonGfaHpusm()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#1e7e34;cursor:pointer;font-weight:600"><i class="ti ti-pencil"></i> Edit</button>
         <button type="button" id="carbon-gfa-hpusm-save-btn" onclick="saveCarbonGfaHpusm()" style="display:none;font-size:12px;padding:5px 12px;border-radius:7px;border:none;background:#1e7e34;color:white;cursor:pointer;font-weight:600"><i class="ti ti-device-floppy"></i> Save</button>
+      </div>
+
+      <div class="filter-row" style="margin:0 0 14px">
+        <label><i class="ti ti-filter"></i> Tapis Tahun:</label>
+        <select id="carbon-bei-sel-tahun" onchange="renderCarbonBEITable()"><option value="">-- Semua Tahun --</option></select>
       </div>
 
       <div class="data-table-wrap">
@@ -1869,10 +1898,16 @@ function switchSection(section){
     energySub.classList.toggle('open', section==='energy');
     energyItem.classList.toggle('expanded', section==='energy');
   }
+  const powerSub = document.getElementById('side-power-sub');
+  const powerItem = document.getElementById('side-power');
+  if(powerSub){
+    powerSub.classList.toggle('open', section==='power');
+    powerItem.classList.toggle('expanded', section==='power');
+  }
   if(section==='carbon' && typeof allRows!=='undefined' && allRows.length) renderCarbonSection();
   if(section==='dashboard' && typeof allRows!=='undefined' && allRows.length) renderDashboardSection();
   if(section==='analysis' && typeof renderAnalysisSection==='function') renderAnalysisSection();
-  if(section==='power' && typeof renderPowerMonitoring==='function') renderPowerMonitoring();
+  if(section==='power' && typeof renderPowerMonitoring==='function' && !pmShellBuilt) renderPowerMonitoring();
 }
 
 // ══════════════════════════════════════════════
@@ -1996,7 +2031,14 @@ async function renderCarbonBEITable(){
   const sorted=sortByPeriod(khRows);
   if(!sorted.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999">Tiada data.</td></tr>'; return; }
 
-  const rowsHtml = sorted.map((r,idx)=>{
+  const yearSel=document.getElementById('carbon-bei-sel-tahun');
+  if(yearSel && yearSel.options.length<=1){
+    const years=[...new Set(khRows.map(r=>r.tahun).filter(Boolean))].sort();
+    years.forEach(y=>{ const opt=document.createElement('option'); opt.value=y; opt.textContent=y; yearSel.appendChild(opt); });
+  }
+  const selectedYear=yearSel?yearSel.value:'';
+
+  const rowsAll = sorted.map((r,idx)=>{
     let start=idx-11, end=idx;
     if(start<0){ start=0; end=Math.min(sorted.length-1,11); }
     const win=sorted.slice(start,end+1);
@@ -2004,6 +2046,12 @@ async function renderCarbonBEITable(){
     const hpusmKwhSum=win.reduce((s,x)=>s+x.hpusmKwh,0);
     const beiKampus = gfaKampus>0 ? kampusKwhSum/gfaKampus : null;
     const beiHpusm  = gfaHpusm>0  ? hpusmKwhSum/gfaHpusm  : null;
+    return {r,beiKampus,beiHpusm};
+  });
+  const rowsFiltered = selectedYear ? rowsAll.filter(x=>x.r.tahun===selectedYear) : rowsAll;
+  if(!rowsFiltered.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999">Tiada data untuk tahun ini.</td></tr>'; return; }
+
+  const rowsHtml = rowsFiltered.map(({r,beiKampus,beiHpusm})=>{
     const ratingKampus = beiKampus!==null ? beiStarRating(beiKampus) : null;
     const ratingHpusm  = beiHpusm!==null  ? beiStarRating(beiHpusm)  : null;
     return `<tr>
@@ -5349,13 +5397,11 @@ const PM_DEMO = {
 
 let pmChartTrend=null, pmChartGauge=null, pmChartHarmonic=null;
 
+let pmShellBuilt=false;
 function renderPowerMonitoring(){
   const el=document.getElementById('section-power');
   if(!el) return;
-  const lokasiSet=[...new Set(PM_DEMO.equipment.map(e=>e.lokasi))];
-  const panelSet=[...new Set(PM_DEMO.equipment.map(e=>e.panel))];
-  const lokasiOpts=['<option value="">All</option>',...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
-  const panelOpts=['<option value="">All</option>',...panelSet.map(p=>`<option value="${p}">${p}</option>`)].join('');
+  pmShellBuilt=true;
 
   el.innerHTML = `
     <div class="dash-head">
@@ -5366,6 +5412,37 @@ function renderPowerMonitoring(){
       <div class="dash-filter"><span class="live-pill"><span class="live-dot"></span> LIVE</span></div>
     </div>
 
+    <div id="panel-power-overview"></div>
+    <div id="panel-power-billing" style="display:none"></div>
+    <div id="panel-power-adddevice" style="display:none"></div>
+  `;
+
+  pmRenderOverview();
+}
+
+function switchPowerTab(tab){
+  const ov=document.getElementById('panel-power-overview');
+  const bl=document.getElementById('panel-power-billing');
+  const ad=document.getElementById('panel-power-adddevice');
+  if(ov) ov.style.display = tab==='overview' ? 'block' : 'none';
+  if(bl) bl.style.display = tab==='billing' ? 'block' : 'none';
+  if(ad) ad.style.display = tab==='adddevice' ? 'block' : 'none';
+  document.getElementById('subside-pm-overview')?.classList.toggle('active', tab==='overview');
+  document.getElementById('subside-pm-billing')?.classList.toggle('active', tab==='billing');
+  document.getElementById('subside-pm-adddevice')?.classList.toggle('active', tab==='adddevice');
+  if(tab==='billing' && bl && !bl.dataset.built){ pmRenderBilling(); bl.dataset.built='1'; }
+  if(tab==='adddevice' && ad && !ad.dataset.built){ pmRenderAddDevice(); ad.dataset.built='1'; }
+}
+
+function pmRenderOverview(){
+  const el=document.getElementById('panel-power-overview');
+  if(!el) return;
+  const lokasiSet=[...new Set(PM_DEMO.equipment.map(e=>e.lokasi))];
+  const panelSet=[...new Set(PM_DEMO.equipment.map(e=>e.panel))];
+  const lokasiOpts=['<option value="">All</option>',...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
+  const panelOpts=['<option value="">All</option>',...panelSet.map(p=>`<option value="${p}">${p}</option>`)].join('');
+
+  el.innerHTML = `
     <div class="pm-layout">
       <div class="pm-filter-card">
         <div class="pm-filter-title"><i class="ti ti-filter"></i> Filter</div>
@@ -5486,6 +5563,145 @@ function pmRenderEquipment(list){
     </tr>`).join('');
 }
 
+function pmRenderEquipment(list){
+  const el=document.getElementById('pm-eq-body');
+  if(!el) return;
+  if(!list.length){ el.innerHTML='<tr><td colspan="7" style="text-align:center;color:#7d93ad">Tiada peralatan sepadan dengan filter.</td></tr>'; return; }
+  el.innerHTML = list.map(e=>`
+    <tr>
+      <td><strong>${e.name}</strong></td><td>${e.lokasi}</td>
+      <td>${fmt(e.kw)}</td><td>${fmt(e.kvar)}</td><td>${fmt(e.kva)}</td><td>${e.pf.toFixed(2)}</td>
+      <td><span class="pm-status-badge">${e.status}</span></td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// POWER MONITORING — BILLING (Laporan DPM)
+// Nota: Data demo sementara menunggu integrasi Digital Power Meter (DPM) sebenar.
+// ══════════════════════════════════════════════
+const PM_METER_TREE = [
+  {group:'CL740 / CL760', items:['DB-FC (CT 150/5A)','DB-NR','STALL 1','STALL 2','STALL 3','STALL 4','STALL 5','STALL 6']}
+];
+const PM_BILLING_DEMO = [
+  {meter:'STALL 1', serial:'201700010146', t1:3387.000, t2:0, t3:0, t4:0},
+  {meter:'STALL 2', serial:'201700010147', t1:7989.000, t2:0, t3:0, t4:0},
+  {meter:'STALL 3', serial:'201700010142', t1:0, t2:0, t3:0, t4:0},
+  {meter:'STALL 4', serial:'201700010144', t1:0, t2:0, t3:0, t4:0},
+  {meter:'STALL 5', serial:'201700010143', t1:0, t2:0, t3:0, t4:0},
+  {meter:'STALL 6', serial:'201700010145', t1:0, t2:0, t3:0, t4:0}
+];
+
+function pmRenderBilling(){
+  const el=document.getElementById('panel-power-billing');
+  if(!el) return;
+  const meterOpts = PM_METER_TREE.map(g=>`<option disabled style="color:#5fa8ff;font-weight:700">${g.group}</option>` +
+    g.items.map(i=>`<option value="${i}">&nbsp;&nbsp;${i}</option>`).join('')).join('');
+
+  el.innerHTML = `
+    <div class="pm-billing-toolbar">
+      <div>
+        <label>Meter</label>
+        <select class="pm-meter-list" id="pm-bill-meter" multiple>${meterOpts}</select>
+      </div>
+      <div>
+        <label>Energy Type</label>
+        <select id="pm-bill-energytype">
+          <option>Total Active Energy</option>
+          <option>Total Reactive Energy</option>
+          <option>Total Apparent Energy</option>
+        </select>
+      </div>
+      <div>
+        <label>Period</label>
+        <select id="pm-bill-period">
+          <option>By month</option>
+          <option>By day</option>
+          <option>By year</option>
+        </select>
+      </div>
+      <div>
+        <label><i class="ti ti-calendar"></i> Date Selection</label>
+        <input type="text" id="pm-bill-daterange" readonly value="01-02-2019 - 01-03-2019" style="cursor:pointer">
+      </div>
+      <div>
+        <label>Data Generate</label>
+        <button class="pm-view-btn" onclick="pmGenerateBilling()"><i class="ti ti-eye"></i> View</button>
+      </div>
+    </div>
+
+    <div class="pm-billing-table-wrap">
+      <table class="pm-billing-table">
+        <thead><tr>
+          <th>Meter</th><th>Serial No.</th><th>Period</th>
+          <th style="text-align:right">T1 (kWh)</th><th style="text-align:right">T2 (kWh)</th>
+          <th style="text-align:right">T3 (kWh)</th><th style="text-align:right">T4 (kWh)</th>
+          <th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody id="pm-bill-tbody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:#7d93ad;margin-top:10px">Nota: Paparan ini menggunakan data demo sementara menunggu integrasi Digital Power Meter (DPM) sebenar.</p>
+  `;
+
+  pmGenerateBilling();
+}
+
+function pmGenerateBilling(){
+  const tbody=document.getElementById('pm-bill-tbody');
+  if(!tbody) return;
+  const period=document.getElementById('pm-bill-daterange')?.value?.split(' - ')[0] || '01-02-2019';
+  tbody.innerHTML = PM_BILLING_DEMO.map(r=>{
+    const total=r.t1+r.t2+r.t3+r.t4;
+    return `<tr>
+      <td>${r.meter}</td><td>${r.serial}</td><td>${period}</td>
+      <td class="num">${r.t1.toFixed(3)}</td><td class="num">${r.t2.toFixed(3)}</td>
+      <td class="num">${r.t3.toFixed(3)}</td><td class="num">${r.t4.toFixed(3)}</td>
+      <td class="num"><strong>${total.toFixed(3)}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// POWER MONITORING — ADD DEVICE
+// ══════════════════════════════════════════════
+function pmRenderAddDevice(){
+  const el=document.getElementById('panel-power-adddevice');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="dpanel" style="max-width:560px">
+      <div class="dpanel-title"><i class="ti ti-circle-plus"></i> ADD DEVICE</div>
+      <div class="dpanel-sub">Daftar Digital Power Meter (DPM) / peralatan baharu untuk pemantauan</div>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+        <div class="pm-filter-field"><label>Nama Peralatan / Meter</label><input type="text" id="pm-add-name" placeholder="cth: Transformer 3" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+        <div class="pm-filter-field"><label>Serial No.</label><input type="text" id="pm-add-serial" placeholder="cth: 201700010150" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+        <div class="pm-filter-field"><label>Lokasi</label><input type="text" id="pm-add-lokasi" placeholder="cth: Bilik Mesin" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+        <div class="pm-filter-field"><label>Panel</label>
+          <select id="pm-add-panel" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+            <option>Main Switchboard</option><option>Sub Switchboard</option>
+          </select>
+        </div>
+        <button class="pm-view-btn" style="margin-top:4px;width:fit-content" onclick="pmSubmitAddDevice()"><i class="ti ti-device-floppy"></i> Simpan Peralatan</button>
+        <div id="pm-add-msg" style="display:none;font-size:12.5px;padding:9px 12px;border-radius:8px"></div>
+      </div>
+      <p style="font-size:11px;color:#7d93ad;margin-top:14px">Nota: Ciri ini masih dalam demo — pendaftaran peralatan sebenar memerlukan integrasi backend DPM/Modbus.</p>
+    </div>
+  `;
+}
+
+function pmSubmitAddDevice(){
+  const name=document.getElementById('pm-add-name')?.value.trim();
+  const serial=document.getElementById('pm-add-serial')?.value.trim();
+  const msg=document.getElementById('pm-add-msg');
+  if(!msg) return;
+  if(!name || !serial){
+    msg.textContent='⚠ Sila isi Nama Peralatan dan Serial No.';
+    msg.style.cssText='display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:rgba(224,90,74,.15);color:#f0897c';
+    return;
+  }
+  msg.textContent=`✓ "${name}" (${serial}) berjaya didaftarkan (demo — belum disimpan ke backend sebenar).`;
+  msg.style.cssText='display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:rgba(74,222,128,.15);color:#4ade80';
+}
+
 function pmApplyFilter(){
   const lokasi=document.getElementById('pm-f-lokasi')?.value||'';
   const panel=document.getElementById('pm-f-panel')?.value||'';
@@ -5511,7 +5727,7 @@ function pmRenderCharts(){
       data:{labels,datasets:[{label:'Beban (kW)',data:PM_DEMO.trend,borderColor:'#5fa8ff',backgroundColor:'rgba(95,168,255,.12)',pointRadius:2,tension:.35,borderWidth:2,fill:true}]},
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Beban: ${fmt(ctx.parsed.y)} kW`}}},
+        plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`Beban: ${fmt(ctx.parsed.y)} kW`}}},
         scales:{
           x:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},autoSkip:false,maxRotation:0}},
           y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>fmt(v)}}
