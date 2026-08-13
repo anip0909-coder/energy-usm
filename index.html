@@ -1883,18 +1883,41 @@ function fmtKg(v){ return Math.round(v).toLocaleString('ms-MY'); }
 function fmtT(v){ return (v/1000).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 function computeAnnualKwhForBEI(t,b){
-  // Returns {kwh, label} for a trailing-12-month window ending at the selected month/year.
-  // If insufficient history exists before the selected month, the window shifts forward
-  // (clamped to the earliest available month) so it still covers 12 months where possible.
-  if(!t || !b || t.includes('Semua') || b.includes('Semua')) return null;
+  // Jika tahun+bulan spesifik dipilih (bukan "Semua"), guna tetingkap trailing-12-bulan
+  // berakhir pada bulan tersebut (paparan ikut "bulan semasa" yang dipilih).
+  // Jika tiada tapisan bulan spesifik (kosong / "Semua"), semak dahulu sama ada tahun
+  // sasaran (tahun dipilih, atau tahun terkini jika tiada tapisan tahun) sudah cukup
+  // 12 bulan data — jika ya, papar BEI tahun penuh tersebut. Jika belum cukup, guna
+  // tetingkap trailing-12-bulan berakhir pada bulan terkini yang ada data.
+  if(!allRows || !allRows.length) return null;
   const sorted = sortByPeriod(allRows);
-  const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
-  if(idx===-1) return null;
-  let start = idx-11, end = idx;
-  if(start<0){
-    start = 0;
-    end = Math.min(sorted.length-1, 11);
+  if(!sorted.length) return null;
+  const hasT = t && !t.includes('Semua');
+  const hasB = b && !b.includes('Semua');
+
+  if(hasT && hasB){
+    const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
+    if(idx===-1) return null;
+    let start = idx-11, end = idx;
+    if(start<0){ start = 0; end = Math.min(sorted.length-1, 11); }
+    const win = sorted.slice(start, end+1);
+    const kwh = win.reduce((s,r)=>s+r.totalKwh,0);
+    const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
+    return {kwh, label, months:win.length};
   }
+
+  const targetYear = hasT ? t : sorted[sorted.length-1].tahun;
+  const yearRows = allRows.filter(r=>r.tahun===targetYear);
+  const monthsInYear = new Set(yearRows.map(r=>r.bulan));
+  if(monthsInYear.size>=12){
+    const kwh = yearRows.reduce((s,r)=>s+r.totalKwh,0);
+    return {kwh, label:`Jan – Dis ${targetYear} (tahun penuh)`, months:12};
+  }
+
+  const lastRow = sorted[sorted.length-1];
+  const idx = sorted.findIndex(r=>r.tahun===lastRow.tahun && r.bulan===lastRow.bulan);
+  let start = idx-11, end = idx;
+  if(start<0){ start = 0; end = Math.min(sorted.length-1, 11); }
   const win = sorted.slice(start, end+1);
   const kwh = win.reduce((s,r)=>s+r.totalKwh,0);
   const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
@@ -2152,6 +2175,12 @@ function getYoYFiltered(){
   if(b && !b.includes('Semua')){
     curRows = curRows.filter(r=>r.bulan===b);
     prevRows = prevRows.filter(r=>r.bulan===b);
+  } else {
+    // Perbandingan "like-for-like": hadkan tahun sebelum kepada bulan yang benar-benar
+    // berdata sahaja seperti tahun semasa (cth: 2026 setakat Jun → 2025 dibandingkan
+    // setakat Jun sahaja), supaya kos elektrik dibanding secara setara.
+    const curMonthsSet=new Set(curRows.filter(r=>(r.ssaKwh>0||r.ssdKwh>0)).map(r=>r.bulan));
+    prevRows = prevRows.filter(r=>curMonthsSet.has(r.bulan));
   }
   return {curRows,prevRows,curYear,prevYear};
 }
@@ -2939,6 +2968,21 @@ function openEditModal(tab,row){
   fields.forEach(f=>{ html+=`<div class="edit-field"><label>${f.label}</label><input type="number" id="ef-${f.key}" value="${row[f.key]!==undefined?row[f.key]:''}" step="any"></div>`; });
   document.getElementById('edit-fields').innerHTML=html;
   document.getElementById('edit-modal').classList.add('show');
+
+  // ── Building sahaja: JPPF kWh dikira & dipapar automatik = Import TNB + Janaan Solar - Eksport kWh ──
+  if(tab==='building'){
+    const jppfEl=document.getElementById('ef-jppfKwh');
+    const importEl=document.getElementById('ef-importKwh');
+    const solarEl=document.getElementById('ef-solarKwh');
+    const eksportEl=document.getElementById('ef-eksportKwh');
+    const recalc=()=>{
+      const i=parseFloat(importEl?.value), s=parseFloat(solarEl?.value), e=parseFloat(eksportEl?.value);
+      if(jppfEl && !isNaN(i) && !isNaN(s) && !isNaN(e)) jppfEl.value=(i+s-e);
+    };
+    if(jppfEl) jppfEl.readOnly=true;
+    [importEl,solarEl,eksportEl].forEach(el=>{ if(el) el.addEventListener('input',recalc); });
+    recalc();
+  }
 }
 
 async function gasRequest(payload){
@@ -3011,6 +3055,16 @@ async function submitEdit(){
     // Total RM = Kampus RM + HPUSM (Hospital) RM — dikira automatik setiap kali disimpan
     if(!isNaN(kampusRmVal) && !isNaN(hospitalRmVal)){
       fields.totalRm = kampusRmVal + hospitalRmVal;
+    }
+  }
+
+  // ── Auto-kira JPPF kWh — khas tab Building sahaja: JPPF kWh = Import TNB + Janaan Solar - Eksport kWh ──
+  if(editRow.tab==='building'){
+    const importVal=parseFloat(fields.importKwh);
+    const solarVal=parseFloat(fields.solarKwh);
+    const eksportVal=parseFloat(fields.eksportKwh);
+    if(!isNaN(importVal) && !isNaN(solarVal) && !isNaN(eksportVal)){
+      fields.jppfKwh = importVal + solarVal - eksportVal;
     }
   }
 
@@ -3839,11 +3893,35 @@ function bldYoY(){
 }
 
 function bldComputeAnnualKwh(t,b){
-  // Trailing-12-month window ending at the selected month/year, same logic as computeAnnualKwhForBEI.
-  if(!t || !b) return null;
+  // Jika tahun+bulan spesifik dipilih, guna tetingkap trailing-12-bulan berakhir pada
+  // bulan tersebut (paparan ikut "bulan semasa"). Jika tiada tapisan bulan (kosong),
+  // semak dahulu sama ada tahun sasaran (tahun dipilih, atau tahun terkini jika tiada
+  // tapisan tahun) sudah cukup 12 bulan data — jika ya, papar BEI tahun penuh tersebut.
+  if(!buildingRows.length) return null;
   const sorted = sortByPeriod(buildingRows);
-  const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
-  if(idx===-1) return null;
+  if(!sorted.length) return null;
+
+  if(t && b){
+    const idx = sorted.findIndex(r=>r.tahun===t && r.bulan===b);
+    if(idx===-1) return null;
+    let start = idx-11, end = idx;
+    if(start<0){ start = 0; end = Math.min(sorted.length-1, 11); }
+    const win = sorted.slice(start, end+1);
+    const kwh = win.reduce((s,r)=>s+r.jppfKwh,0);
+    const label = win.length ? `${win[0].bulan} ${win[0].tahun} – ${win[win.length-1].bulan} ${win[win.length-1].tahun}` : '';
+    return {kwh, label, months:win.length};
+  }
+
+  const targetYear = t || sorted[sorted.length-1].tahun;
+  const yearRows = buildingRows.filter(r=>r.tahun===targetYear);
+  const monthsInYear = new Set(yearRows.map(r=>r.bulan));
+  if(monthsInYear.size>=12){
+    const kwh = yearRows.reduce((s,r)=>s+r.jppfKwh,0);
+    return {kwh, label:`Jan – Dis ${targetYear} (tahun penuh)`, months:12};
+  }
+
+  const lastRow = sorted[sorted.length-1];
+  const idx = sorted.findIndex(r=>r.tahun===lastRow.tahun && r.bulan===lastRow.bulan);
   let start = idx-11, end = idx;
   if(start<0){ start = 0; end = Math.min(sorted.length-1, 11); }
   const win = sorted.slice(start, end+1);
@@ -5055,6 +5133,18 @@ function openAddBuildingModal(){
   });
   document.getElementById('add-bld-msg').style.display='none';
   document.getElementById('add-bld-modal').classList.add('show');
+
+  // ── JPPF kWh dikira & dipapar automatik = Import TNB + Janaan Solar - Eksport kWh ──
+  const jppfEl=document.getElementById('af-jppfKwh');
+  const importEl=document.getElementById('af-importKwh');
+  const solarEl=document.getElementById('af-solarKwh');
+  const eksportEl=document.getElementById('af-eksportKwh');
+  const recalcAdd=()=>{
+    const i=parseFloat(importEl?.value), s=parseFloat(solarEl?.value), e=parseFloat(eksportEl?.value);
+    if(jppfEl && !isNaN(i) && !isNaN(s) && !isNaN(e)) jppfEl.value=(i+s-e);
+  };
+  if(jppfEl) jppfEl.readOnly=true;
+  [importEl,solarEl,eksportEl].forEach(el=>{ if(el && !el.dataset.bldCalcBound){ el.addEventListener('input',recalcAdd); el.dataset.bldCalcBound='1'; } });
 }
 function closeAddBuildingModal(){document.getElementById('add-bld-modal').classList.remove('show');}
 
@@ -5065,6 +5155,14 @@ async function submitAddBuilding(){
   if(!bulan || !tahun){ showAddBldMsg('⚠ Sila isi Bulan dan Tahun.','err'); return; }
   const fields={bulan,tahun};
   BUILDING_EDIT_FIELDS.forEach(f=>{const el=document.getElementById('af-'+f.key);if(el&&el.value!=='')fields[f.key]=el.value;});
+
+  // ── Auto-kira JPPF kWh = Import TNB + Janaan Solar - Eksport kWh ──
+  const importVal=parseFloat(fields.importKwh);
+  const solarVal=parseFloat(fields.solarKwh);
+  const eksportVal=parseFloat(fields.eksportKwh);
+  if(!isNaN(importVal) && !isNaN(solarVal) && !isNaN(eksportVal)){
+    fields.jppfKwh = importVal + solarVal - eksportVal;
+  }
 
   const btn=document.querySelector('#add-bld-modal .btn-save');btn.textContent='Menyimpan...';btn.disabled=true;
   try{
