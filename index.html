@@ -754,6 +754,40 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
         </div>
       </div>
     </div>
+
+    <!-- ══ BEI BULANAN — KAMPUS vs HPUSM ══ -->
+    <div class="chart-box" style="margin-top:18px">
+      <div class="chart-title"><i class="ti ti-building-warehouse"></i> Building Energy Index (BEI) Bulanan — Kampus vs HPUSM</div>
+      <div class="chart-sub">Sumber data kWh: tab Kampus+HPUSM · BEI = Jumlah kWh trailing 12 bulan ÷ GFA (m²)</div>
+
+      <div class="filter-row" style="margin:14px 0">
+        <label><i class="ti ti-ruler-2"></i> GFA Kampus:</label>
+        <span id="carbon-gfa-kampus-display" style="font-weight:700;color:#1a5fa8;font-size:13px;min-width:70px;display:inline-block">—</span>
+        <input type="number" id="carbon-gfa-kampus" min="1" step="0.01" style="width:150px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;font-size:13px;display:none">
+        <span style="font-size:12px;color:#888">m²</span>
+        <button type="button" id="carbon-gfa-kampus-edit-btn" onclick="editCarbonGfaKampus()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#1a5fa8;cursor:pointer;font-weight:600"><i class="ti ti-pencil"></i> Edit</button>
+        <button type="button" id="carbon-gfa-kampus-save-btn" onclick="saveCarbonGfaKampus()" style="display:none;font-size:12px;padding:5px 12px;border-radius:7px;border:none;background:#1a5fa8;color:white;cursor:pointer;font-weight:600"><i class="ti ti-device-floppy"></i> Save</button>
+
+        <div class="filter-divider"></div>
+        <label><i class="ti ti-ruler-2"></i> GFA HPUSM:</label>
+        <span id="carbon-gfa-hpusm-display" style="font-weight:700;color:#1e7e34;font-size:13px;min-width:70px;display:inline-block">—</span>
+        <input type="number" id="carbon-gfa-hpusm" min="1" step="0.01" style="width:150px;padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;font-size:13px;display:none">
+        <span style="font-size:12px;color:#888">m²</span>
+        <button type="button" id="carbon-gfa-hpusm-edit-btn" onclick="editCarbonGfaHpusm()" style="font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #c0cdd8;background:white;color:#1e7e34;cursor:pointer;font-weight:600"><i class="ti ti-pencil"></i> Edit</button>
+        <button type="button" id="carbon-gfa-hpusm-save-btn" onclick="saveCarbonGfaHpusm()" style="display:none;font-size:12px;padding:5px 12px;border-radius:7px;border:none;background:#1e7e34;color:white;cursor:pointer;font-weight:600"><i class="ti ti-device-floppy"></i> Save</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table" style="min-width:600px">
+          <thead><tr>
+            <th>Bulan</th>
+            <th>BEI Kampus (kWh/m²/thn)</th><th>Rating Kampus</th>
+            <th>BEI HPUSM (kWh/m²/thn)</th><th>Rating HPUSM</th>
+          </tr></thead>
+          <tbody id="carbon-bei-table-body"><tr><td colspan="5" style="text-align:center;color:#999">Memuatkan...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
 
@@ -828,7 +862,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 300;
+const REFRESH_SECONDS    = 1800;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -1879,6 +1913,110 @@ function saveCarbonGfa(){
   renderCarbonSection();
 }
 
+// ── GFA Kampus & GFA HPUSM (untuk jadual BEI Bulanan — berasingan daripada GFA keseluruhan) ──
+function getCarbonGfaKampus(){
+  const saved=parseFloat(localStorage.getItem('usm_carbon_gfa_kampus'));
+  return (!isNaN(saved) && saved>0) ? saved : 0;
+}
+function getCarbonGfaHpusm(){
+  const saved=parseFloat(localStorage.getItem('usm_carbon_gfa_hpusm'));
+  return (!isNaN(saved) && saved>0) ? saved : 0;
+}
+function editCarbonGfaKampus(){
+  const disp=document.getElementById('carbon-gfa-kampus-display');
+  const input=document.getElementById('carbon-gfa-kampus');
+  const editBtn=document.getElementById('carbon-gfa-kampus-edit-btn');
+  const saveBtn=document.getElementById('carbon-gfa-kampus-save-btn');
+  if(!disp||!input) return;
+  input.value=getCarbonGfaKampus()||'';
+  disp.style.display='none'; input.style.display='';
+  if(editBtn) editBtn.style.display='none';
+  if(saveBtn) saveBtn.style.display='';
+  input.focus(); input.select();
+}
+function saveCarbonGfaKampus(){
+  const disp=document.getElementById('carbon-gfa-kampus-display');
+  const input=document.getElementById('carbon-gfa-kampus');
+  const editBtn=document.getElementById('carbon-gfa-kampus-edit-btn');
+  const saveBtn=document.getElementById('carbon-gfa-kampus-save-btn');
+  const v=parseFloat(input.value);
+  if(!isNaN(v) && v>0){ localStorage.setItem('usm_carbon_gfa_kampus', v); }
+  if(input) input.style.display='none';
+  if(disp) disp.style.display='';
+  if(editBtn) editBtn.style.display='';
+  if(saveBtn) saveBtn.style.display='none';
+  renderCarbonBEITable();
+}
+function editCarbonGfaHpusm(){
+  const disp=document.getElementById('carbon-gfa-hpusm-display');
+  const input=document.getElementById('carbon-gfa-hpusm');
+  const editBtn=document.getElementById('carbon-gfa-hpusm-edit-btn');
+  const saveBtn=document.getElementById('carbon-gfa-hpusm-save-btn');
+  if(!disp||!input) return;
+  input.value=getCarbonGfaHpusm()||'';
+  disp.style.display='none'; input.style.display='';
+  if(editBtn) editBtn.style.display='none';
+  if(saveBtn) saveBtn.style.display='';
+  input.focus(); input.select();
+}
+function saveCarbonGfaHpusm(){
+  const disp=document.getElementById('carbon-gfa-hpusm-display');
+  const input=document.getElementById('carbon-gfa-hpusm');
+  const editBtn=document.getElementById('carbon-gfa-hpusm-edit-btn');
+  const saveBtn=document.getElementById('carbon-gfa-hpusm-save-btn');
+  const v=parseFloat(input.value);
+  if(!isNaN(v) && v>0){ localStorage.setItem('usm_carbon_gfa_hpusm', v); }
+  if(input) input.style.display='none';
+  if(disp) disp.style.display='';
+  if(editBtn) editBtn.style.display='';
+  if(saveBtn) saveBtn.style.display='none';
+  renderCarbonBEITable();
+}
+
+// ── Jadual BEI Bulanan — Kampus vs HPUSM (sumber: tab Kampus+HPUSM, khRows) ──
+async function renderCarbonBEITable(){
+  const tbody=document.getElementById('carbon-bei-table-body');
+  if(!tbody) return;
+
+  const gfaKampusDisp=document.getElementById('carbon-gfa-kampus-display');
+  const gfaHpusmDisp=document.getElementById('carbon-gfa-hpusm-display');
+  const gfaKampus=getCarbonGfaKampus(), gfaHpusm=getCarbonGfaHpusm();
+  if(gfaKampusDisp) gfaKampusDisp.textContent = gfaKampus>0 ? gfaKampus.toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'Belum diset';
+  if(gfaHpusmDisp) gfaHpusmDisp.textContent = gfaHpusm>0 ? gfaHpusm.toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'Belum diset';
+
+  if(!khRows.length){
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999">Memuatkan data Kampus+HPUSM...</td></tr>';
+    await loadKH();
+    if(!khRows.length){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999">Tiada data Kampus+HPUSM tersedia.</td></tr>';
+      return;
+    }
+  }
+
+  const sorted=sortByPeriod(khRows);
+  if(!sorted.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#999">Tiada data.</td></tr>'; return; }
+
+  const rowsHtml = sorted.map((r,idx)=>{
+    let start=idx-11, end=idx;
+    if(start<0){ start=0; end=Math.min(sorted.length-1,11); }
+    const win=sorted.slice(start,end+1);
+    const kampusKwhSum=win.reduce((s,x)=>s+x.kampusKwh,0);
+    const hpusmKwhSum=win.reduce((s,x)=>s+x.hpusmKwh,0);
+    const beiKampus = gfaKampus>0 ? kampusKwhSum/gfaKampus : null;
+    const beiHpusm  = gfaHpusm>0  ? hpusmKwhSum/gfaHpusm  : null;
+    const ratingKampus = beiKampus!==null ? beiStarRating(beiKampus) : null;
+    const ratingHpusm  = beiHpusm!==null  ? beiStarRating(beiHpusm)  : null;
+    return `<tr>
+      <td><strong>${r.bulan} ${r.tahun}</strong></td>
+      <td>${beiKampus!==null?beiKampus.toFixed(2):'—'}</td>
+      <td>${ratingKampus?ratingKampus.html+' <span style="font-size:11px;color:#888">'+ratingKampus.label+'</span>':'—'}</td>
+      <td>${beiHpusm!==null?beiHpusm.toFixed(2):'—'}</td>
+      <td>${ratingHpusm?ratingHpusm.html+' <span style="font-size:11px;color:#888">'+ratingHpusm.label+'</span>':'—'}</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align:center;color:#999">Tiada data.</td></tr>';
+}
+
 function fmtKg(v){ return Math.round(v).toLocaleString('ms-MY'); }
 function fmtT(v){ return (v/1000).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
@@ -1931,6 +2069,8 @@ function renderCarbonSection(){
   const gfaDisplay=document.getElementById('carbon-gfa-display');
   const gfa=getCarbonGfa();
   if(gfaDisplay) gfaDisplay.textContent = gfa.toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  if(typeof renderCarbonBEITable==='function') renderCarbonBEITable();
 
   const filtered=getFilteredCarbon();
   if(!filtered.length){
