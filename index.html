@@ -268,6 +268,38 @@ body.dark .kh-yoy-table th{background:#0f172a}
 .pm-billing-table tr:last-child td{border-bottom:none}
 .pm-billing-table tr:hover td{background:#0d1c30}
 
+/* ── Power Monitoring Billing: Date Range Picker (popup guna tema terang, sama seperti modal sedia ada) ── */
+.pm-daterange-wrap{position:relative}
+.pm-daterange-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:white;color:#1a1a2e;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.35);padding:16px;width:600px;max-width:90vw}
+.pm-daterange-panel.open{display:block}
+.pm-dr-inputs{display:flex;gap:10px;margin-bottom:14px}
+.pm-dr-inputs input{flex:1;padding:8px 10px;border:1.5px solid #c0cdd8;border-radius:8px;font-size:13px;color:#1a1a2e}
+.pm-dr-inputs input:focus{outline:none;border-color:#1a5fa8}
+.pm-dr-actions{display:flex;gap:8px;align-items:center}
+.pm-dr-apply{background:#4caf50;color:white;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.pm-dr-apply:hover{background:#43a047}
+.pm-dr-cancel{background:transparent;color:#888;border:none;padding:8px 12px;font-size:13px;cursor:pointer}
+.pm-dr-cal-row{display:flex;gap:22px;margin-top:4px}
+.pm-dr-cal{flex:1}
+.pm-dr-cal-head{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;position:relative}
+.pm-dr-cal-nav{background:none;border:none;cursor:pointer;color:#555;font-size:15px;padding:2px 6px;border-radius:5px}
+.pm-dr-cal-nav:hover{background:#f0f4f8}
+.pm-dr-cal-nav:disabled{visibility:hidden}
+.pm-dr-cal-title{font-weight:700;font-size:13.5px;color:#1a1a2e;flex:1;text-align:center}
+.pm-dr-cal-title select{border:none;background:transparent;font-weight:700;font-size:13.5px;color:#1a1a2e;cursor:pointer}
+.pm-dr-grid{width:100%;border-collapse:collapse}
+.pm-dr-grid th{font-size:11px;color:#888;font-weight:600;padding:4px 0;text-align:center}
+.pm-dr-grid td{text-align:center;font-size:12.5px;padding:0}
+.pm-dr-day{display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin:1px auto;border-radius:50%;cursor:pointer;color:#333}
+.pm-dr-day:hover{background:#e8f0fb}
+.pm-dr-day.muted{color:#c3ccd4;cursor:default}
+.pm-dr-day.muted:hover{background:none}
+.pm-dr-day.today{font-weight:800}
+.pm-dr-day.in-range{border-radius:0;background:#e8f0fb}
+.pm-dr-day.range-start{background:#1a5fa8;color:white;border-radius:50% 0 0 50%}
+.pm-dr-day.range-end{background:#1a5fa8;color:white;border-radius:0 50% 50% 0}
+.pm-dr-day.range-single{background:#1a5fa8;color:white;border-radius:50%}
+
 /* ── Pengurusan Data Building (tema gelap, khas dalam #panel-building) ── */
 #panel-building .bld-mgmt{margin-top:20px}
 #panel-building .bld-mgmt-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 16px;background:#0f1e34;border-radius:10px;border:1px solid #1c2f48;user-select:none;transition:background .15s}
@@ -891,7 +923,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 300;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -5583,12 +5615,12 @@ const PM_METER_TREE = [
   {group:'CL740 / CL760', items:['DB-FC (CT 150/5A)','DB-NR','STALL 1','STALL 2','STALL 3','STALL 4','STALL 5','STALL 6']}
 ];
 const PM_BILLING_DEMO = [
-  {meter:'STALL 1', serial:'201700010146', t1:3387.000, t2:0, t3:0, t4:0},
-  {meter:'STALL 2', serial:'201700010147', t1:7989.000, t2:0, t3:0, t4:0},
-  {meter:'STALL 3', serial:'201700010142', t1:0, t2:0, t3:0, t4:0},
-  {meter:'STALL 4', serial:'201700010144', t1:0, t2:0, t3:0, t4:0},
-  {meter:'STALL 5', serial:'201700010143', t1:0, t2:0, t3:0, t4:0},
-  {meter:'STALL 6', serial:'201700010145', t1:0, t2:0, t3:0, t4:0}
+  {meter:'STALL 1', serial:'201700010146', t1:1200.000, t2:1450.000, t3:737.000, kadarCaj:0.365},
+  {meter:'STALL 2', serial:'201700010147', t1:2800.000, t2:3200.000, t3:1989.000, kadarCaj:0.365},
+  {meter:'STALL 3', serial:'201700010142', t1:0, t2:0, t3:0, kadarCaj:0.365},
+  {meter:'STALL 4', serial:'201700010144', t1:0, t2:0, t3:0, kadarCaj:0.365},
+  {meter:'STALL 5', serial:'201700010143', t1:0, t2:0, t3:0, kadarCaj:0.365},
+  {meter:'STALL 6', serial:'201700010145', t1:0, t2:0, t3:0, kadarCaj:0.365}
 ];
 
 function pmRenderBilling(){
@@ -5619,9 +5651,20 @@ function pmRenderBilling(){
           <option>By year</option>
         </select>
       </div>
-      <div>
+      <div class="pm-daterange-wrap">
         <label><i class="ti ti-calendar"></i> Date Selection</label>
-        <input type="text" id="pm-bill-daterange" readonly value="01-02-2019 - 01-03-2019" style="cursor:pointer">
+        <input type="text" id="pm-bill-daterange" readonly value="27-02-2019 - 27-03-2019" style="cursor:pointer" onclick="pmToggleDatePicker()">
+        <div class="pm-daterange-panel" id="pm-daterange-panel">
+          <div class="pm-dr-inputs">
+            <input type="text" id="pm-dr-start-input" placeholder="dd-mm-yyyy">
+            <input type="text" id="pm-dr-end-input" placeholder="dd-mm-yyyy">
+            <div class="pm-dr-actions">
+              <button class="pm-dr-apply" onclick="pmApplyDateRange()">Apply</button>
+              <button class="pm-dr-cancel" onclick="pmCancelDateRange()">Cancel</button>
+            </div>
+          </div>
+          <div class="pm-dr-cal-row" id="pm-dr-cal-row"></div>
+        </div>
       </div>
       <div>
         <label>Data Generate</label>
@@ -5633,9 +5676,12 @@ function pmRenderBilling(){
       <table class="pm-billing-table">
         <thead><tr>
           <th>Meter</th><th>Serial No.</th><th>Period</th>
-          <th style="text-align:right">T1 (kWh)</th><th style="text-align:right">T2 (kWh)</th>
-          <th style="text-align:right">T3 (kWh)</th><th style="text-align:right">T4 (kWh)</th>
-          <th style="text-align:right">Total</th>
+          <th style="text-align:right">T1<br><span style="font-weight:400;text-transform:none">(kWh Bulan Sebelum)</span></th>
+          <th style="text-align:right">T2<br><span style="font-weight:400;text-transform:none">(kWh Bulan Semasa)</span></th>
+          <th style="text-align:right">T3<br><span style="font-weight:400;text-transform:none">(kWh Penggunaan + Sub-Meter)</span></th>
+          <th style="text-align:right">T4<br><span style="font-weight:400;text-transform:none">(Jumlah Penggunaan Sebenar kWh)</span></th>
+          <th style="text-align:right">Kadar Caj<br><span style="font-weight:400;text-transform:none">(RM/kWh)</span></th>
+          <th style="text-align:right">Jumlah RM</th>
         </tr></thead>
         <tbody id="pm-bill-tbody"></tbody>
       </table>
@@ -5643,22 +5689,186 @@ function pmRenderBilling(){
     <p style="font-size:11px;color:#7d93ad;margin-top:10px">Nota: Paparan ini menggunakan data demo sementara menunggu integrasi Digital Power Meter (DPM) sebenar.</p>
   `;
 
+  pmInitDatePicker();
   pmGenerateBilling();
 }
 
 function pmGenerateBilling(){
   const tbody=document.getElementById('pm-bill-tbody');
   if(!tbody) return;
-  const period=document.getElementById('pm-bill-daterange')?.value?.split(' - ')[0] || '01-02-2019';
+  const period=document.getElementById('pm-bill-daterange')?.value?.split(' - ')[0] || '27-02-2019';
   tbody.innerHTML = PM_BILLING_DEMO.map(r=>{
-    const total=r.t1+r.t2+r.t3+r.t4;
+    const t4=r.t1+r.t2+r.t3;
+    const jumlahRm=t4*r.kadarCaj;
     return `<tr>
       <td>${r.meter}</td><td>${r.serial}</td><td>${period}</td>
       <td class="num">${r.t1.toFixed(3)}</td><td class="num">${r.t2.toFixed(3)}</td>
-      <td class="num">${r.t3.toFixed(3)}</td><td class="num">${r.t4.toFixed(3)}</td>
-      <td class="num"><strong>${total.toFixed(3)}</strong></td>
+      <td class="num">${r.t3.toFixed(3)}</td><td class="num">${t4.toFixed(3)}</td>
+      <td class="num">${r.kadarCaj.toFixed(3)}</td>
+      <td class="num"><strong>${fmtRM(jumlahRm)}</strong></td>
     </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════
+// POWER MONITORING — BILLING: Date Range Picker
+// Kalendar 2-bulan (boleh navigasi bulan/tahun) untuk pilih julat tarikh
+// ══════════════════════════════════════════════
+const PM_BULAN_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const PM_HARI_EN=['Su','Mo','Tu','We','Th','Fr','Sa'];
+let pmDrCalYear=2019, pmDrCalMonth=1; // bulan kiri (0-indexed) — kanan = bulan+1
+let pmDrStart=null, pmDrEnd=null; // Date objects
+let pmDrPicking=null; // 'start' | 'end' | null — jejak klik seterusnya semasa pilih julat baharu
+
+function pmFmtDrDate(d){
+  if(!d) return '';
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}-${mm}-${d.getFullYear()}`;
+}
+function pmParseDrDate(str){
+  if(!str) return null;
+  const m=str.trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if(!m) return null;
+  const d=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function pmInitDatePicker(){
+  const disp=document.getElementById('pm-bill-daterange');
+  const parts=(disp?.value||'').split(' - ');
+  pmDrStart=pmParseDrDate(parts[0]) || new Date(2019,1,27);
+  pmDrEnd=pmParseDrDate(parts[1]) || new Date(2019,2,27);
+  pmDrCalYear=pmDrStart.getFullYear();
+  pmDrCalMonth=pmDrStart.getMonth();
+  pmDrPicking=null;
+  document.addEventListener('click', pmDocClickCloseDatePicker);
+}
+function pmDocClickCloseDatePicker(e){
+  const panel=document.getElementById('pm-daterange-panel');
+  const wrap=document.querySelector('.pm-daterange-wrap');
+  if(!panel || !wrap) return;
+  if(panel.classList.contains('open') && !wrap.contains(e.target)){
+    panel.classList.remove('open');
+  }
+}
+function pmToggleDatePicker(){
+  const panel=document.getElementById('pm-daterange-panel');
+  if(!panel) return;
+  const opening=!panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if(opening){
+    const si=document.getElementById('pm-dr-start-input'), ei=document.getElementById('pm-dr-end-input');
+    if(si) si.value=pmFmtDrDate(pmDrStart);
+    if(ei) ei.value=pmFmtDrDate(pmDrEnd);
+    pmRenderDrCalendars();
+  }
+}
+function pmCancelDateRange(){
+  const panel=document.getElementById('pm-daterange-panel');
+  if(panel) panel.classList.remove('open');
+}
+function pmApplyDateRange(){
+  const si=document.getElementById('pm-dr-start-input'), ei=document.getElementById('pm-dr-end-input');
+  const s=pmParseDrDate(si?.value), e=pmParseDrDate(ei?.value);
+  if(s) pmDrStart=s;
+  if(e) pmDrEnd=e;
+  if(pmDrStart && pmDrEnd && pmDrEnd<pmDrStart){ const t=pmDrStart; pmDrStart=pmDrEnd; pmDrEnd=t; }
+  const disp=document.getElementById('pm-bill-daterange');
+  if(disp) disp.value = `${pmFmtDrDate(pmDrStart)} - ${pmFmtDrDate(pmDrEnd)}`;
+  const panel=document.getElementById('pm-daterange-panel');
+  if(panel) panel.classList.remove('open');
+  pmGenerateBilling();
+}
+function pmCalPrevMonth(){
+  pmDrCalMonth--; if(pmDrCalMonth<0){ pmDrCalMonth=11; pmDrCalYear--; }
+  pmRenderDrCalendars();
+}
+function pmCalNextMonth(){
+  pmDrCalMonth++; if(pmDrCalMonth>11){ pmDrCalMonth=0; pmDrCalYear++; }
+  pmRenderDrCalendars();
+}
+function pmCalYearChange(which,val){
+  const y=parseInt(val); if(isNaN(y)) return;
+  pmDrCalYear=y;
+  pmRenderDrCalendars();
+}
+function pmPickDay(y,m,d){
+  const picked=new Date(y,m,d);
+  if(!pmDrStart || pmDrPicking==='done'){
+    pmDrStart=picked; pmDrEnd=null; pmDrPicking='start';
+  } else if(pmDrPicking==='start'){
+    if(picked<pmDrStart){ pmDrEnd=pmDrStart; pmDrStart=picked; } else { pmDrEnd=picked; }
+    pmDrPicking='done';
+  } else {
+    pmDrStart=picked; pmDrEnd=null; pmDrPicking='start';
+  }
+  const si=document.getElementById('pm-dr-start-input'), ei=document.getElementById('pm-dr-end-input');
+  if(si) si.value=pmFmtDrDate(pmDrStart);
+  if(ei) ei.value=pmFmtDrDate(pmDrEnd);
+  pmRenderDrCalendars();
+}
+function pmBuildDrMonthHTML(year,month){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(year,month,1);
+  const startOffset=first.getDay(); // 0=Su
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const daysInPrevMonth=new Date(year,month,0).getDate();
+
+  const yearOpts=[]; for(let y=2015;y<=2030;y++) yearOpts.push(`<option value="${y}" ${y===year?'selected':''}>${y}</option>`);
+
+  let cells=[];
+  for(let i=startOffset-1;i>=0;i--){ cells.push({d:daysInPrevMonth-i, muted:true, y:month===0?year-1:year, m:month===0?11:month-1}); }
+  for(let d=1;d<=daysInMonth;d++){ cells.push({d, muted:false, y:year, m:month}); }
+  let nextTrailDay=1;
+  while(cells.length%7!==0){ cells.push({d:nextTrailDay, muted:true, y:month===11?year+1:year, m:month===11?0:month+1}); nextTrailDay++; }
+
+  const rangeStartMs = pmDrStart ? new Date(pmDrStart.getFullYear(),pmDrStart.getMonth(),pmDrStart.getDate()).getTime() : null;
+  const rangeEndMs = pmDrEnd ? new Date(pmDrEnd.getFullYear(),pmDrEnd.getMonth(),pmDrEnd.getDate()).getTime() : null;
+
+  let rowsHtml='';
+  for(let r=0;r<cells.length/7;r++){
+    rowsHtml+='<tr>';
+    for(let c=0;c<7;c++){
+      const cell=cells[r*7+c];
+      if(!cell){ rowsHtml+='<td></td>'; continue; }
+      const cellMs=new Date(cell.y,cell.m,cell.d).getTime();
+      let cls='pm-dr-day';
+      if(cell.muted) cls+=' muted';
+      if(cellMs===today.getTime() && !cell.muted) cls+=' today';
+      if(rangeStartMs!==null && rangeEndMs!==null){
+        if(cellMs===rangeStartMs && cellMs===rangeEndMs) cls+=' range-single';
+        else if(cellMs===rangeStartMs) cls+=' range-start';
+        else if(cellMs===rangeEndMs) cls+=' range-end';
+        else if(cellMs>rangeStartMs && cellMs<rangeEndMs) cls+=' in-range';
+      } else if(rangeStartMs!==null && cellMs===rangeStartMs){
+        cls+=' range-single';
+      }
+      const onclick=cell.muted ? '' : `onclick="pmPickDay(${cell.y},${cell.m},${cell.d})"`;
+      rowsHtml+=`<td><div class="${cls}" ${onclick}>${cell.d}</div></td>`;
+    }
+    rowsHtml+='</tr>';
+  }
+
+  return `
+    <div class="pm-dr-cal">
+      <div class="pm-dr-cal-head">
+        <button class="pm-dr-cal-nav" ${month===pmDrCalMonth?'onclick="pmCalPrevMonth()"':'disabled'}>‹</button>
+        <div class="pm-dr-cal-title">${PM_BULAN_EN[month]} <select onchange="pmCalYearChange('l',this.value)">${yearOpts}</select></div>
+        <button class="pm-dr-cal-nav" ${month!==pmDrCalMonth?'onclick="pmCalNextMonth()"':'disabled'}>›</button>
+      </div>
+      <table class="pm-dr-grid">
+        <thead><tr>${PM_HARI_EN.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+}
+function pmRenderDrCalendars(){
+  const row=document.getElementById('pm-dr-cal-row');
+  if(!row) return;
+  let rightMonth=pmDrCalMonth+1, rightYear=pmDrCalYear;
+  if(rightMonth>11){ rightMonth=0; rightYear++; }
+  row.innerHTML = pmBuildDrMonthHTML(pmDrCalYear,pmDrCalMonth) + pmBuildDrMonthHTML(rightYear,rightMonth);
 }
 
 // ══════════════════════════════════════════════
