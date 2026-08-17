@@ -1983,11 +1983,11 @@ function saveCarbonGfa(){
 // ── GFA Kampus & GFA HPUSM (untuk jadual BEI Bulanan — berasingan daripada GFA keseluruhan) ──
 function getCarbonGfaKampus(){
   const saved=parseFloat(localStorage.getItem('usm_carbon_gfa_kampus'));
-  return (!isNaN(saved) && saved>0) ? saved : 0;
+  return (!isNaN(saved) && saved>0) ? saved : 308313.15;
 }
 function getCarbonGfaHpusm(){
   const saved=parseFloat(localStorage.getItem('usm_carbon_gfa_hpusm'));
-  return (!isNaN(saved) && saved>0) ? saved : 0;
+  return (!isNaN(saved) && saved>0) ? saved : 79971.76;
 }
 function editCarbonGfaKampus(){
   const disp=document.getElementById('carbon-gfa-kampus-display');
