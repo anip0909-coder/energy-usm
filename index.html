@@ -583,7 +583,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-item active" id="side-dashboard" onclick="switchSection('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
 
-  <div class="sidebar-item" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev"></i></div>
+  <div class="sidebar-item" id="side-energy" onclick="switchSection('energy')"><i class="ti ti-bolt"></i> Energy Overview<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('energy')"></i></div>
   <div class="sidebar-sub" id="side-energy-sub">
     <div class="sidebar-sub-item active" id="subside-jppf" onclick="switchSection('energy');switchTab('jppf')"><i class="ti ti-bolt"></i> KWH USMKK</div>
     <div class="sidebar-sub-item" id="subside-epc" onclick="switchSection('energy');switchTab('epc')"><i class="ti ti-leaf"></i> EPC Chiller</div>
@@ -594,7 +594,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
   <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
 
-  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev"></i></div>
+  <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('power')"></i></div>
   <div class="sidebar-sub" id="side-power-sub">
     <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
     <div class="sidebar-sub-item" id="subside-pm-billing" onclick="switchSection('power');switchPowerTab('billing')"><i class="ti ti-receipt"></i> Billing</div>
@@ -1940,6 +1940,16 @@ function switchTab(tab){
 // SIDEBAR SECTION NAVIGATION
 // ══════════════════════════════════════════════
 let activeSection = 'dashboard';
+// Minimize/maximize sub-menu sidebar (klik chevron) — bebas daripada navigasi switchSection()
+function toggleSidebarGroup(section){
+  const item=document.getElementById('side-'+section);
+  const sub=document.getElementById('side-'+section+'-sub');
+  if(!item||!sub) return;
+  const nowOpen=!sub.classList.contains('open');
+  sub.classList.toggle('open', nowOpen);
+  item.classList.toggle('expanded', nowOpen);
+}
+
 function switchSection(section){
   activeSection = section;
   ['dashboard','energy','solar','power','carbon','analysis','settings'].forEach(s=>{
