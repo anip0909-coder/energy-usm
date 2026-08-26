@@ -148,10 +148,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;mi
 .yoy-chart-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed}
 .yoy-table-box{background:white;border-radius:12px;padding:16px;border:1px solid #e0e6ed;overflow-x:auto;margin-bottom:4px}
 /* Jadual YoY Kampus+HPUSM — paparan penuh tanpa scroll mendatar */
-.kh-yoy-table-box{overflow-x:visible!important;padding:14px 10px}
-.kh-yoy-table{table-layout:fixed;width:100%}
-.kh-yoy-table th,.kh-yoy-table td{white-space:normal!important;word-break:break-word;font-size:9.5px;padding:6px 3px;text-align:center;line-height:1.3}
-.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left;width:42px}
+.kh-yoy-table-box{padding:14px 10px}
+.kh-yoy-table td,.kh-yoy-table th{text-align:center}
+.kh-yoy-table th:first-child,.kh-yoy-table td:first-child{text-align:left}
 body.dark .kh-yoy-table th{background:#0f172a}
 .yoy-table{width:100%;border-collapse:collapse;font-size:12px}
 .yoy-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-weight:700;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
@@ -3612,6 +3611,22 @@ window.renderEPC = function(){
 const KH_SHEET_GID = '1853842562';
 let khRows=[];
 let khChart1=null,khChart2=null,khChart3=null,khChart4=null;
+let khMainShowKampus=true,khMainShowHpusm=true;
+
+function toggleKHMain(which){
+  if(which==='kampus'){
+    khMainShowKampus=!khMainShowKampus;
+    document.getElementById('kh-main-tog-kampus')?.classList.toggle('active',khMainShowKampus);
+  } else if(which==='hpusm'){
+    khMainShowHpusm=!khMainShowHpusm;
+    document.getElementById('kh-main-tog-hpusm')?.classList.toggle('active',khMainShowHpusm);
+  }
+  if(!khMainShowKampus && !khMainShowHpusm){
+    khMainShowKampus=true;
+    document.getElementById('kh-main-tog-kampus')?.classList.add('active');
+  }
+  khUpdateMain();
+}
 let khYoy1=null,khYoy2=null,khYoy3=null,khYoy4=null;
 let khRangeStart=0,khRangeEnd=11,khYoySelecting=false;
 let khYoyShowKampus=true,khYoyShowHpusm=true;
@@ -3711,6 +3726,12 @@ function buildKHPage(){
     <label><i class="ti ti-filter"></i> Tapis:</label>
     <select id="kh-f-tahun" onchange="khUpdateMain()">${yOptsFull}</select>
     <select id="kh-f-bulan" onchange="khUpdateMain()">${mOptsFull}</select>
+    <div class="filter-divider"></div>
+    <label><i class="ti ti-building"></i> Paparan:</label>
+    <div class="toggle-group">
+      <button class="toggle-btn active ssa" id="kh-main-tog-kampus" onclick="toggleKHMain('kampus')">Kampus</button>
+      <button class="toggle-btn active ssd" id="kh-main-tog-hpusm" onclick="toggleKHMain('hpusm')">HPUSM</button>
+    </div>
     <button class="icon-btn" style="margin-left:auto" onclick="loadKH()"><i class="ti ti-refresh"></i> Refresh</button>
   </div>
 
@@ -3900,13 +3921,18 @@ function khUpdateMain(){
   const kRPct=d.totalRm>0?(d.kampusRm/d.totalRm*100).toFixed(1):'0';
   const hRPct=d.totalRm>0?(d.hospitalRm/d.totalRm*100).toFixed(1):'0';
 
-  document.getElementById('kh-metrics').innerHTML=`
-    <div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-building"></i></div><div class="card-label" style="color:#1a5fa8">Kampus kWh</div><div class="card-value" style="color:#1a5fa8">${fmt(d.kampusKwh)}</div><div class="card-unit">kWh · ${kPct}%</div></div>
-    <div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-building-hospital"></i></div><div class="card-label" style="color:#1e7e34">HPUSM kWh</div><div class="card-value" style="color:#1e7e34">${fmt(d.hpusmKwh)}</div><div class="card-unit">kWh · ${hPct}%</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(d.totalKwh)}</div><div class="card-unit">${label}</div></div>
-    <div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1a5fa8">Kampus RM</div><div class="card-value" style="color:#1a5fa8">${fmtRM2d(d.kampusRm)}</div><div class="card-unit">· ${kRPct}%</div></div>
-    <div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1e7e34">Hospital RM</div><div class="card-value" style="color:#1e7e34">${fmtRM2d(d.hospitalRm)}</div><div class="card-unit">· ${hRPct}%</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(d.totalRm)}</div><div class="card-unit">${label}</div></div>`;
+  // Jumlah kWh/Bil ikut toggle Kampus/HPUSM yang aktif
+  const jKwh=(khMainShowKampus?d.kampusKwh:0)+(khMainShowHpusm?d.hpusmKwh:0);
+  const jRm=(khMainShowKampus?d.kampusRm:0)+(khMainShowHpusm?d.hospitalRm:0);
+
+  let cardsHtml='';
+  if(khMainShowKampus) cardsHtml+=`<div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-building"></i></div><div class="card-label" style="color:#1a5fa8">Kampus kWh</div><div class="card-value" style="color:#1a5fa8">${fmt(d.kampusKwh)}</div><div class="card-unit">kWh · ${kPct}%</div></div>`;
+  if(khMainShowHpusm) cardsHtml+=`<div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-building-hospital"></i></div><div class="card-label" style="color:#1e7e34">HPUSM kWh</div><div class="card-value" style="color:#1e7e34">${fmt(d.hpusmKwh)}</div><div class="card-unit">kWh · ${hPct}%</div></div>`;
+  cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(jKwh)}</div><div class="card-unit">${label}</div></div>`;
+  if(khMainShowKampus) cardsHtml+=`<div class="card kampus"><div class="card-icon" style="color:#1a5fa8"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1a5fa8">Kampus RM</div><div class="card-value" style="color:#1a5fa8">${fmtRM2d(d.kampusRm)}</div><div class="card-unit">· ${kRPct}%</div></div>`;
+  if(khMainShowHpusm) cardsHtml+=`<div class="card hospital"><div class="card-icon" style="color:#1e7e34"><i class="ti ti-receipt"></i></div><div class="card-label" style="color:#1e7e34">Hospital RM</div><div class="card-value" style="color:#1e7e34">${fmtRM2d(d.hospitalRm)}</div><div class="card-unit">· ${hRPct}%</div></div>`;
+  cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(jRm)}</div><div class="card-unit">${label}</div></div>`;
+  document.getElementById('kh-metrics').innerHTML=cardsHtml;
 
   const sorted=[...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
   const lbl=sorted.map(r=>{const dup=sorted.filter(x=>x.bulan===r.bulan).length>1;return r.bulan.substring(0,3)+(dup?' '+r.tahun.slice(-2):'');});
@@ -3922,15 +3948,29 @@ function khUpdateMain(){
   const pieDL={display:true,formatter:(v,ctx)=>{const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);return tot>0?(v/tot*100).toFixed(1)+'%':'';},color:'white',font:{size:13,weight:'700'}};
   const pieOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:12},boxWidth:12,padding:16}},datalabels:pieDL}};
 
-  if(khChart1)khChart1.destroy();khChart1=new Chart(document.getElementById('kh-c1'),{type:'bar',data:{labels:lbl,datasets:[{label:'Kampus',data:sorted.map(r=>r.kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'HPUSM',data:sorted.map(r=>r.hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}]},options:barOpts(false)});
-  if(khChart2)khChart2.destroy();khChart2=new Chart(document.getElementById('kh-c2'),{type:'bar',data:{labels:lbl,datasets:[{label:'Kampus RM',data:sorted.map(r=>r.kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Hospital RM',data:sorted.map(r=>r.hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false}]},options:barOpts(true)});
-  if(khChart3)khChart3.destroy();khChart3=new Chart(document.getElementById('kh-c3'),{type:'pie',data:{labels:['Kampus RM','Hospital RM'],datasets:[{data:[d.kampusRm,d.hospitalRm],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]},options:pieOpts});
-  if(khChart4)khChart4.destroy();khChart4=new Chart(document.getElementById('kh-c4'),{type:'pie',data:{labels:['Kampus kWh','HPUSM kWh'],datasets:[{data:[d.kampusKwh,d.hpusmKwh],backgroundColor:['#1a5fa8','#1e7e34'],borderWidth:2,borderColor:'white'}]},options:pieOpts});
+  const barKwhDatasets=[];
+  if(khMainShowKampus) barKwhDatasets.push({label:'Kampus',data:sorted.map(r=>r.kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
+  if(khMainShowHpusm) barKwhDatasets.push({label:'HPUSM',data:sorted.map(r=>r.hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
+  const barRmDatasets=[];
+  if(khMainShowKampus) barRmDatasets.push({label:'Kampus RM',data:sorted.map(r=>r.kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false});
+  if(khMainShowHpusm) barRmDatasets.push({label:'Hospital RM',data:sorted.map(r=>r.hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false});
+  const pieRmData=[]; const pieRmLabels=[]; const pieRmColors=[];
+  if(khMainShowKampus){ pieRmData.push(d.kampusRm); pieRmLabels.push('Kampus RM'); pieRmColors.push('#1a5fa8'); }
+  if(khMainShowHpusm){ pieRmData.push(d.hospitalRm); pieRmLabels.push('Hospital RM'); pieRmColors.push('#1e7e34'); }
+  const pieKwhData=[]; const pieKwhLabels=[]; const pieKwhColors=[];
+  if(khMainShowKampus){ pieKwhData.push(d.kampusKwh); pieKwhLabels.push('Kampus kWh'); pieKwhColors.push('#1a5fa8'); }
+  if(khMainShowHpusm){ pieKwhData.push(d.hpusmKwh); pieKwhLabels.push('HPUSM kWh'); pieKwhColors.push('#1e7e34'); }
 
-  document.getElementById('kh-health').innerHTML=`
-    <div class="hcard"><div class="hhead"><div class="hname" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus</div></div><div class="hstat">kWh<span>${fmt(d.kampusKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.kampusRm)}</span></div><div class="hstat">%<span>${kPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${kPct}%;background:#1a5fa8"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM</div></div><div class="hstat">kWh<span>${fmt(d.hpusmKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.hospitalRm)}</span></div><div class="hstat">%<span>${hPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${hPct}%;background:#1e7e34"></div></div></div>
-    <div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Nisbah Bil</div></div><div class="hstat">Kampus<span style="color:#1a5fa8">${kRPct}%</span></div><div class="hstat">Hospital<span style="color:#1e7e34">${hRPct}%</span></div><div class="hstat">Jumlah<span>${fmtRM2d(d.totalRm)}</span></div></div>`;
+  if(khChart1)khChart1.destroy();khChart1=new Chart(document.getElementById('kh-c1'),{type:'bar',data:{labels:lbl,datasets:barKwhDatasets},options:barOpts(false)});
+  if(khChart2)khChart2.destroy();khChart2=new Chart(document.getElementById('kh-c2'),{type:'bar',data:{labels:lbl,datasets:barRmDatasets},options:barOpts(true)});
+  if(khChart3)khChart3.destroy();khChart3=new Chart(document.getElementById('kh-c3'),{type:'pie',data:{labels:pieRmLabels,datasets:[{data:pieRmData,backgroundColor:pieRmColors,borderWidth:2,borderColor:'white'}]},options:pieOpts});
+  if(khChart4)khChart4.destroy();khChart4=new Chart(document.getElementById('kh-c4'),{type:'pie',data:{labels:pieKwhLabels,datasets:[{data:pieKwhData,backgroundColor:pieKwhColors,borderWidth:2,borderColor:'white'}]},options:pieOpts});
+
+  let healthHtml='';
+  if(khMainShowKampus) healthHtml+=`<div class="hcard"><div class="hhead"><div class="hname" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus</div></div><div class="hstat">kWh<span>${fmt(d.kampusKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.kampusRm)}</span></div><div class="hstat">%<span>${kPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${kPct}%;background:#1a5fa8"></div></div></div>`;
+  if(khMainShowHpusm) healthHtml+=`<div class="hcard"><div class="hhead"><div class="hname" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM</div></div><div class="hstat">kWh<span>${fmt(d.hpusmKwh)}</span></div><div class="hstat">Bil<span>${fmtRM2d(d.hospitalRm)}</span></div><div class="hstat">%<span>${hPct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${hPct}%;background:#1e7e34"></div></div></div>`;
+  if(khMainShowKampus && khMainShowHpusm) healthHtml+=`<div class="hcard"><div class="hhead"><div class="hname"><i class="ti ti-chart-pie" style="color:#1a3a5c"></i> Nisbah Bil</div></div><div class="hstat">Kampus<span style="color:#1a5fa8">${kRPct}%</span></div><div class="hstat">Hospital<span style="color:#1e7e34">${hRPct}%</span></div><div class="hstat">Jumlah<span>${fmtRM2d(d.totalRm)}</span></div></div>`;
+  document.getElementById('kh-health').innerHTML=healthHtml;
 }
 
 // ── YoY ──
@@ -4010,49 +4050,63 @@ function khRenderYoY(){
   const hideDL=shortDlm.length>12;
   const dlY={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
   const dlYrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
+  const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:true,position:'top',labels:{boxWidth:10,font:{size:10}}},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
 
   if(khYoyShowKampus){
-    if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-    if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+    if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:String(currY),data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:String(prevY),data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
+    if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:String(currY),data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:String(prevY),data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
   }
   if(khYoyShowHpusm){
-    if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-    if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+    if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:String(currY),data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:String(prevY),data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
+    if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:String(currY),data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:String(prevY),data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
   }
 
-  // Jadual — gaya ringkas ikut imej rujukan (KWH/BIL gabungan ikut toggle + Penjimatan + baris JUMLAH)
+  // Jadual — perbandingan kWh Kampus, kWh HPUSM, RM Kampus, RM HPUSM (ikut toggle),
+  // + Penjimatan kWh dan Penjimatan RM (bulanan) + baris JUMLAH
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
   <table class="yoy-table kh-yoy-table"><thead><tr>
-    <th>Bulan</th>
-    <th class="td-num">KWH ${currY}</th><th class="td-num">KWH ${prevY}</th><th class="td-num">Δ KWH</th>
-    <th class="td-num">BIL ${currY}</th><th class="td-num">BIL ${prevY}</th><th class="td-num">Δ BIL</th>
-    <th class="td-num">Penjimatan (kWh) ${currY}</th>
+    <th>Bulan</th>`;
+  if(khYoyShowKampus) th+=`<th class="td-num">kWh Kampus ${currY}</th><th class="td-num">kWh Kampus ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowHpusm) th+=`<th class="td-num">kWh HPUSM ${currY}</th><th class="td-num">kWh HPUSM ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowKampus) th+=`<th class="td-num">RM Kampus ${currY}</th><th class="td-num">RM Kampus ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowHpusm) th+=`<th class="td-num">RM HPUSM ${currY}</th><th class="td-num">RM HPUSM ${prevY}</th><th class="td-num">Δ</th>`;
+  th+=`<th class="td-num">Penjimatan kWh</th><th class="td-num">Penjimatan RM</th>
   </tr></thead><tbody>`;
-  let totCKwh=0,totPKwh=0,totCRm=0,totPRm=0,totPenj=0;
+  let totCKK=0,totPKK=0,totCHK=0,totPHK=0,totCKR=0,totPKR=0,totCHR=0,totPHR=0,totPenjKwh=0,totPenjRm=0;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
+    const dkk=khDlt(cr?cr.kampusKwh:0,pr?pr.kampusKwh:0);
+    const dhk=khDlt(cr?cr.hpusmKwh:0,pr?pr.hpusmKwh:0);
+    const dkr=khDlt(cr?cr.kampusRm:0,pr?pr.kampusRm:0);
+    const dhr=khDlt(cr?cr.hospitalRm:0,pr?pr.hospitalRm:0);
     const crJKwh=cr?jKwhOf(cr):0, prJKwh=pr?jKwhOf(pr):0;
     const crJRm=cr?jRmOf(cr):0, prJRm=pr?jRmOf(pr):0;
-    const djk=khDlt(crJKwh,prJKwh), djr=khDlt(crJRm,prJRm);
-    // Penjimatan (Jan 2025) = KWH 2025 − KWH 2024 (ikut zon yang ditapis/toggle)
-    const penjimatan=(cr&&pr) ? (crJKwh-prJKwh) : null;
-    if(cr){ totCKwh+=crJKwh; totCRm+=crJRm; }
-    if(pr){ totPKwh+=prJKwh; totPRm+=prJRm; }
-    if(penjimatan!==null) totPenj+=penjimatan;
+    // Penjimatan kWh (Jan 2025) = kWh 2025 − kWh 2024 | Penjimatan RM (Jan 2025) = RM 2025 − RM 2024 (ikut zon ditogol)
+    const penjKwh=(cr&&pr) ? (crJKwh-prJKwh) : null;
+    const penjRm =(cr&&pr) ? (crJRm-prJRm) : null;
+    if(cr){ totCKK+=cr.kampusKwh; totCHK+=cr.hpusmKwh; totCKR+=cr.kampusRm; totCHR+=cr.hospitalRm; }
+    if(pr){ totPKK+=pr.kampusKwh; totPHK+=pr.hpusmKwh; totPKR+=pr.kampusRm; totPHR+=pr.hospitalRm; }
+    if(penjKwh!==null) totPenjKwh+=penjKwh;
+    if(penjRm!==null) totPenjRm+=penjRm;
     th+=`<tr>
-      <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num">${cr?fmtN(crJKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(prJKwh):'—'}</td><td class="td-num td-${djk.cls}">${(cr&&pr)?djk.pct:'—'}</td>
-      <td class="td-num">${cr?fmtRM2(crJRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(prJRm):'—'}</td><td class="td-num td-${djr.cls}">${(cr&&pr)?djr.pct:'—'}</td>
-      <td class="td-num td-${penjimatan===null?'flat':(penjimatan>=0?'up':'down')}">${penjimatan===null?'—':(penjimatan>=0?'+':'')+fmtN(penjimatan)}</td>
+      <td><strong>${shortDlm[i]}</strong></td>`;
+    if(khYoyShowKampus) th+=`<td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td><td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>`;
+    if(khYoyShowHpusm) th+=`<td class="td-num" style="color:#1e7e34">${cr?fmtN(cr.hpusmKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.hpusmKwh):'—'}</td><td class="td-num td-${dhk.cls}">${(cr&&pr)?dhk.pct:'—'}</td>`;
+    if(khYoyShowKampus) th+=`<td class="td-num" style="color:#1a5fa8">${cr?fmtRM2(cr.kampusRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.kampusRm):'—'}</td><td class="td-num td-${dkr.cls}">${(cr&&pr)?dkr.pct:'—'}</td>`;
+    if(khYoyShowHpusm) th+=`<td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td><td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>`;
+    th+=`<td class="td-num td-${penjKwh===null?'flat':(penjKwh>=0?'up':'down')}">${penjKwh===null?'—':(penjKwh>=0?'+':'')+fmtN(penjKwh)}</td>
+      <td class="td-num td-${penjRm===null?'flat':(penjRm>=0?'up':'down')}">${penjRm===null?'—':(penjRm>=0?'+':'')+fmtRM2(penjRm)}</td>
     </tr>`;
   });
-  const dTotKwh=khDlt(totCKwh,totPKwh), dTotRm=khDlt(totCRm,totPRm);
+  const dTotKK=khDlt(totCKK,totPKK), dTotHK=khDlt(totCHK,totPHK), dTotKR=khDlt(totCKR,totPKR), dTotHR=khDlt(totCHR,totPHR);
   th+=`<tr style="font-weight:800;border-top:2px solid #ccc">
-    <td>JUMLAH</td>
-    <td class="td-num">${fmtN(totCKwh)}</td><td class="td-num" style="color:#aaa">${fmtN(totPKwh)}</td><td class="td-num td-${dTotKwh.cls}">${dTotKwh.pct}</td>
-    <td class="td-num">${fmtRM2(totCRm)}</td><td class="td-num" style="color:#aaa">${fmtRM2(totPRm)}</td><td class="td-num td-${dTotRm.cls}">${dTotRm.pct}</td>
-    <td class="td-num td-${totPenj>=0?'up':'down'}">${totPenj>=0?'+':''}${fmtN(totPenj)}</td>
+    <td>JUMLAH</td>`;
+  if(khYoyShowKampus) th+=`<td class="td-num">${fmtN(totCKK)}</td><td class="td-num" style="color:#aaa">${fmtN(totPKK)}</td><td class="td-num td-${dTotKK.cls}">${dTotKK.pct}</td>`;
+  if(khYoyShowHpusm) th+=`<td class="td-num">${fmtN(totCHK)}</td><td class="td-num" style="color:#aaa">${fmtN(totPHK)}</td><td class="td-num td-${dTotHK.cls}">${dTotHK.pct}</td>`;
+  if(khYoyShowKampus) th+=`<td class="td-num">${fmtRM2(totCKR)}</td><td class="td-num" style="color:#aaa">${fmtRM2(totPKR)}</td><td class="td-num td-${dTotKR.cls}">${dTotKR.pct}</td>`;
+  if(khYoyShowHpusm) th+=`<td class="td-num">${fmtRM2(totCHR)}</td><td class="td-num" style="color:#aaa">${fmtRM2(totPHR)}</td><td class="td-num td-${dTotHR.cls}">${dTotHR.pct}</td>`;
+  th+=`<td class="td-num td-${totPenjKwh>=0?'up':'down'}">${totPenjKwh>=0?'+':''}${fmtN(totPenjKwh)}</td>
+    <td class="td-num td-${totPenjRm>=0?'up':'down'}">${totPenjRm>=0?'+':''}${fmtRM2(totPenjRm)}</td>
   </tr>`;
   th+=`</tbody></table>`;
   const tblEl=document.getElementById('kh-yoy-tbl');if(tblEl)tblEl.innerHTML=th;
