@@ -1239,7 +1239,7 @@ function updateDisplay(){
     <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
-    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan Melalui Solar</div></div>
+    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
     <div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
     <div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(dispTotalRm)}</div><div class="card-unit">${label}</div></div>`;
@@ -3616,6 +3616,25 @@ let khRows=[];
 let khChart1=null,khChart2=null,khChart3=null,khChart4=null;
 let khYoy1=null,khYoy2=null,khYoy3=null,khYoy4=null;
 let khRangeStart=0,khRangeEnd=11,khYoySelecting=false;
+let khYoyShowKampus=true,khYoyShowHpusm=true;
+
+function toggleKHYoY(which){
+  if(which==='kampus'){
+    khYoyShowKampus=!khYoyShowKampus;
+    const b=document.getElementById('kh-tog-kampus');
+    b.classList.toggle('active',khYoyShowKampus);
+  } else if(which==='hpusm'){
+    khYoyShowHpusm=!khYoyShowHpusm;
+    const b=document.getElementById('kh-tog-hpusm');
+    b.classList.toggle('active',khYoyShowHpusm);
+  }
+  // kekalkan sekurang-kurangnya satu zon aktif
+  if(!khYoyShowKampus && !khYoyShowHpusm){
+    khYoyShowKampus=true;
+    document.getElementById('kh-tog-kampus')?.classList.add('active');
+  }
+  khRenderYoY();
+}
 
 async function loadKH(){
   const el=document.getElementById('kh-content');
@@ -3748,6 +3767,12 @@ function buildKHPage(){
       <select id="kh-yoy-curr">${yOptsCurr}</select>
       <label style="margin-left:6px">Berbanding:</label>
       <select id="kh-yoy-prev">${yOptsPrev}</select>
+      <div class="filter-divider"></div>
+      <label><i class="ti ti-building"></i> Paparan:</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active ssa" id="kh-tog-kampus" onclick="toggleKHYoY('kampus')">Kampus</button>
+        <button class="toggle-btn active ssd" id="kh-tog-hpusm" onclick="toggleKHYoY('hpusm')">HPUSM</button>
+      </div>
     </div>
 
     <!-- Julat Bulan -->
@@ -3765,7 +3790,7 @@ function buildKHPage(){
 
     <!-- 4 Carta YoY -->
     <div class="yoy-charts">
-      <div class="yoy-chart-box">
+      <div class="yoy-chart-box" id="kh-yoy-box-c1">
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh Kampus — YoY</div>
         <div class="chart-sub" id="kh-yoy-s1">—</div>
         <div class="legend" style="margin-bottom:8px">
@@ -3774,7 +3799,7 @@ function buildKHPage(){
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c1"></canvas></div>
       </div>
-      <div class="yoy-chart-box">
+      <div class="yoy-chart-box" id="kh-yoy-box-c2">
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh HPUSM — YoY</div>
         <div class="chart-sub" id="kh-yoy-s2">—</div>
         <div class="legend" style="margin-bottom:8px">
@@ -3785,7 +3810,7 @@ function buildKHPage(){
       </div>
     </div>
     <div class="yoy-charts" style="margin-top:16px">
-      <div class="yoy-chart-box">
+      <div class="yoy-chart-box" id="kh-yoy-box-c3">
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Kampus — YoY</div>
         <div class="chart-sub" id="kh-yoy-s3">—</div>
         <div class="legend" style="margin-bottom:8px">
@@ -3794,7 +3819,7 @@ function buildKHPage(){
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c3"></canvas></div>
       </div>
-      <div class="yoy-chart-box">
+      <div class="yoy-chart-box" id="kh-yoy-box-c4">
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Hospital — YoY</div>
         <div class="chart-sub" id="kh-yoy-s4">—</div>
         <div class="legend" style="margin-bottom:8px">
@@ -3943,25 +3968,45 @@ function khRenderYoY(){
   const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
   const cRows=khGetRange(currY),pRows=khGetRange(prevY);
   const c=khSum(cRows),p=khSum(pRows);
-  const dKwh=khDlt(c.totalKwh,p.totalKwh),dRm=khDlt(c.totalRm,p.totalRm);
   const dKK=khDlt(c.kampusKwh,p.kampusKwh),dHK=khDlt(c.hpusmKwh,p.hpusmKwh);
   const dKR=khDlt(c.kampusRm,p.kampusRm),dHR=khDlt(c.hospitalRm,p.hospitalRm);
 
-  // Kad YoY
+  // Jumlah kWh/RM ikut zon yang aktif (toggle Kampus/HPUSM)
+  const jKwhOf=r=>(khYoyShowKampus?r.kampusKwh:0)+(khYoyShowHpusm?r.hpusmKwh:0);
+  const jRmOf=r=>(khYoyShowKampus?r.kampusRm:0)+(khYoyShowHpusm?r.hospitalRm:0);
+  const cJKwh=jKwhOf(c), pJKwh=jKwhOf(p), cJRm=jRmOf(c), pJRm=jRmOf(p);
+  const dJKwh=khDlt(cJKwh,pJKwh), dJRm=khDlt(cJRm,pJRm);
+
+  // Kad YoY — Jumlah (ikut toggle) sentiasa ditunjuk, kad Kampus/HPUSM ikut toggle aktif
   const cardsEl=document.getElementById('kh-yoy-cards');
-  if(cardsEl) cardsEl.innerHTML=`<div class="yoy-summary" style="margin-bottom:16px">
-    <div class="yoy-card kwh-card"><div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(c.totalKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.totalKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKwh.cls}">${dKwh.arrow} ${dKwh.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(c.totalRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.totalRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dRm.cls}">${dRm.arrow} ${dRm.pct}</div></div>
-    <div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.kampusKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.kampusKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKK.cls}">${dKK.arrow} ${dKK.pct}</div></div>
-    <div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.hpusmKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.hpusmKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHK.cls}">${dHK.arrow} ${dHK.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-receipt"></i> Kampus RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtRM2(c.kampusRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.kampusRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKR.cls}">${dKR.arrow} ${dKR.pct}</div></div>
-    <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-receipt"></i> Hospital RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtRM2(c.hospitalRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.hospitalRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHR.cls}">${dHR.arrow} ${dHR.pct}</div></div>
-  </div>`;
+  if(cardsEl){
+    let cardsHtml=`<div class="yoy-summary" style="margin-bottom:16px">
+      <div class="yoy-card kwh-card"><div class="yoy-card-label"><i class="ti ti-plug"></i> Jumlah kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtN(cJKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(pJKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dJKwh.cls}">${dJKwh.arrow} ${dJKwh.pct}</div></div>
+      <div class="yoy-card bil-card"><div class="yoy-card-label"><i class="ti ti-cash"></i> Jumlah Bil (RM)</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(cJRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(pJRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dJRm.cls}">${dJRm.arrow} ${dJRm.pct}</div></div>`;
+    if(khYoyShowKampus){
+      cardsHtml+=`<div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-building"></i> Kampus kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.kampusKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.kampusKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKK.cls}">${dKK.arrow} ${dKK.pct}</div></div>
+      <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1a5fa8"><i class="ti ti-receipt"></i> Kampus RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtRM2(c.kampusRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.kampusRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dKR.cls}">${dKR.arrow} ${dKR.pct}</div></div>`;
+    }
+    if(khYoyShowHpusm){
+      cardsHtml+=`<div class="yoy-card kwh-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-building-hospital"></i> HPUSM kWh</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.hpusmKwh)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.hpusmKwh)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHK.cls}">${dHK.arrow} ${dHK.pct}</div></div>
+      <div class="yoy-card bil-card"><div class="yoy-card-label" style="color:#1e7e34"><i class="ti ti-receipt"></i> Hospital RM</div><div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtRM2(c.hospitalRm)}</span></div><div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.hospitalRm)}</span></div><hr class="yoy-divider"><div class="yoy-delta ${dHR.cls}">${dHR.arrow} ${dHR.pct}</div></div>`;
+    }
+    cardsHtml+=`</div>`;
+    cardsEl.innerHTML=cardsHtml;
+  }
 
   const getCurr=b=>cRows.find(r=>r.bulan===b);
   const getPrev=b=>pRows.find(r=>r.bulan===b);
   const sub=`${rangeStr} | ${currY} vs ${prevY}`;
   ['kh-yoy-s1','kh-yoy-s2','kh-yoy-s3','kh-yoy-s4'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=sub;});
+
+  // Tunjuk/sorok carta ikut toggle Kampus/HPUSM
+  const boxC1=document.getElementById('kh-yoy-box-c1'), boxC3=document.getElementById('kh-yoy-box-c3');
+  const boxC2=document.getElementById('kh-yoy-box-c2'), boxC4=document.getElementById('kh-yoy-box-c4');
+  if(boxC1) boxC1.style.display=khYoyShowKampus?'':'none';
+  if(boxC3) boxC3.style.display=khYoyShowKampus?'':'none';
+  if(boxC2) boxC2.style.display=khYoyShowHpusm?'':'none';
+  if(boxC4) boxC4.style.display=khYoyShowHpusm?'':'none';
 
   const tck={color:'#999',font:{size:10}};
   const hideDL=shortDlm.length>12;
@@ -3969,19 +4014,26 @@ function khRenderYoY(){
   const dlYrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
   const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
 
-  if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-  if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
-  if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
-  if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+  if(khYoyShowKampus){
+    if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
+    if(khYoy3)khYoy3.destroy();khYoy3=new Chart(document.getElementById('kh-yoy-c3'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{kampusRm:0}).kampusRm),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+  }
+  if(khYoyShowHpusm){
+    if(khYoy2)khYoy2.destroy();khYoy2=new Chart(document.getElementById('kh-yoy-c2'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hpusmKwh:0}).hpusmKwh),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
+    if(khYoy4)khYoy4.destroy();khYoy4=new Chart(document.getElementById('kh-yoy-c4'),{type:'bar',data:{labels:shortDlm,datasets:[{label:'Semasa',data:bulanDlm.map(b=>(getCurr(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(30,126,52,.85)',borderRadius:3,borderSkipped:false},{label:'Lalu',data:bulanDlm.map(b=>(getPrev(b)||{hospitalRm:0}).hospitalRm),backgroundColor:'rgba(110,231,183,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(true)});
+  }
 
-  // Jadual
+  // Jadual — lajur Kampus/HPUSM ikut toggle, + Jumlah kWh/RM dan Penjimatan (kWh) sentiasa ditunjuk
   let th=`<div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px">Jadual YoY — ${rangeStr} | ${currY} vs ${prevY}</div>
   <table class="yoy-table kh-yoy-table"><thead><tr>
-    <th>Bulan</th>
-    <th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">Kampus RM ${currY}</th><th class="td-num">Kampus RM ${prevY}</th><th class="td-num">Δ</th>
-    <th class="td-num">Hospital RM ${currY}</th><th class="td-num">Hospital RM ${prevY}</th><th class="td-num">Δ</th>
+    <th>Bulan</th>`;
+  if(khYoyShowKampus) th+=`<th class="td-num">Kampus kWh ${currY}</th><th class="td-num">Kampus kWh ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowHpusm) th+=`<th class="td-num">HPUSM kWh ${currY}</th><th class="td-num">HPUSM kWh ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowKampus) th+=`<th class="td-num">Kampus RM ${currY}</th><th class="td-num">Kampus RM ${prevY}</th><th class="td-num">Δ</th>`;
+  if(khYoyShowHpusm) th+=`<th class="td-num">Hospital RM ${currY}</th><th class="td-num">Hospital RM ${prevY}</th><th class="td-num">Δ</th>`;
+  th+=`<th class="td-num">Jumlah kWh ${currY}</th><th class="td-num">Jumlah kWh ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Jumlah RM ${currY}</th><th class="td-num">Jumlah RM ${prevY}</th><th class="td-num">Δ</th>
+    <th class="td-num">Penjimatan (kWh)</th>
   </tr></thead><tbody>`;
   bulanDlm.forEach((b,i)=>{
     const cr=getCurr(b),pr=getPrev(b);
@@ -3989,12 +4041,20 @@ function khRenderYoY(){
     const dhk=khDlt(cr?cr.hpusmKwh:0,pr?pr.hpusmKwh:0);
     const dkr=khDlt(cr?cr.kampusRm:0,pr?pr.kampusRm:0);
     const dhr=khDlt(cr?cr.hospitalRm:0,pr?pr.hospitalRm:0);
+    const crJKwh=cr?jKwhOf(cr):0, prJKwh=pr?jKwhOf(pr):0;
+    const crJRm=cr?jRmOf(cr):0, prJRm=pr?jRmOf(pr):0;
+    const djk=khDlt(crJKwh,prJKwh), djr=khDlt(crJRm,prJRm);
+    // Penjimatan (Jan 2025) = Jumlah kWh 2025 − Jumlah kWh 2024
+    const penjimatan=(cr&&pr) ? (crJKwh-prJKwh) : null;
     th+=`<tr>
-      <td><strong>${shortDlm[i]}</strong></td>
-      <td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td><td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>
-      <td class="td-num" style="color:#1e7e34">${cr?fmtN(cr.hpusmKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.hpusmKwh):'—'}</td><td class="td-num td-${dhk.cls}">${(cr&&pr)?dhk.pct:'—'}</td>
-      <td class="td-num" style="color:#1a5fa8">${cr?fmtRM2(cr.kampusRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.kampusRm):'—'}</td><td class="td-num td-${dkr.cls}">${(cr&&pr)?dkr.pct:'—'}</td>
-      <td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td><td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>
+      <td><strong>${shortDlm[i]}</strong></td>`;
+    if(khYoyShowKampus) th+=`<td class="td-num" style="color:#1a5fa8">${cr?fmtN(cr.kampusKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.kampusKwh):'—'}</td><td class="td-num td-${dkk.cls}">${(cr&&pr)?dkk.pct:'—'}</td>`;
+    if(khYoyShowHpusm) th+=`<td class="td-num" style="color:#1e7e34">${cr?fmtN(cr.hpusmKwh):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtN(pr.hpusmKwh):'—'}</td><td class="td-num td-${dhk.cls}">${(cr&&pr)?dhk.pct:'—'}</td>`;
+    if(khYoyShowKampus) th+=`<td class="td-num" style="color:#1a5fa8">${cr?fmtRM2(cr.kampusRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.kampusRm):'—'}</td><td class="td-num td-${dkr.cls}">${(cr&&pr)?dkr.pct:'—'}</td>`;
+    if(khYoyShowHpusm) th+=`<td class="td-num" style="color:#1e7e34">${cr?fmtRM2(cr.hospitalRm):'—'}</td><td class="td-num" style="color:#aaa">${pr?fmtRM2(pr.hospitalRm):'—'}</td><td class="td-num td-${dhr.cls}">${(cr&&pr)?dhr.pct:'—'}</td>`;
+    th+=`<td class="td-num"><strong>${cr?fmtN(crJKwh):'—'}</strong></td><td class="td-num" style="color:#aaa">${pr?fmtN(prJKwh):'—'}</td><td class="td-num td-${djk.cls}">${(cr&&pr)?djk.pct:'—'}</td>
+      <td class="td-num"><strong>${cr?fmtRM2(crJRm):'—'}</strong></td><td class="td-num" style="color:#aaa">${pr?fmtRM2(prJRm):'—'}</td><td class="td-num td-${djr.cls}">${(cr&&pr)?djr.pct:'—'}</td>
+      <td class="td-num td-${penjimatan===null?'flat':(penjimatan>=0?'up':'down')}">${penjimatan===null?'—':(penjimatan>=0?'+':'')+fmtN(penjimatan)}</td>
     </tr>`;
   });
   th+=`</tbody></table>`;
