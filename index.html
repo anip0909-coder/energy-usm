@@ -3813,8 +3813,8 @@ function buildKHPage(){
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh Kampus — YoY</div>
         <div class="chart-sub" id="kh-yoy-s1">—</div>
         <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span><span id="kh-yoy-leg1a">Semasa</span></span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span><span id="kh-yoy-leg1b">Tahun Lalu</span></span>
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c1"></canvas></div>
       </div>
@@ -3822,8 +3822,8 @@ function buildKHPage(){
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">kWh HPUSM — YoY</div>
         <div class="chart-sub" id="kh-yoy-s2">—</div>
         <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span><span id="kh-yoy-leg2a">Semasa</span></span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span><span id="kh-yoy-leg2b">Tahun Lalu</span></span>
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c2"></canvas></div>
       </div>
@@ -3833,8 +3833,8 @@ function buildKHPage(){
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Kampus — YoY</div>
         <div class="chart-sub" id="kh-yoy-s3">—</div>
         <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span>Tahun Lalu</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1a5fa8;margin-right:4px"></span><span id="kh-yoy-leg3a">Semasa</span></span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#93c5fd;margin-right:4px"></span><span id="kh-yoy-leg3b">Tahun Lalu</span></span>
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c3"></canvas></div>
       </div>
@@ -3842,8 +3842,8 @@ function buildKHPage(){
         <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">Bil RM Hospital — YoY</div>
         <div class="chart-sub" id="kh-yoy-s4">—</div>
         <div class="legend" style="margin-bottom:8px">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span>Semasa</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span>Tahun Lalu</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#1e7e34;margin-right:4px"></span><span id="kh-yoy-leg4a">Semasa</span></span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6ee7b7;margin-right:4px"></span><span id="kh-yoy-leg4b">Tahun Lalu</span></span>
         </div>
         <div style="position:relative;width:100%;height:220px"><canvas id="kh-yoy-c4"></canvas></div>
       </div>
@@ -4037,6 +4037,8 @@ function khRenderYoY(){
   const getPrev=b=>pRows.find(r=>r.bulan===b);
   const sub=`${rangeStr} | ${currY} vs ${prevY}`;
   ['kh-yoy-s1','kh-yoy-s2','kh-yoy-s3','kh-yoy-s4'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=sub;});
+  ['1a','2a','3a','4a'].forEach(id=>{const el=document.getElementById('kh-yoy-leg'+id);if(el)el.textContent=currY;});
+  ['1b','2b','3b','4b'].forEach(id=>{const el=document.getElementById('kh-yoy-leg'+id);if(el)el.textContent=prevY;});
 
   // Tunjuk/sorok carta ikut toggle Kampus/HPUSM
   const boxC1=document.getElementById('kh-yoy-box-c1'), boxC3=document.getElementById('kh-yoy-box-c3');
@@ -4050,7 +4052,7 @@ function khRenderYoY(){
   const hideDL=shortDlm.length>12;
   const dlY={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
   const dlYrm={display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,true),color:'#333',font:{size:9,weight:'700'},anchor:'end',align:'end',offset:4,rotation:-90,clip:false};
-  const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:true,position:'top',labels:{boxWidth:10,font:{size:10}}},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
+  const yBase=(isRM)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:8}},plugins:{legend:{display:false},datalabels:hideDL?{display:false}:(isRM?dlYrm:dlY)},scales:{x:{ticks:{...tck,autoSkip:false,maxRotation:45},grid:{display:false}},y:{ticks:{...tck,callback:v=>isRM?'RM '+(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()):(v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString())},grid:{color:'rgba(0,0,0,0.05)'}}}});
 
   if(khYoyShowKampus){
     if(khYoy1)khYoy1.destroy();khYoy1=new Chart(document.getElementById('kh-yoy-c1'),{type:'bar',data:{labels:shortDlm,datasets:[{label:String(currY),data:bulanDlm.map(b=>(getCurr(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(26,95,168,.85)',borderRadius:3,borderSkipped:false},{label:String(prevY),data:bulanDlm.map(b=>(getPrev(b)||{kampusKwh:0}).kampusKwh),backgroundColor:'rgba(147,197,253,.7)',borderRadius:3,borderSkipped:false}]},options:yBase(false)});
