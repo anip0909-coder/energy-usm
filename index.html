@@ -642,9 +642,9 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
           <div id="dash-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
         </div>
       </div>
-      <div class="dpanel" style="display:flex;flex-direction:column">
+      <div class="dpanel" style="display:flex;flex-direction:column;height:100%">
         <div class="dpanel-title">USM KAMPUS KESIHATAN</div>
-        <div style="position:relative;width:100%;flex:1;min-height:520px;margin-top:8px"><div id="dash-hospital-map"></div></div>
+        <div style="position:relative;width:100%;flex:1 1 auto;height:100%;margin-top:8px"><div id="dash-hospital-map"></div></div>
       </div>
     </div>
 
@@ -931,7 +931,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 300;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -2470,23 +2470,51 @@ function dashGo(section, tab){
 }
 
 // Peta sebenar Hospital USM (Kubang Kerian, Kelantan) guna Leaflet + OpenStreetMap — boleh zoom/seret
-let dashHospitalMapInstance=null, dashHospitalMarker=null;
+let dashHospitalMapInstance=null, dashHospitalMarker=null, dashHospitalMapResizeObs=null;
+let dashHospitalLatLng=[6.1300,102.2895]; // anggaran awal (USM Kampus Kesihatan) — dikemaskini terus dari OpenStreetMap sekali sahaja
+let dashHospitalGeocoded=false;
+
+function dashInitHospitalMapInstance(){
+  const el=document.getElementById('dash-hospital-map');
+  if(!el || typeof L==='undefined') return;
+
+  // Bina semula peta dari kosong setiap kali dipanggil supaya Leaflet sentiasa ukur saiz
+  // bekas SEBENAR (selepas grid/flex selesai susun atur) — elak isu ruang kosong/peta tersasar.
+  if(dashHospitalMapInstance){
+    dashHospitalMapInstance.remove();
+    dashHospitalMapInstance=null;
+  }
+  el.innerHTML='';
+
+  dashHospitalMapInstance=L.map(el,{scrollWheelZoom:true}).setView(dashHospitalLatLng,17);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,
+    attribution:'© OpenStreetMap'
+  }).addTo(dashHospitalMapInstance);
+  dashHospitalMarker=L.marker(dashHospitalLatLng).addTo(dashHospitalMapInstance)
+    .bindPopup('<strong>USM Kampus Kesihatan</strong><br>Kubang Kerian, Kelantan')
+    .openPopup();
+
+  if(!dashHospitalMapResizeObs && typeof ResizeObserver!=='undefined'){
+    dashHospitalMapResizeObs=new ResizeObserver(()=>{ if(dashHospitalMapInstance) dashHospitalMapInstance.invalidateSize(); });
+  }
+  if(dashHospitalMapResizeObs) dashHospitalMapResizeObs.observe(el);
+
+  // Pastikan saiz peta betul sebaik sahaja bekas selesai susun atur (grid/flex)
+  requestAnimationFrame(()=>{ if(dashHospitalMapInstance) dashHospitalMapInstance.invalidateSize(); });
+  [50,200,500,1000].forEach(ms=>setTimeout(()=>{ if(dashHospitalMapInstance) dashHospitalMapInstance.invalidateSize(); }, ms));
+}
+
 function renderDashboardHospitalMap(){
   const el=document.getElementById('dash-hospital-map');
   if(!el || typeof L==='undefined') return;
-  const HOSPITAL_USM_FALLBACK=[6.1300,102.2895]; // anggaran awal (USM Kampus Kesihatan) — akan diperhalusi terus dari OpenStreetMap di bawah
-  if(!dashHospitalMapInstance){
-    dashHospitalMapInstance=L.map(el,{scrollWheelZoom:true}).setView(HOSPITAL_USM_FALLBACK,16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19,
-      attribution:'© OpenStreetMap'
-    }).addTo(dashHospitalMapInstance);
-    dashHospitalMarker=L.marker(HOSPITAL_USM_FALLBACK).addTo(dashHospitalMapInstance)
-      .bindPopup('<strong>USM Kampus Kesihatan</strong><br>Kubang Kerian, Kelantan')
-      .openPopup();
 
-    // Dapatkan lokasi tepat terus dari OpenStreetMap (Nominatim) ikut nama rasmi USM Kampus
-    // Kesihatan, supaya penanda sentiasa sepadan dengan bangunan sebenar dalam data peta.
+  dashInitHospitalMapInstance();
+
+  // Dapatkan lokasi tepat terus dari OpenStreetMap (Nominatim) ikut nama rasmi USM Kampus
+  // Kesihatan — sekali sahaja, kemudian cache supaya render seterusnya tak perlu geocode semula.
+  if(!dashHospitalGeocoded){
+    dashHospitalGeocoded=true;
     fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
       encodeURIComponent('Universiti Sains Malaysia Kampus Kesihatan, Kubang Kerian, Kota Bharu, Kelantan'))
       .then(r=>r.json())
@@ -2494,15 +2522,16 @@ function renderDashboardHospitalMap(){
         if(results && results[0]){
           const lat=parseFloat(results[0].lat), lon=parseFloat(results[0].lon);
           if(!isNaN(lat) && !isNaN(lon)){
-            dashHospitalMapInstance.setView([lat,lon],17);
-            dashHospitalMarker.setLatLng([lat,lon]).openPopup();
+            dashHospitalLatLng=[lat,lon];
+            if(dashHospitalMapInstance){
+              dashHospitalMapInstance.setView(dashHospitalLatLng,17);
+              dashHospitalMarker.setLatLng(dashHospitalLatLng).openPopup();
+            }
           }
         }
       })
       .catch(()=>{ /* kekal pada anggaran awal jika geocoding gagal (cth. luar talian) */ });
   }
-  // pastikan saiz peta betul selepas panel dipaparkan (elak isu tile kosong)
-  setTimeout(()=>{ if(dashHospitalMapInstance) dashHospitalMapInstance.invalidateSize(); }, 150);
 }
 
 function renderDashboardSection(){
