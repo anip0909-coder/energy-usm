@@ -630,21 +630,21 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       </div>
     </div>
 
-    <div class="dash-grid g3" id="dash-metrics-top"></div>
-    <div class="dash-grid g5" id="dash-metrics-bottom"></div>
+    <div class="dash-grid g4" id="dash-metrics-top"></div>
 
-    <div class="dash-row3" style="grid-template-columns:1fr 1fr">
-      <div class="dpanel">
-        <div class="dpanel-title">SUMBANGAN TENAGA</div>
-        <div class="dpanel-sub">Daripada jumlah penggunaan</div>
-        <div style="position:relative;width:100%;height:170px"><canvas id="dashChartDonut"></canvas></div>
-        <div id="dash-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
+    <div class="dash-row3" style="grid-template-columns:2.1fr 1.3fr;margin-top:14px">
+      <div class="dash-grid g4" id="dash-metrics-bottom" style="grid-template-columns:repeat(2,1fr);margin-bottom:0"></div>
+      <div class="dpanel" style="display:flex;flex-direction:column">
+        <div class="dpanel-title">USM KAMPUS KESIHATAN</div>
+        <div style="position:relative;width:100%;flex:1;min-height:290px;margin-top:8px"><div id="dash-hospital-map"></div></div>
       </div>
-      <div class="dpanel">
-        <div class="dpanel-title">LOKASI HOSPITAL USM</div>
-        <div class="dpanel-sub">Peta sebenar — boleh zoom in/out &amp; seret</div>
-        <div style="position:relative;width:100%;height:230px;margin-top:8px"><div id="dash-hospital-map"></div></div>
-      </div>
+    </div>
+
+    <div class="dpanel" style="margin-top:14px;max-width:520px">
+      <div class="dpanel-title">SUMBANGAN TENAGA</div>
+      <div class="dpanel-sub">Daripada jumlah penggunaan</div>
+      <div style="position:relative;width:100%;height:170px"><canvas id="dashChartDonut"></canvas></div>
+      <div id="dash-donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#c3d3e3;font-weight:600"></div>
     </div>
 
     <div class="dash-row2" style="grid-template-columns:1fr">
@@ -2469,19 +2469,36 @@ function dashGo(section, tab){
 }
 
 // Peta sebenar Hospital USM (Kubang Kerian, Kelantan) guna Leaflet + OpenStreetMap — boleh zoom/seret
-let dashHospitalMapInstance=null;
+let dashHospitalMapInstance=null, dashHospitalMarker=null;
 function renderDashboardHospitalMap(){
   const el=document.getElementById('dash-hospital-map');
   if(!el || typeof L==='undefined') return;
-  const HOSPITAL_USM_LATLNG=[6.1254,102.2977]; // Hospital Universiti Sains Malaysia, Kubang Kerian
+  const HOSPITAL_USM_FALLBACK=[6.1300,102.2895]; // anggaran awal (USM Kampus Kesihatan) — akan diperhalusi terus dari OpenStreetMap di bawah
   if(!dashHospitalMapInstance){
-    dashHospitalMapInstance=L.map(el,{scrollWheelZoom:true}).setView(HOSPITAL_USM_LATLNG,16);
+    dashHospitalMapInstance=L.map(el,{scrollWheelZoom:true}).setView(HOSPITAL_USM_FALLBACK,16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19,
       attribution:'© OpenStreetMap'
     }).addTo(dashHospitalMapInstance);
-    L.marker(HOSPITAL_USM_LATLNG).addTo(dashHospitalMapInstance)
-      .bindPopup('<strong>Hospital Universiti Sains Malaysia</strong><br>Kubang Kerian, Kelantan').openPopup();
+    dashHospitalMarker=L.marker(HOSPITAL_USM_FALLBACK).addTo(dashHospitalMapInstance)
+      .bindPopup('<strong>USM Kampus Kesihatan</strong><br>Kubang Kerian, Kelantan')
+      .openPopup();
+
+    // Dapatkan lokasi tepat terus dari OpenStreetMap (Nominatim) ikut nama rasmi USM Kampus
+    // Kesihatan, supaya penanda sentiasa sepadan dengan bangunan sebenar dalam data peta.
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
+      encodeURIComponent('Universiti Sains Malaysia Kampus Kesihatan, Kubang Kerian, Kota Bharu, Kelantan'))
+      .then(r=>r.json())
+      .then(results=>{
+        if(results && results[0]){
+          const lat=parseFloat(results[0].lat), lon=parseFloat(results[0].lon);
+          if(!isNaN(lat) && !isNaN(lon)){
+            dashHospitalMapInstance.setView([lat,lon],17);
+            dashHospitalMarker.setLatLng([lat,lon]).openPopup();
+          }
+        }
+      })
+      .catch(()=>{ /* kekal pada anggaran awal jika geocoding gagal (cth. luar talian) */ });
   }
   // pastikan saiz peta betul selepas panel dipaparkan (elak isu tile kosong)
   setTimeout(()=>{ if(dashHospitalMapInstance) dashHospitalMapInstance.invalidateSize(); }, 150);
@@ -2538,6 +2555,12 @@ function renderDashboardSection(){
       ${deltaBadge(d.totalKwh, prevAgg?prevAgg.totalKwh:null)}
       ${sparklineSVG(last8.map(r=>r.totalKwh),'#5fa8ff')}
     </div>
+    <div class="dcard dcard-clickable" onclick="dashGo('analysis')" title="Lihat Analysis">
+      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#f0c060"><i class="ti ti-currency-dollar"></i></div><div class="dcard-label">Cost of Electricity</div></div>
+      <div class="dcard-value">${fmtRM(costElec)}</div>
+      ${deltaBadge(costElec, prevCostElec)}
+      ${barSparkSVG(costSpark,'#f0c060')}
+    </div>
     <div class="dcard dcard-clickable" onclick="dashGo('solar')" title="Lihat Solar Monitoring">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#e8a020"><i class="ti ti-sun"></i></div><div class="dcard-label">Solar Generation</div></div>
       <div class="dcard-value">${fmt(d.solarKwh)}<span>kWh</span></div>
@@ -2569,12 +2592,6 @@ function renderDashboardSection(){
       <div class="dcard-value" style="font-size:18px">${fmtKg(net)}<span>kgCO₂e</span></div>
       ${deltaBadge(net, prevNet)}
       ${barSparkSVG(netSpark,'#a78bfa')}
-    </div>
-    <div class="dcard dcard-clickable" onclick="dashGo('analysis')" title="Lihat Analysis">
-      <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#f0c060"><i class="ti ti-currency-dollar"></i></div><div class="dcard-label">Cost of Electricity</div></div>
-      <div class="dcard-value" style="font-size:18px">${fmtRM(costElec)}</div>
-      ${deltaBadge(costElec, prevCostElec)}
-      ${barSparkSVG(costSpark,'#f0c060')}
     </div>
     <div class="dcard dcard-clickable" onclick="dashGo('analysis')" title="Lihat Analysis">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(8,145,178,.14);color:#22d3ee"><i class="ti ti-piggy-bank"></i></div><div class="dcard-label">Cost Saving by Solar</div></div>
