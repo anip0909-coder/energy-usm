@@ -931,7 +931,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 // ══════════════════════════════════════════════
 const DEFAULT_SHEET_ID   = '1qeBr-3Ja9eGbtIXN_DuGq0ig6xo_UJLcMmZXKmjcRQg';
 const DEFAULT_SHEET_NAME = 'JPPF';
-const REFRESH_SECONDS    = 1800;
+const REFRESH_SECONDS    = 300;
 // ══════════════════════════════════════════════
 
 document.getElementById('footer-sec').textContent = REFRESH_SECONDS;
@@ -942,7 +942,7 @@ function getConfig(){
   return {sheetId:DEFAULT_SHEET_ID,sheetName:DEFAULT_SHEET_NAME};
 }
 let CONFIG=getConfig();
-let allRows=[],chartKwh,chartBil,chartTrend,countdownTimer,secondsLeft=REFRESH_SECONDS;
+let allRows=[],chartKwh,chartBil,chartTrend,chartMD,countdownTimer,secondsLeft=REFRESH_SECONDS;
 
 const BULAN_ORDER=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
 const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
@@ -971,11 +971,11 @@ function printPDF(){
 
 // Resize carta Chart.js supaya sesuai dengan saiz padat semasa cetak (chart-canvas-wrap dikecilkan via CSS print)
 window.addEventListener('beforeprint', () => {
-  [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
+  [chartKwh, chartBil, chartTrend, chartMD].forEach(ch => { if(ch) ch.resize(); });
 });
 window.addEventListener('afterprint', () => {
   setTimeout(() => {
-    [chartKwh, chartBil, chartTrend].forEach(ch => { if(ch) ch.resize(); });
+    [chartKwh, chartBil, chartTrend, chartMD].forEach(ch => { if(ch) ch.resize(); });
   }, 100);
 });
 
@@ -1013,8 +1013,16 @@ function detectColumns(lines){
     if(!row.some(c=>c.includes('bulan'))) continue;
     const m={};
     row.forEach((h,idx)=>{
+      const hNorm=h.replace(/[\s-]/g,''); // buang spasi/sengkang utk padanan MD/On-Peak/Off-Peak lebih tepat
       if(h.includes('bulan'))m.bulan=idx;
       else if(h.includes('tahun')||h.includes('year'))m.tahun=idx;
+      // Lajur baharu: SS-A/SS-D MD, On-Peak, Off-Peak kWh — disemak SEBELUM padanan umum ssaKwh/ssdKwh
+      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssaMdKwh=idx;
+      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('onpeak'))m.ssaOnPeakKwh=idx;
+      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('offpeak'))m.ssaOffPeakKwh=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssdMdKwh=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('onpeak'))m.ssdOnPeakKwh=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('offpeak'))m.ssdOffPeakKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh'))m.ssaKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('kwh'))m.ssdKwh=idx;
       else if(h.includes('total')&&h.includes('kwh'))m.totalKwh=idx;
@@ -1050,6 +1058,8 @@ function buildRows(lines,headerIdx,colMap){
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
+      ssaMdKwh:n('ssaMdKwh'),ssaOnPeakKwh:n('ssaOnPeakKwh'),ssaOffPeakKwh:n('ssaOffPeakKwh'),
+      ssdMdKwh:n('ssdMdKwh'),ssdOnPeakKwh:n('ssdOnPeakKwh'),ssdOffPeakKwh:n('ssdOffPeakKwh'),
       ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
@@ -1175,10 +1185,11 @@ function sortByPeriod(rows){
 function sumRows(rows){
   return rows.reduce((a,r)=>({
     ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
+    ssaMdKwh:a.ssaMdKwh+(r.ssaMdKwh||0),ssdMdKwh:a.ssdMdKwh+(r.ssdMdKwh||0),
     solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,
     eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,
     ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm
-  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});
+  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,ssaMdKwh:0,ssdMdKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});
 }
 
 function renderShell(){
@@ -1215,6 +1226,14 @@ function renderShell(){
         <span><span class="leg-dot" style="background:#e8a020"></span>Total RM</span>
       </div>
       <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
+    </div>
+    <div class="trend-box" style="margin-top:18px">
+      <div class="chart-title">Maximum Demand (MD) — SS-A vs SS-D</div>
+      <div class="legend" style="margin-top:6px">
+        <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kWh</span>
+        <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kWh</span>
+      </div>
+      <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartMD"></canvas></div>
     </div>
     </div>
     <div class="sec-title"><i class="ti ti-heartbeat"></i> Kesihatan Sistem</div>
@@ -1396,6 +1415,25 @@ function renderCharts(filtered,d){
         }
       }
     });
+
+    if(chartMD) chartMD.destroy();
+    chartMD=new Chart(document.getElementById('chartMD'),{type:'line',
+      data:{labels:lbl,datasets:[
+        {label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false},
+        {label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        layout:{padding:{top:12,bottom:8}},
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},datalabels:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kWh`}}},
+        scales:{
+          x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},
+          y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}
+        }
+      }
+    });
   } else {
     // ── Single month / single bar ──
     const kwhLbls=[],kwhVals=[],kwhClr=[];
@@ -1420,6 +1458,12 @@ function renderCharts(filtered,d){
       data:{labels:['kWh Total','Bil Total','Eksport RM','Penjimatan'],
         datasets:[{data:[d.totalKwh,d.totalRm,d.eksportRm,d.penjimatan],backgroundColor:['#1a5fa8','#1e7e34','#0891b2','#7c3aed'],borderRadius:6}]},
       options:baseOpts(false)});
+
+    if(chartMD) chartMD.destroy();
+    const mdLbls=[],mdVals=[],mdClr=[];
+    if(showSSA){mdLbls.push('SS-A MD kWh');mdVals.push(d.ssaMdKwh);mdClr.push('#1a5fa8');}
+    if(showSSD){mdLbls.push('SS-D MD kWh');mdVals.push(d.ssdMdKwh);mdClr.push('#1e7e34');}
+    chartMD=new Chart(document.getElementById('chartMD'),{type:'bar',data:{labels:mdLbls,datasets:[{data:mdVals,backgroundColor:mdClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
   }
 }
 
@@ -3219,7 +3263,13 @@ function unlockAdmin(pw){
 // EDIT / DELETE
 // ══════════════════════════════════════════════
 const JPPF_EDIT_FIELDS=[
+  {key:'ssaMdKwh',     label:'SS-A MD kWh'},
+  {key:'ssaOnPeakKwh', label:'SS-A On-Peak kWh'},
+  {key:'ssaOffPeakKwh',label:'SS-A Off-Peak kWh'},
   {key:'ssaKwh',   label:'SS-A kWh'},
+  {key:'ssdMdKwh',     label:'SS-D MD kWh'},
+  {key:'ssdOnPeakKwh', label:'SS-D On-Peak kWh'},
+  {key:'ssdOffPeakKwh',label:'SS-D Off-Peak kWh'},
   {key:'ssdKwh',   label:'SS-D kWh'},
   {key:'solarKwh', label:'Janaan Solar kWh'},
   {key:'ssaRm',    label:'Bil SS-A (RM)'},
@@ -3437,7 +3487,9 @@ function buildJppfTable(rows){
   sorted.forEach(r=>{
     rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-      <td>${fmt(r.ssaKwh)}</td><td>${fmt(r.ssdKwh)}</td><td>${fmt2d(r.solarKwh)}</td>
+      <td>${fmt(r.ssaMdKwh)}</td><td>${fmt(r.ssaOnPeakKwh)}</td><td>${fmt(r.ssaOffPeakKwh)}</td><td>${fmt(r.ssaKwh)}</td>
+      <td>${fmt(r.ssdMdKwh)}</td><td>${fmt(r.ssdOnPeakKwh)}</td><td>${fmt(r.ssdOffPeakKwh)}</td><td>${fmt(r.ssdKwh)}</td>
+      <td>${fmt2d(r.solarKwh)}</td>
       <td>${fmtRM2d(r.ssaRm)}</td><td>${fmtRM2d(r.ssdRm)}</td>
       <td>${fmt(r.eksportKwh)}</td><td>${fmtRM2d(r.eksportRm)}</td><td>${fmtRM2d(r.penjimatan)}</td><td>${fmtRM2d(r.bilPvSolar)}</td>
       <td class="edit-action-col" style="display:none">
@@ -3480,7 +3532,9 @@ function buildJppfTable(rows){
         <table class="data-table" id="jppf-data-tbl">
           <thead><tr>
             <th>Bulan</th><th>Tahun</th>
-            <th>SS-A kWh</th><th>SS-D kWh</th><th>Solar kWh</th>
+            <th>SS-A MD kWh</th><th>SS-A On-Peak kWh</th><th>SS-A Off-Peak kWh</th><th>SS-A kWh</th>
+            <th>SS-D MD kWh</th><th>SS-D On-Peak kWh</th><th>SS-D Off-Peak kWh</th><th>SS-D kWh</th>
+            <th>Solar kWh</th>
             <th>Bil SS-A</th><th>Bil SS-D</th>
             <th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
             <th class="edit-action-col" style="display:none">Tindakan</th>
