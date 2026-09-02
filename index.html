@@ -599,8 +599,6 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item" id="subside-surcaj" onclick="switchSection('energy');switchTab('surcaj')"><i class="ti ti-receipt-2"></i> Surcaj</div>
   </div>
 
-  <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
-
   <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('power')"></i></div>
   <div class="sidebar-sub" id="side-power-sub">
     <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
@@ -1230,8 +1228,8 @@ function renderShell(){
     <div class="trend-box" style="margin-top:18px">
       <div class="chart-title">Maximum Demand (MD) — SS-A vs SS-D</div>
       <div class="legend" style="margin-top:6px">
-        <span><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kWh</span>
-        <span><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kWh</span>
+        <span id="leg-md-ssa"><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kWh</span>
+        <span id="leg-md-ssd"><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kWh</span>
       </div>
       <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartMD"></canvas></div>
     </div>
@@ -1257,12 +1255,17 @@ function updateDisplay(){
   const dispTotalKwh=(showSSA?d.ssaKwh:0)+(showSSD?d.ssdKwh:0);
   const dispTotalRm=(showSSA?d.ssaRm:0)+(showSSD?d.ssdRm:0);
 
-  // ── 10 METRIC CARDS ──
+  // ── 10 METRIC CARDS + kad MD (ikut toggle SS-A/SS-D) ──
+  let mdCardsHtml='';
+  if(showSSA) mdCardsHtml+=`<div class="card kampus"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kWh (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSD) mdCardsHtml+=`<div class="card hospital"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+
   document.getElementById('metrics-grid').innerHTML=`
     <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
     <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>
     <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(dispTotalKwh)}</div><div class="card-unit">${label}</div></div>
+    ${mdCardsHtml}
     <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
     <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
@@ -1417,11 +1420,14 @@ function renderCharts(filtered,d){
     });
 
     if(chartMD) chartMD.destroy();
+    const legMdA=document.getElementById('leg-md-ssa'), legMdD=document.getElementById('leg-md-ssd');
+    if(legMdA) legMdA.style.display=showSSA?'':'none';
+    if(legMdD) legMdD.style.display=showSSD?'':'none';
+    const mdDatasets=[];
+    if(showSSA) mdDatasets.push({label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false});
+    if(showSSD) mdDatasets.push({label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false});
     chartMD=new Chart(document.getElementById('chartMD'),{type:'line',
-      data:{labels:lbl,datasets:[
-        {label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false},
-        {label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false}
-      ]},
+      data:{labels:lbl,datasets:mdDatasets},
       options:{
         responsive:true, maintainAspectRatio:false,
         layout:{padding:{top:12,bottom:8}},
@@ -1460,6 +1466,9 @@ function renderCharts(filtered,d){
       options:baseOpts(false)});
 
     if(chartMD) chartMD.destroy();
+    const legMdA2=document.getElementById('leg-md-ssa'), legMdD2=document.getElementById('leg-md-ssd');
+    if(legMdA2) legMdA2.style.display=showSSA?'':'none';
+    if(legMdD2) legMdD2.style.display=showSSD?'':'none';
     const mdLbls=[],mdVals=[],mdClr=[];
     if(showSSA){mdLbls.push('SS-A MD kWh');mdVals.push(d.ssaMdKwh);mdClr.push('#1a5fa8');}
     if(showSSD){mdLbls.push('SS-D MD kWh');mdVals.push(d.ssdMdKwh);mdClr.push('#1e7e34');}
@@ -4782,15 +4791,24 @@ const ANA_YEAR_COLORS=['#5fa8ff','#e8a020','#4ade80','#a78bfa','#e05a4a','#22d3e
 
 function anaMetricValue(r, metric){
   if(metric==='rm') return r.totalRm;
+  if(metric==='rm-ssa') return r.ssaRm;
+  if(metric==='rm-ssd') return r.ssdRm;
+  if(metric==='kwh-ssa') return r.ssaKwh;
+  if(metric==='kwh-ssd') return r.ssdKwh;
   if(metric==='carbon') return (r.ssaKwh+r.ssdKwh)*CARBON_EF;
   return r.totalKwh; // kwh (default)
 }
 function anaMetricLabel(metric){
-  return metric==='rm' ? 'Kos (RM)' : metric==='carbon' ? 'Carbon Emission (kgCO₂e)' : 'Jumlah Tenaga (kWh)';
+  const labels={
+    'rm':'Kos (RM)', 'rm-ssa':'Kos SS-A (RM)', 'rm-ssd':'Kos SS-D (RM)',
+    'kwh-ssa':'Tenaga SS-A (kWh)', 'kwh-ssd':'Tenaga SS-D (kWh)',
+    'carbon':'Carbon Emission (kgCO₂e)'
+  };
+  return labels[metric] || 'Jumlah Tenaga (kWh)';
 }
 function anaMetricFmt(metric, v){
   if(v==null) return '—';
-  if(metric==='rm') return fmtRM(v);
+  if(metric==='rm'||metric==='rm-ssa'||metric==='rm-ssd') return fmtRM(v);
   if(metric==='carbon') return fmtKg(v)+' kgCO₂e';
   return fmt(v)+' kWh';
 }
@@ -4817,7 +4835,11 @@ function renderAnalysisSection(){
         <select id="ana-sel-tahun" onchange="renderAnalysisBody()">${yearOpts}</select>
         <select id="ana-sel-metrik" onchange="renderAnalysisBody()">
           <option value="kwh">Tenaga (kWh)</option>
+          <option value="kwh-ssa">Tenaga SS-A (kWh)</option>
+          <option value="kwh-ssd">Tenaga SS-D (kWh)</option>
           <option value="rm">Kos (RM)</option>
+          <option value="rm-ssa">Kos SS-A (RM)</option>
+          <option value="rm-ssd">Kos SS-D (RM)</option>
           <option value="carbon">Carbon (kgCO₂e)</option>
         </select>
       </div>
