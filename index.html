@@ -599,6 +599,8 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item" id="subside-surcaj" onclick="switchSection('energy');switchTab('surcaj')"><i class="ti ti-receipt-2"></i> Surcaj</div>
   </div>
 
+  <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
+
   <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('power')"></i></div>
   <div class="sidebar-sub" id="side-power-sub">
     <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
@@ -902,6 +904,18 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 </div>
 
+<!-- SS-A / SS-D DETAIL POPUP -->
+<div class="edit-modal-bg" id="ss-detail-modal">
+  <div class="edit-modal-box" style="max-width:480px">
+    <h2 id="ss-detail-title"><i class="ti ti-building"></i> Butiran SS-A</h2>
+    <p id="ss-detail-sub" style="color:#888;font-size:12.5px;margin-bottom:14px"></p>
+    <div id="ss-detail-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSSDetailModal()">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD RECORD MODAL (Building) -->
 <div class="edit-modal-bg" id="add-bld-modal">
   <div class="edit-modal-box">
@@ -941,6 +955,7 @@ function getConfig(){
 }
 let CONFIG=getConfig();
 let allRows=[],chartKwh,chartBil,chartTrend,chartMD,countdownTimer,secondsLeft=REFRESH_SECONDS;
+let lastMetricsD=null, lastMetricsLabel='';
 
 const BULAN_ORDER=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
 const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
@@ -1254,25 +1269,27 @@ function updateDisplay(){
   // Jumlah kWh / Jumlah Bil ikut toggle SS-A/SS-D yang aktif (konsisten dengan carta Trend Bulanan)
   const dispTotalKwh=(showSSA?d.ssaKwh:0)+(showSSD?d.ssdKwh:0);
   const dispTotalRm=(showSSA?d.ssaRm:0)+(showSSD?d.ssdRm:0);
+  lastMetricsD=d; lastMetricsLabel=label; // simpan utk pop-up butiran SS-A/SS-D
 
-  // ── 10 METRIC CARDS + kad MD (ikut toggle SS-A/SS-D) ──
-  let mdCardsHtml='';
-  if(showSSA) mdCardsHtml+=`<div class="card kampus"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kWh (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
-  if(showSSD) mdCardsHtml+=`<div class="card hospital"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  // ── KAD METRIK — setiap kad SS-A/SS-D/Solar hanya muncul bila toggle berkenaan aktif ──
+  let cardsHtml='';
+  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh · <i class="ti ti-info-circle"></i> Klik butiran</div></div>`;
+  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh · <i class="ti ti-info-circle"></i> Klik butiran</div></div>`;
+  if(showSolar) cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>`;
+  cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(dispTotalKwh)}</div><div class="card-unit">${label}</div></div>`;
+  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kWh (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>`;
+  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
+  if(showSolar){
+    cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
+    cardsHtml+=`<div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>`;
+    cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
+    cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
+  }
+  cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(dispTotalRm)}</div><div class="card-unit">${label}</div></div>`;
 
-  document.getElementById('metrics-grid').innerHTML=`
-    <div class="card kampus"><div class="card-icon"><i class="ti ti-building"></i></div><div class="card-label">SS-A kWh (Kampus)</div><div class="card-value">${fmt(d.ssaKwh)}</div><div class="card-unit">kWh</div></div>
-    <div class="card hospital"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh</div></div>
-    <div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(dispTotalKwh)}</div><div class="card-unit">${label}</div></div>
-    ${mdCardsHtml}
-    <div class="card kampus"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card hospital"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>
-    <div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>
-    <div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>
-    <div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>
-    <div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(dispTotalRm)}</div><div class="card-unit">${label}</div></div>`;
+  document.getElementById('metrics-grid').innerHTML=cardsHtml;
 
   renderCharts(filtered,d);
   renderHealth(d);
@@ -1283,6 +1300,40 @@ function updateDisplay(){
 
 // ── SS FILTER STATE ──
 let showSSA=true, showSSD=true, showSolar=true;
+// ── Pop-up butiran penuh SS-A / SS-D (klik kad metrik) ──
+function openSSDetailModal(zone){
+  if(!lastMetricsD) return;
+  const d=lastMetricsD;
+  const isA=zone==='ssa';
+  const title=isA?'Butiran SS-A (Kampus)':'Butiran SS-D (HPUSM)';
+  const icon=isA?'ti-building':'ti-building-hospital';
+  const color=isA?'#1a5fa8':'#1e7e34';
+  const rows=isA?[
+    {label:'SS-A kWh (Jumlah)', value:fmt(d.ssaKwh)+' kWh'},
+    {label:'SS-A MD kWh (Maximum Demand)', value:fmt(d.ssaMdKwh)+' kWh'},
+    {label:'SS-A On-Peak kWh', value:fmt(d.ssaOnPeakKwh)+' kWh'},
+    {label:'SS-A Off-Peak kWh', value:fmt(d.ssaOffPeakKwh)+' kWh'},
+    {label:'Bil SS-A (RM)', value:fmtRM2d(d.ssaRm)},
+  ]:[
+    {label:'SS-D kWh (Jumlah)', value:fmt(d.ssdKwh)+' kWh'},
+    {label:'SS-D MD kWh (Maximum Demand)', value:fmt(d.ssdMdKwh)+' kWh'},
+    {label:'SS-D On-Peak kWh', value:fmt(d.ssdOnPeakKwh)+' kWh'},
+    {label:'SS-D Off-Peak kWh', value:fmt(d.ssdOffPeakKwh)+' kWh'},
+    {label:'Bil SS-D (RM)', value:fmtRM2d(d.ssdRm)},
+  ];
+  document.getElementById('ss-detail-title').innerHTML=`<i class="ti ${icon}" style="color:${color}"></i> ${title}`;
+  document.getElementById('ss-detail-sub').textContent='Tempoh tapisan semasa: '+lastMetricsLabel;
+  document.getElementById('ss-detail-body').innerHTML = rows.map(r=>
+    `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eee;font-size:13.5px">
+      <span style="color:#555">${r.label}</span><strong style="color:${color}">${r.value}</strong>
+    </div>`
+  ).join('');
+  document.getElementById('ss-detail-modal').classList.add('show');
+}
+function closeSSDetailModal(){
+  document.getElementById('ss-detail-modal').classList.remove('show');
+}
+
 function toggleSS(which){
   if(which==='ssa'){
     showSSA=!showSSA;
@@ -1423,16 +1474,18 @@ function renderCharts(filtered,d){
     const legMdA=document.getElementById('leg-md-ssa'), legMdD=document.getElementById('leg-md-ssd');
     if(legMdA) legMdA.style.display=showSSA?'':'none';
     if(legMdD) legMdD.style.display=showSSD?'':'none';
+    const dlMdA = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1a5fa8',font:{size:9,weight:'700'},anchor:'end',align:'top',offset:4,rotation:0,clip:false} : {display:false};
+    const dlMdD = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1e7e34',font:{size:9,weight:'700'},anchor:'end',align:'bottom',offset:4,rotation:0,clip:false} : {display:false};
     const mdDatasets=[];
-    if(showSSA) mdDatasets.push({label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false});
-    if(showSSD) mdDatasets.push({label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false});
+    if(showSSA) mdDatasets.push({label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false,datalabels:dlMdA});
+    if(showSSD) mdDatasets.push({label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false,datalabels:dlMdD});
     chartMD=new Chart(document.getElementById('chartMD'),{type:'line',
       data:{labels:lbl,datasets:mdDatasets},
       options:{
         responsive:true, maintainAspectRatio:false,
-        layout:{padding:{top:12,bottom:8}},
+        layout:{padding:{top:26,bottom:20}},
         interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},datalabels:{display:false},
+        plugins:{legend:{display:false},datalabels:{},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kWh`}}},
         scales:{
           x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},
