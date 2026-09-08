@@ -1786,11 +1786,25 @@ function yoyPenjimatanVal(row){
     }
     return row.penjimatan;
   }
-  const prevYear=String(parseInt(row.tahun)-1);
-  const prevRow=allRows.find(r=>r.bulan===row.bulan && r.tahun===prevYear);
-  if(!prevRow) return null;
-  if(yoyShowSSA) return prevRow.ssaRm-(row.ssaRm+row.bilPvSolar);
-  if(yoyShowSSD) return prevRow.ssdRm-row.ssdRm;
+  // Row bulanan individu — cari rekod bulan sepadan tahun sebelum terus dari allRows
+  if(row.bulan && row.tahun){
+    const prevYear=String(parseInt(row.tahun)-1);
+    const prevRow=allRows.find(r=>r.bulan===row.bulan && r.tahun===prevYear);
+    if(!prevRow) return null;
+    if(yoyShowSSA) return prevRow.ssaRm-(row.ssaRm+row.bilPvSolar);
+    if(yoyShowSSD) return prevRow.ssdRm-row.ssdRm;
+    return row.penjimatan;
+  }
+  // Row agregat (jumlah julat bulan terpilih — kad ringkasan YoY) — guna cache _compareSsaRm/_compareSsdRm
+  // yang disediakan dalam renderYoY() supaya kad Penjimatan (SS-A)/(SS-D) sepadan dengan jadual.
+  if(yoyShowSSA){
+    if(row._compareSsaRm===undefined) return null;
+    return row._compareSsaRm-(row.ssaRm+row.bilPvSolar);
+  }
+  if(yoyShowSSD){
+    if(row._compareSsdRm===undefined) return null;
+    return row._compareSsdRm-row.ssdRm;
+  }
   return row.penjimatan;
 }
 function yoyPenjimatanLabel(){
@@ -1819,6 +1833,10 @@ function renderYoY(){
   const prevCompareRows=dedupByBulan(allRows.filter(r=>r.tahun===String(parseInt(prevY)-1)&&BULAN_ORDER.indexOf(r.bulan)>=s&&BULAN_ORDER.indexOf(r.bulan)<=e));
   c._compareTotalRm=sumR(currCompareRows).totalRm;
   p._compareTotalRm=sumR(prevCompareRows).totalRm;
+  c._compareSsaRm=sumR(currCompareRows).ssaRm;
+  p._compareSsaRm=sumR(prevCompareRows).ssaRm;
+  c._compareSsdRm=sumR(currCompareRows).ssdRm;
+  p._compareSsdRm=sumR(prevCompareRows).ssdRm;
   const rangeStr=s===e?BULAN_ORDER[s]:BULAN_ORDER[s]+' – '+BULAN_ORDER[e];
   const dK=delta(yoyKwhVal(c),yoyKwhVal(p)),dB=delta(yoyBilVal(c),yoyBilVal(p));
   const dSSAk=delta(c.ssaKwh,p.ssaKwh),dSSDk=delta(c.ssdKwh,p.ssdKwh);
@@ -1837,19 +1855,22 @@ function renderYoY(){
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val">${fmtRM2(yoyBilVal(c))}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyBilVal(p))}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyBilVal(c),yoyBilVal(p)).cls}">${delta(yoyBilVal(c),yoyBilVal(p)).arrow} ${delta(yoyBilVal(c),yoyBilVal(p)).pct}</div>
-    </div>
+    </div>`;
+  if(yoyShowSSA) html+=`
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building"></i> SS-A kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1a5fa8">${fmtN(c.ssaKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.ssaKwh)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dSSAk.cls}">${dSSAk.arrow} ${dSSAk.pct}</div>
-    </div>
+    </div>`;
+  if(yoyShowSSD) html+=`
     <div class="yoy-card kwh-card">
       <div class="yoy-card-label"><i class="ti ti-building-hospital"></i> SS-D kWh</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#1e7e34">${fmtN(c.ssdKwh)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtN(p.ssdKwh)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dSSDk.cls}">${dSSDk.arrow} ${dSSDk.pct}</div>
-    </div>
+    </div>`;
+  html+=`
     <div class="yoy-card solar-card">
       <div class="yoy-card-label"><i class="ti ti-solar-panel"></i> Janaan Solar</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#c47800">${fmtN(c.solarKwh)}</span></div>
@@ -1873,7 +1894,8 @@ function renderYoY(){
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#be185d">${fmtRM2(c.bilPvSolar)}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(p.bilPvSolar)}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${dPvSolar.cls}">${dPvSolar.arrow} ${dPvSolar.pct}</div>
-    </div>
+    </div>`;
+  if(yoyShowSSA&&yoyShowSSD) html+=`
     <div class="yoy-card bil-card">
       <div class="yoy-card-label"><i class="ti ti-receipt"></i> Bil SS-A vs SS-D</div>
       <div class="yoy-row"><span class="yoy-year-label">SS-A ${currY}</span><span class="yoy-val" style="font-size:12px;color:#1a5fa8">${fmtRM2(c.ssaRm)}</span></div>
@@ -1883,8 +1905,8 @@ function renderYoY(){
         <span class="${dSSAr.cls}">A ${dSSAr.arrow}${dSSAr.pct}</span>
         <span class="${dSSDr.cls}">D ${dSSDr.arrow}${dSSDr.pct}</span>
       </div>
-    </div>
-  </div>`;
+    </div>`;
+  html+=`</div>`;
 
   // charts
   const getCurr=b=>currRows.find(r=>r.bulan===b);
