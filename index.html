@@ -905,6 +905,22 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 </div>
 
+<!-- JADUAL SMP / PENJIMATAN SEBENAR (SS-A) -->
+<div class="edit-modal-bg" id="smp-modal">
+  <div class="edit-modal-box" style="max-width:98vw;width:1720px">
+    <h2><i class="ti ti-table" style="color:#7c3aed"></i> Ringkasan Penggunaan Tenaga Impot TNB berbanding Tenaga Terjana Solar dan Eksport Tenaga ke Grid TNB (Kampus Kesihatan)</h2>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:700;color:#555">Tahun:</label>
+      <select id="smp-sel-tahun" onchange="renderSmpTable()" style="padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;font-size:13px"></select>
+      <span style="font-size:11.5px;color:#888;margin-left:auto">Nilai <strong>SMP (Kolum L)</strong> boleh ditambah/edit/padam secara terus dalam jadual — lajur lain dikira automatik dari data JPPF &amp; Surcaj.</span>
+    </div>
+    <div id="smp-table-wrap" style="overflow-x:auto;max-height:65vh"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSmpModal()">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <!-- SS-A / SS-D DETAIL POPUP -->
 <div class="edit-modal-bg" id="ss-detail-modal">
   <div class="edit-modal-box" style="max-width:480px">
@@ -1088,10 +1104,10 @@ function detectColumns(lines){
       if(h.includes('bulan'))m.bulan=idx;
       else if(h.includes('tahun')||h.includes('year'))m.tahun=idx;
       // Lajur baharu: SS-A/SS-D MD, On-Peak, Off-Peak kWh — disemak SEBELUM padanan umum ssaKwh/ssdKwh
-      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('md')&&h.includes('kw'))m.ssaMdKw=idx;
+      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssaMdKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('onpeak'))m.ssaOnPeakKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('offpeak'))m.ssaOffPeakKwh=idx;
-      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md')&&h.includes('kw'))m.ssdMdKw=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssdMdKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('onpeak'))m.ssdOnPeakKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('offpeak'))m.ssdOffPeakKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh'))m.ssaKwh=idx;
@@ -1129,8 +1145,8 @@ function buildRows(lines,headerIdx,colMap){
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
       ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
-      ssaMdKw:n('ssaMdKw'),ssaOnPeakKwh:n('ssaOnPeakKwh'),ssaOffPeakKwh:n('ssaOffPeakKwh'),
-      ssdMdKw:n('ssdMdKw'),ssdOnPeakKwh:n('ssdOnPeakKwh'),ssdOffPeakKwh:n('ssdOffPeakKwh'),
+      ssaMdKwh:n('ssaMdKwh'),ssaOnPeakKwh:n('ssaOnPeakKwh'),ssaOffPeakKwh:n('ssaOffPeakKwh'),
+      ssdMdKwh:n('ssdMdKwh'),ssdOnPeakKwh:n('ssdOnPeakKwh'),ssdOffPeakKwh:n('ssdOffPeakKwh'),
       ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
@@ -1262,13 +1278,13 @@ function sortByPeriod(rows){
 function sumRows(rows){
   return rows.reduce((a,r)=>({
     ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
-    ssaMdKw:a.ssaMdKw+(r.ssaMdKw||0),ssdMdKw:a.ssdMdKw+(r.ssdMdKw||0),
+    ssaMdKwh:a.ssaMdKwh+(r.ssaMdKwh||0),ssdMdKwh:a.ssdMdKwh+(r.ssdMdKwh||0),
     ssaOnPeakKwh:a.ssaOnPeakKwh+(r.ssaOnPeakKwh||0),ssaOffPeakKwh:a.ssaOffPeakKwh+(r.ssaOffPeakKwh||0),
     ssdOnPeakKwh:a.ssdOnPeakKwh+(r.ssdOnPeakKwh||0),ssdOffPeakKwh:a.ssdOffPeakKwh+(r.ssdOffPeakKwh||0),
     solarKwh:a.solarKwh+r.solarKwh,eksportKwh:a.eksportKwh+r.eksportKwh,
     eksportRm:a.eksportRm+r.eksportRm,penjimatan:a.penjimatan+r.penjimatan,bilPvSolar:a.bilPvSolar+r.bilPvSolar,
     ssaRm:a.ssaRm+r.ssaRm,ssdRm:a.ssdRm+r.ssdRm,totalRm:a.totalRm+r.totalRm
-  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,ssaMdKw:0,ssdMdKw:0,ssaOnPeakKwh:0,ssaOffPeakKwh:0,ssdOnPeakKwh:0,ssdOffPeakKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});
+  }),{ssaKwh:0,ssdKwh:0,totalKwh:0,ssaMdKwh:0,ssdMdKwh:0,ssaOnPeakKwh:0,ssaOffPeakKwh:0,ssdOnPeakKwh:0,ssdOffPeakKwh:0,solarKwh:0,eksportKwh:0,eksportRm:0,penjimatan:0,bilPvSolar:0,ssaRm:0,ssdRm:0,totalRm:0});
 }
 
 function renderShell(){
@@ -1309,8 +1325,8 @@ function renderShell(){
     <div class="trend-box" id="print-sec-md" style="margin-top:18px">
       <div class="chart-title">Maximum Demand (MD) — SS-A vs SS-D</div>
       <div class="legend" style="margin-top:6px">
-        <span id="leg-md-ssa"><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kW</span>
-        <span id="leg-md-ssd"><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kW</span>
+        <span id="leg-md-ssa"><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kWh</span>
+        <span id="leg-md-ssd"><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kWh</span>
       </div>
       <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartMD"></canvas></div>
     </div>
@@ -1345,13 +1361,13 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh · <i class="ti ti-info-circle"></i> Klik butiran</div></div>`;
   if(showSolar) cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>`;
   cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(dispTotalKwh)}</div><div class="card-unit">${label}</div></div>`;
-  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kW (Kampus)</div><div class="card-value">${fmt(d.ssaMdKw)}</div><div class="card-unit">Maximum Demand</div></div>`;
-  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kW (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKw)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kWh (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
   if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
     cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
-    cardsHtml+=`<div class="card jimat"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih</div></div>`;
+    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
     cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
@@ -1369,6 +1385,148 @@ function updateDisplay(){
 // ── SS FILTER STATE ──
 let showSSA=true, showSSD=true, showSolar=true;
 // ── Pop-up butiran penuh SS-A / SS-D (klik kad metrik) ──
+// ══════════════════════════════════════════════
+// JADUAL SMP / PENJIMATAN SEBENAR (SS-A) — pop-up dari kad "Penjimatan USM melalui Tenaga Solar"
+// Lajur A-K dikira automatik dari data JPPF (allRows) & Surcaj (surcajRows).
+// Lajur L (SMP) satu-satunya nilai yang dimasukkan manual — boleh tambah/edit/padam,
+// disimpan dalam localStorage (belum ada sumber data SMP automatik dari Google Sheets).
+// ══════════════════════════════════════════════
+let smpData = (()=>{ try{ return JSON.parse(localStorage.getItem('usm_smp_data')||'{}'); }catch(e){ return {}; } })();
+function smpKey(tahun,bulan){ return tahun+'_'+bulan; }
+function smpSave(){ localStorage.setItem('usm_smp_data', JSON.stringify(smpData)); }
+
+function openSmpModal(){
+  const sel=document.getElementById('smp-sel-tahun');
+  const years=[...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort();
+  const curYear=years.length?years[years.length-1]:'';
+  sel.innerHTML=years.map(y=>`<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('');
+  document.getElementById('smp-modal').classList.add('show');
+  if(typeof surcajRows!=='undefined' && surcajRows.length===0 && typeof loadSurcaj==='function'){
+    loadSurcaj().then(renderSmpTable).catch(renderSmpTable);
+  }
+  renderSmpTable();
+}
+function closeSmpModal(){ document.getElementById('smp-modal').classList.remove('show'); }
+
+function renderSmpTable(){
+  const sel=document.getElementById('smp-sel-tahun');
+  const tahun=sel?sel.value:'';
+  const wrap=document.getElementById('smp-table-wrap');
+  if(!wrap) return;
+
+  const getRow=b=>allRows.find(r=>r.bulan===b && r.tahun===tahun);
+  const getSurcaj=b=>(typeof surcajRows!=='undefined'?surcajRows.find(r=>r.bulan===b && r.tahun===tahun):null);
+
+  let tA=0,tB=0,tC=0,tD=0,tE=0,tF=0,tG=0,tH=0,tJ=0,tK=0;
+  const rowsHtml = BULAN_ORDER.map(b=>{
+    const r=getRow(b), sc=getSurcaj(b);
+    const hasData = !!r;
+    const onPeak=r?r.ssaOnPeakKwh:0, offPeak=r?r.ssaOffPeakKwh:0;
+    const A=r?r.ssaKwh:0;                       // Jumlah Penggunaan Import TNB (kWh)
+    const B=r?r.ssaRm:0;                        // Bil TNB bulanan (RM)
+    const C=r?r.solarKwh:0;                     // Jumlah Tenaga Solar Terjana (kWh)
+    const D=C*0.238;                            // Bil PV Hi-Tech Solar Sdn Bhd (RM)
+    const E=r?r.eksportKwh:0;                   // Eksport Tenaga Solar ke TNB Grid (kWh)
+    const L=smpData[smpKey(tahun,b)];           // SMP — manual
+    const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
+    const F=Lval!==null ? (E*Lval) : null;       // Amaun Eksport Tenaga yang ditimbalkan (RM)
+    const G=A+C-E;                              // Penggunaan Tenaga Sebenar (kWh)
+    const H=B+D;                                // Kos Utiliti Sebenar Ditanggung USM (RM)
+    const tarifAfa=sc?sc.kadarSurcaj:0;          // Tarif AFA (RM)
+    const cajAfa=sc?sc.surcajSSA:0;              // Caj AFA (RM)
+    const J=(A+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
+    const K=F!==null ? (J-D+F) : null;           // Penjimatan Sebenar dinikmati USM (RM)
+
+    if(hasData){ tA+=A;tB+=B;tC+=C;tD+=D;tE+=E;tG+=G;tH+=H;tJ+=J; }
+    if(F!==null) tF+=F;
+    if(K!==null) tK+=K;
+
+    return `<tr data-bulan="${b}">
+      <td style="text-align:left"><strong>${b}</strong></td>
+      <td class="td-num">${hasData?fmtN(onPeak):'-'}</td>
+      <td class="td-num">${hasData?fmtN(offPeak):'-'}</td>
+      <td class="td-num">${hasData?fmtN(A):'-'}</td>
+      <td class="td-num">${hasData?fmtRM2(B):'RM -'}</td>
+      <td class="td-num">${hasData?fmtN(C):'-'}</td>
+      <td class="td-num">${hasData?fmtRM2(D):'RM -'}</td>
+      <td class="td-num">${hasData?fmtN(E):'-'}</td>
+      <td class="td-num" style="background:#eafaf1">${F!==null?fmtRM2(F):'<span style="color:#c00">RM -</span>'}</td>
+      <td class="td-num">${hasData?fmtN(G):'-'}</td>
+      <td class="td-num">${hasData?fmtRM2(H):'RM -'}</td>
+      <td class="td-num">${hasData?'RM '+tarifAfa.toFixed(4):'-'}</td>
+      <td class="td-num">${hasData?fmtRM2(cajAfa):'RM -'}</td>
+      <td class="td-num">${hasData?fmtRM2(J):'RM -'}</td>
+      <td class="td-num" style="background:#eafaf1">${K!==null?('<strong>'+fmtRM2(K)+'</strong>'):'<span style="color:#c00">RM -</span>'}</td>
+      <td class="td-num" style="background:#fff8e1">
+        <input type="number" step="any" value="${Lval!==null?Lval:''}" placeholder="—" style="width:80px;padding:4px 6px;border-radius:5px;border:1px solid #c0cdd8;font-size:12px;text-align:right"
+          onchange="updateSmpValue('${tahun}','${b}',this.value)">
+      </td>
+      <td style="text-align:center">${Lval!==null?`<button class="btn-del" style="padding:3px 8px" onclick="deleteSmpValue('${tahun}','${b}')" title="Padam SMP"><i class="ti ti-trash"></i></button>`:''}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+  <table class="data-table" style="min-width:1650px;font-size:12px">
+    <thead>
+      <tr>
+        <th rowspan="2" style="vertical-align:middle">Bulan</th>
+        <th colspan="2">Penggunaan Import TNB</th>
+        <th rowspan="2">Jumlah Penggunaan<br>Import TNB (kWh)</th>
+        <th rowspan="2">Bil TNB<br>bulanan (RM)</th>
+        <th rowspan="2">Jumlah Tenaga<br>Solar Terjana (kWh)</th>
+        <th rowspan="2">Bil PV Hi-Tech<br>Solar Sdn Bhd (RM)</th>
+        <th rowspan="2">Eksport Tenaga<br>Solar ke TNB Grid (kWh)</th>
+        <th rowspan="2">Amaun Eksport<br>Tenaga ditimbalkan (RM)</th>
+        <th rowspan="2">Penggunaan<br>Tenaga Sebenar (kWh)</th>
+        <th rowspan="2">Kos Utiliti Sebenar<br>Ditanggung USM (RM)</th>
+        <th colspan="2">Auto Fuel Adjustment (AFA)</th>
+        <th rowspan="2">Kos Tenaga<br>tanpa SOLAR (RM)</th>
+        <th rowspan="2">Penjimatan Sebenar<br>dinikmati USM (RM)</th>
+        <th rowspan="2">SMP<br>(RM/kWh)</th>
+        <th rowspan="2"></th>
+      </tr>
+      <tr>
+        <th>TOU Peak<br>(2pm–10pm)</th>
+        <th>TOU Off-Peak<br>(10pm–2pm)</th>
+        <th>Tarif AFA (RM)</th>
+        <th>Caj AFA (RM)</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+    <tfoot>
+      <tr style="font-weight:800;border-top:2px solid #999">
+        <td style="text-align:left">JUMLAH</td>
+        <td class="td-num">—</td><td class="td-num">—</td>
+        <td class="td-num">${fmtN(tA)}</td>
+        <td class="td-num">${fmtRM2(tB)}</td>
+        <td class="td-num">${fmtN(tC)}</td>
+        <td class="td-num">${fmtRM2(tD)}</td>
+        <td class="td-num">${fmtN(tE)}</td>
+        <td class="td-num">${fmtRM2(tF)}</td>
+        <td class="td-num">${fmtN(tG)}</td>
+        <td class="td-num">${fmtRM2(tH)}</td>
+        <td class="td-num">—</td><td class="td-num">—</td>
+        <td class="td-num">${fmtRM2(tJ)}</td>
+        <td class="td-num">${fmtRM2(tK)}</td>
+        <td class="td-num">—</td><td></td>
+      </tr>
+    </tfoot>
+  </table>`;
+}
+
+function updateSmpValue(tahun,bulan,val){
+  const key=smpKey(tahun,bulan);
+  if(val==='' || val===null || isNaN(parseFloat(val))){ delete smpData[key]; }
+  else { smpData[key]=parseFloat(val); }
+  smpSave();
+  renderSmpTable();
+}
+function deleteSmpValue(tahun,bulan){
+  delete smpData[smpKey(tahun,bulan)];
+  smpSave();
+  renderSmpTable();
+}
+
 function openSSDetailModal(zone){
   if(!lastMetricsD) return;
   const d=lastMetricsD;
@@ -1378,13 +1536,13 @@ function openSSDetailModal(zone){
   const color=isA?'#1a5fa8':'#1e7e34';
   const rows=isA?[
     {label:'SS-A kWh (Jumlah)', value:fmt(d.ssaKwh)+' kWh'},
-    {label:'SS-A MD kWh (Maximum Demand)', value:fmt(d.ssaMdKw)+' kWh'},
+    {label:'SS-A MD kWh (Maximum Demand)', value:fmt(d.ssaMdKwh)+' kWh'},
     {label:'SS-A On-Peak kWh', value:fmt(d.ssaOnPeakKwh)+' kWh'},
     {label:'SS-A Off-Peak kWh', value:fmt(d.ssaOffPeakKwh)+' kWh'},
     {label:'Bil SS-A (RM)', value:fmtRM2d(d.ssaRm)},
   ]:[
     {label:'SS-D kWh (Jumlah)', value:fmt(d.ssdKwh)+' kWh'},
-    {label:'SS-D MD kWh (Maximum Demand)', value:fmt(d.ssdMdKw)+' kWh'},
+    {label:'SS-D MD kWh (Maximum Demand)', value:fmt(d.ssdMdKwh)+' kWh'},
     {label:'SS-D On-Peak kWh', value:fmt(d.ssdOnPeakKwh)+' kWh'},
     {label:'SS-D Off-Peak kWh', value:fmt(d.ssdOffPeakKwh)+' kWh'},
     {label:'Bil SS-D (RM)', value:fmtRM2d(d.ssdRm)},
@@ -1545,8 +1703,8 @@ function renderCharts(filtered,d){
     const dlMdA = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1a5fa8',font:{size:9,weight:'700'},anchor:'end',align:'top',offset:4,rotation:0,clip:false} : {display:false};
     const dlMdD = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1e7e34',font:{size:9,weight:'700'},anchor:'end',align:'bottom',offset:4,rotation:0,clip:false} : {display:false};
     const mdDatasets=[];
-    if(showSSA) mdDatasets.push({label:'SS-A MD kW',data:sorted.map(r=>r.ssaMdKw>0?r.ssaMdKw:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false,datalabels:dlMdA});
-    if(showSSD) mdDatasets.push({label:'SS-D MD kW',data:sorted.map(r=>r.ssdMdKw>0?r.ssdMdKw:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false,datalabels:dlMdD});
+    if(showSSA) mdDatasets.push({label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false,datalabels:dlMdA});
+    if(showSSD) mdDatasets.push({label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false,datalabels:dlMdD});
     chartMD=new Chart(document.getElementById('chartMD'),{type:'line',
       data:{labels:lbl,datasets:mdDatasets},
       options:{
@@ -1591,8 +1749,8 @@ function renderCharts(filtered,d){
     if(legMdA2) legMdA2.style.display=showSSA?'':'none';
     if(legMdD2) legMdD2.style.display=showSSD?'':'none';
     const mdLbls=[],mdVals=[],mdClr=[];
-    if(showSSA){mdLbls.push('SS-A MD kW');mdVals.push(d.ssaMdKw);mdClr.push('#1a5fa8');}
-    if(showSSD){mdLbls.push('SS-D MD kW');mdVals.push(d.ssdMdKw);mdClr.push('#1e7e34');}
+    if(showSSA){mdLbls.push('SS-A MD kWh');mdVals.push(d.ssaMdKwh);mdClr.push('#1a5fa8');}
+    if(showSSD){mdLbls.push('SS-D MD kWh');mdVals.push(d.ssdMdKwh);mdClr.push('#1e7e34');}
     chartMD=new Chart(document.getElementById('chartMD'),{type:'bar',data:{labels:mdLbls,datasets:[{data:mdVals,backgroundColor:mdClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
   }
 }
@@ -3427,11 +3585,11 @@ function unlockAdmin(pw){
 // EDIT / DELETE
 // ══════════════════════════════════════════════
 const JPPF_EDIT_FIELDS=[
-  {key:'ssaMdKw',     label:'SS-A MD kW'},
+  {key:'ssaMdKwh',     label:'SS-A MD kWh'},
   {key:'ssaOnPeakKwh', label:'SS-A On-Peak kWh'},
   {key:'ssaOffPeakKwh',label:'SS-A Off-Peak kWh'},
   {key:'ssaKwh',   label:'SS-A kWh'},
-  {key:'ssdMdKw',     label:'SS-D MD kW'},
+  {key:'ssdMdKwh',     label:'SS-D MD kWh'},
   {key:'ssdOnPeakKwh', label:'SS-D On-Peak kWh'},
   {key:'ssdOffPeakKwh',label:'SS-D Off-Peak kWh'},
   {key:'ssdKwh',   label:'SS-D kWh'},
@@ -3651,8 +3809,8 @@ function buildJppfTable(rows){
   sorted.forEach(r=>{
     rowsHtml+=`<tr data-bulan="${r.bulan}" data-tahun="${r.tahun}">
       <td><strong>${r.bulan}</strong></td><td>${r.tahun}</td>
-      <td>${fmt(r.ssaMdKw)}</td><td>${fmt(r.ssaOnPeakKwh)}</td><td>${fmt(r.ssaOffPeakKwh)}</td><td>${fmt(r.ssaKwh)}</td>
-      <td>${fmt(r.ssdMdKw)}</td><td>${fmt(r.ssdOnPeakKwh)}</td><td>${fmt(r.ssdOffPeakKwh)}</td><td>${fmt(r.ssdKwh)}</td>
+      <td>${fmt(r.ssaMdKwh)}</td><td>${fmt(r.ssaOnPeakKwh)}</td><td>${fmt(r.ssaOffPeakKwh)}</td><td>${fmt(r.ssaKwh)}</td>
+      <td>${fmt(r.ssdMdKwh)}</td><td>${fmt(r.ssdOnPeakKwh)}</td><td>${fmt(r.ssdOffPeakKwh)}</td><td>${fmt(r.ssdKwh)}</td>
       <td>${fmt2d(r.solarKwh)}</td>
       <td>${fmtRM2d(r.ssaRm)}</td><td>${fmtRM2d(r.ssdRm)}</td>
       <td>${fmt(r.eksportKwh)}</td><td>${fmtRM2d(r.eksportRm)}</td><td>${fmtRM2d(r.penjimatan)}</td><td>${fmtRM2d(r.bilPvSolar)}</td>
@@ -3696,8 +3854,8 @@ function buildJppfTable(rows){
         <table class="data-table" id="jppf-data-tbl">
           <thead><tr>
             <th>Bulan</th><th>Tahun</th>
-            <th>SS-A MD kW</th><th>SS-A On-Peak kWh</th><th>SS-A Off-Peak kWh</th><th>SS-A kWh</th>
-            <th>SS-D MD kW</th><th>SS-D On-Peak kWh</th><th>SS-D Off-Peak kWh</th><th>SS-D kWh</th>
+            <th>SS-A MD kWh</th><th>SS-A On-Peak kWh</th><th>SS-A Off-Peak kWh</th><th>SS-A kWh</th>
+            <th>SS-D MD kWh</th><th>SS-D On-Peak kWh</th><th>SS-D Off-Peak kWh</th><th>SS-D kWh</th>
             <th>Solar kWh</th>
             <th>Bil SS-A</th><th>Bil SS-D</th>
             <th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
