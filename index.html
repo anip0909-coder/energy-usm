@@ -1280,6 +1280,26 @@ function sortByPeriod(rows){
   return [...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
 }
 
+// Jumlah Penjimatan Sebenar USM (Kolum K) berdasarkan formula dalam Jadual SMP
+// K = J - D + F, dengan J=(TOU Peak + Solar)*0.3132, D=Solar*0.238, F=Eksport*SMP
+function calcSmpSavingK(rows){
+  let totalK=0;
+  rows.forEach(r=>{
+    const onPeak=r?.ssaOnPeakKwh||0;
+    const solar=r?.solarKwh||0;
+    const eksport=r?.eksportKwh||0;
+    const L=smpData[smpKey(r?.tahun,r?.bulan)];
+    const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
+    if(Lval!==null && !isNaN(Lval)){
+      const D=solar*0.238;
+      const F=eksport*Lval;
+      const J=(onPeak+solar)*0.3132;
+      totalK += (J-D+F);
+    }
+  });
+  return totalK;
+}
+
 function sumRows(rows){
   return rows.reduce((a,r)=>({
     ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
@@ -1353,12 +1373,12 @@ function updateDisplay(){
     return;
   }
   const d=sumRows(filtered);
+  const jumlahK=calcSmpSavingK(filtered);
   const solarPct=d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
   const label=filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
   // Jumlah kWh / Jumlah Bil ikut toggle SS-A/SS-D yang aktif (konsisten dengan carta Trend Bulanan)
   const dispTotalKwh=(showSSA?d.ssaKwh:0)+(showSSD?d.ssdKwh:0);
   const dispTotalRm=(showSSA?d.ssaRm:0)+(showSSD?d.ssdRm:0);
-  const jumlahK = kiraJumlahPenjimatanK(d);
   lastMetricsD=d; lastMetricsLabel=label; // simpan utk pop-up butiran SS-A/SS-D
 
   // ── KAD METRIK — setiap kad SS-A/SS-D/Solar hanya muncul bila toggle berkenaan aktif ──
@@ -1526,11 +1546,13 @@ function updateSmpValue(tahun,bulan,val){
   else { smpData[key]=parseFloat(val); }
   smpSave();
   renderSmpTable();
+  if(typeof updateDisplay==='function') updateDisplay();
 }
 function deleteSmpValue(tahun,bulan){
   delete smpData[smpKey(tahun,bulan)];
   smpSave();
   renderSmpTable();
+  if(typeof updateDisplay==='function') updateDisplay();
 }
 
 function openSSDetailModal(zone){
@@ -1784,7 +1806,7 @@ function renderHealth(d){
       <div class="hstat">Janaan Solar<span>${fmt2d(d.solarKwh)} kWh</span></div>
       <div class="hstat">Eksport kWh<span>${fmt(d.eksportKwh)} kWh</span></div>
       <div class="hstat">Amaun Eksport<span>${fmtRM2d(d.eksportRm)}</span></div>
-      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM2d(d.penjimatan)}</span></div>
+      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM2d(jumlahK)}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div>
     </div>`;
 }
@@ -2572,6 +2594,7 @@ function renderCarbonSection(){
     return;
   }
   const d=sumRows(filtered);
+  const jumlahK=calcSmpSavingK(filtered);
 
   const emission = (d.ssaKwh + d.ssdKwh) * CARBON_EF;
   const saving   = d.solarKwh * CARBON_EF;
