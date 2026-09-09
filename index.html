@@ -1435,11 +1435,11 @@ function renderSmpTable(){
     const L=smpData[smpKey(tahun,b)];           // SMP — manual
     const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
     const F=Lval!==null ? (E*Lval) : null;       // Amaun Eksport Tenaga yang ditimbalkan (RM)
-    const G=A+C-E;                              // Penggunaan Tenaga Sebenar (kWh)
+    const G=(onPeak+C)-E;                              // Penggunaan Tenaga Sebenar (kWh)
     const H=B+D;                                // Kos Utiliti Sebenar Ditanggung USM (RM)
     const tarifAfa=sc?sc.kadarSurcaj:0;          // Tarif AFA (RM)
     const cajAfa=sc?sc.surcajSSA:0;              // Caj AFA (RM)
-    const J=(A+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
+    const J=(onPeak+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
     const K=F!==null ? (J-D+F) : null;           // Penjimatan Sebenar dinikmati USM (RM)
 
     if(hasData){ tA+=A;tB+=B;tC+=C;tD+=D;tE+=E;tG+=G;tH+=H;tJ+=J; }
