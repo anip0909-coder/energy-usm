@@ -1103,11 +1103,12 @@ function detectColumns(lines){
       const hNorm=h.replace(/[\s-]/g,''); // buang spasi/sengkang utk padanan MD/On-Peak/Off-Peak lebih tepat
       if(h.includes('bulan'))m.bulan=idx;
       else if(h.includes('tahun')||h.includes('year'))m.tahun=idx;
-      // Lajur baharu: SS-A/SS-D MD, On-Peak, Off-Peak kWh — disemak SEBELUM padanan umum ssaKwh/ssdKwh
-      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssaMdKwh=idx;
+      // Lajur baharu: SS-A/SS-D MD (kW), On-Peak, Off-Peak kWh — disemak SEBELUM padanan umum ssaKwh/ssdKwh
+      // Nota: unit MD ialah kW (bukan kWh), jadi jangan wajibkan 'kwh' pada padanan MD.
+      else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('md'))m.ssaMdKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('onpeak'))m.ssaOnPeakKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&hNorm.includes('offpeak'))m.ssaOffPeakKwh=idx;
-      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md')&&h.includes('kwh'))m.ssdMdKwh=idx;
+      else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md'))m.ssdMdKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('onpeak'))m.ssdOnPeakKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('offpeak'))m.ssdOffPeakKwh=idx;
       else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh'))m.ssaKwh=idx;
@@ -1128,6 +1129,8 @@ function detectColumns(lines){
       else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
       else if(h.includes('pv')&&h.includes('solar')&&h.includes('rm'))m.bilPvSolar=idx;
       else if(h.includes('hi-tech')&&h.includes('rm'))m.bilPvSolar=idx;
+      // SMP (System Marginal Price) — RM/kWh, guna dalam jadual Penjimatan Sebenar (Kolum L)
+      else if(h.includes('smp'))m.smp=idx;
     });
     return{headerIdx:i,colMap:m};
   }
@@ -1151,7 +1154,9 @@ function buildRows(lines,headerIdx,colMap){
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
       penjimatan:n('penjimatan'),
-      bilPvSolar:n('bilPvSolar')
+      bilPvSolar:n('bilPvSolar'),
+      smp:n('smp'),
+      smpRaw:(colMap.smp!==undefined && row[colMap.smp]!=='') ? row[colMap.smp] : ''
     });
   }
   return rows;
@@ -1323,10 +1328,10 @@ function renderShell(){
       <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartTrend"></canvas></div>
     </div>
     <div class="trend-box" id="print-sec-md" style="margin-top:18px">
-      <div class="chart-title">Maximum Demand (MD) — SS-A vs SS-D</div>
+      <div class="chart-title">Maximum Demand (MD) — SS-A vs SS-D (kW)</div>
       <div class="legend" style="margin-top:6px">
-        <span id="leg-md-ssa"><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD kWh</span>
-        <span id="leg-md-ssd"><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD kWh</span>
+        <span id="leg-md-ssa"><span class="leg-dot" style="background:#1a5fa8"></span>SS-A MD (kW)</span>
+        <span id="leg-md-ssd"><span class="leg-dot" style="background:#1e7e34"></span>SS-D MD (kW)</span>
       </div>
       <div class="chart-canvas-wrap" style="position:relative;width:100%;height:200px"><canvas id="chartMD"></canvas></div>
     </div>
@@ -1361,8 +1366,8 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-building-hospital"></i></div><div class="card-label">SS-D kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdKwh)}</div><div class="card-unit">kWh · <i class="ti ti-info-circle"></i> Klik butiran</div></div>`;
   if(showSolar) cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-solar-panel"></i></div><div class="card-label">Janaan Solar</div><div class="card-value">${fmt2d(d.solarKwh)}</div><div class="card-unit">kWh · ${solarPct}%</div></div>`;
   cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-plug"></i></div><div class="card-label">Jumlah kWh</div><div class="card-value">${fmt(dispTotalKwh)}</div><div class="card-unit">${label}</div></div>`;
-  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD kWh (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
-  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD kWh (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">Maximum Demand</div></div>`;
+  if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-A MD (kW) (Kampus)</div><div class="card-value">${fmt(d.ssaMdKwh)}</div><div class="card-unit">kW · Maximum Demand</div></div>`;
+  if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-gauge"></i></div><div class="card-label">SS-D MD (kW) (HPUSM)</div><div class="card-value">${fmt(d.ssdMdKwh)}</div><div class="card-unit">kW · Maximum Demand</div></div>`;
   if(showSSA) cardsHtml+=`<div class="card kampus" style="cursor:pointer" onclick="openSSDetailModal('ssa')" title="Klik untuk lihat butiran penuh SS-A"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-A (Kampus)</div><div class="card-value">${fmtRM2d(d.ssaRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
@@ -1536,13 +1541,13 @@ function openSSDetailModal(zone){
   const color=isA?'#1a5fa8':'#1e7e34';
   const rows=isA?[
     {label:'SS-A kWh (Jumlah)', value:fmt(d.ssaKwh)+' kWh'},
-    {label:'SS-A MD kWh (Maximum Demand)', value:fmt(d.ssaMdKwh)+' kWh'},
+    {label:'SS-A MD (kW) (Maximum Demand)', value:fmt(d.ssaMdKwh)+' kW'},
     {label:'SS-A On-Peak kWh', value:fmt(d.ssaOnPeakKwh)+' kWh'},
     {label:'SS-A Off-Peak kWh', value:fmt(d.ssaOffPeakKwh)+' kWh'},
     {label:'Bil SS-A (RM)', value:fmtRM2d(d.ssaRm)},
   ]:[
     {label:'SS-D kWh (Jumlah)', value:fmt(d.ssdKwh)+' kWh'},
-    {label:'SS-D MD kWh (Maximum Demand)', value:fmt(d.ssdMdKwh)+' kWh'},
+    {label:'SS-D MD (kW) (Maximum Demand)', value:fmt(d.ssdMdKwh)+' kW'},
     {label:'SS-D On-Peak kWh', value:fmt(d.ssdOnPeakKwh)+' kWh'},
     {label:'SS-D Off-Peak kWh', value:fmt(d.ssdOffPeakKwh)+' kWh'},
     {label:'Bil SS-D (RM)', value:fmtRM2d(d.ssdRm)},
@@ -1703,8 +1708,8 @@ function renderCharts(filtered,d){
     const dlMdA = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1a5fa8',font:{size:9,weight:'700'},anchor:'end',align:'top',offset:4,rotation:0,clip:false} : {display:false};
     const dlMdD = trendDLshow ? {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,formatter:v=>fmtDL(v,false),color:'#1e7e34',font:{size:9,weight:'700'},anchor:'end',align:'bottom',offset:4,rotation:0,clip:false} : {display:false};
     const mdDatasets=[];
-    if(showSSA) mdDatasets.push({label:'SS-A MD kWh',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false,datalabels:dlMdA});
-    if(showSSD) mdDatasets.push({label:'SS-D MD kWh',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false,datalabels:dlMdD});
+    if(showSSA) mdDatasets.push({label:'SS-A MD (kW)',data:sorted.map(r=>r.ssaMdKwh>0?r.ssaMdKwh:null),borderColor:'#1a5fa8',backgroundColor:'rgba(26,95,168,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1a5fa8',borderWidth:2,spanGaps:false,datalabels:dlMdA});
+    if(showSSD) mdDatasets.push({label:'SS-D MD (kW)',data:sorted.map(r=>r.ssdMdKwh>0?r.ssdMdKwh:null),borderColor:'#1e7e34',backgroundColor:'rgba(30,126,52,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#1e7e34',borderWidth:2,spanGaps:false,datalabels:dlMdD});
     chartMD=new Chart(document.getElementById('chartMD'),{type:'line',
       data:{labels:lbl,datasets:mdDatasets},
       options:{
@@ -1712,7 +1717,7 @@ function renderCharts(filtered,d){
         layout:{padding:{top:26,bottom:20}},
         interaction:{mode:'index',intersect:false},
         plugins:{legend:{display:false},datalabels:{},
-          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kWh`}}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.parsed.y)} kW`}}},
         scales:{
           x:{ticks:{...tck,autoSkip:true,maxTicksLimit:18,maxRotation:45},grid:{display:false}},
           y:{ticks:{...tck,callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v.toLocaleString()},grid:{color:'rgba(0,0,0,0.05)'}}
@@ -1749,8 +1754,8 @@ function renderCharts(filtered,d){
     if(legMdA2) legMdA2.style.display=showSSA?'':'none';
     if(legMdD2) legMdD2.style.display=showSSD?'':'none';
     const mdLbls=[],mdVals=[],mdClr=[];
-    if(showSSA){mdLbls.push('SS-A MD kWh');mdVals.push(d.ssaMdKwh);mdClr.push('#1a5fa8');}
-    if(showSSD){mdLbls.push('SS-D MD kWh');mdVals.push(d.ssdMdKwh);mdClr.push('#1e7e34');}
+    if(showSSA){mdLbls.push('SS-A MD (kW)');mdVals.push(d.ssaMdKwh);mdClr.push('#1a5fa8');}
+    if(showSSD){mdLbls.push('SS-D MD (kW)');mdVals.push(d.ssdMdKwh);mdClr.push('#1e7e34');}
     chartMD=new Chart(document.getElementById('chartMD'),{type:'bar',data:{labels:mdLbls,datasets:[{data:mdVals,backgroundColor:mdClr,borderRadius:6,borderSkipped:false}]},options:baseOpts(false)});
   }
 }
@@ -3585,11 +3590,11 @@ function unlockAdmin(pw){
 // EDIT / DELETE
 // ══════════════════════════════════════════════
 const JPPF_EDIT_FIELDS=[
-  {key:'ssaMdKwh',     label:'SS-A MD kWh'},
+  {key:'ssaMdKwh',     label:'SS-A MD (kW)'},
   {key:'ssaOnPeakKwh', label:'SS-A On-Peak kWh'},
   {key:'ssaOffPeakKwh',label:'SS-A Off-Peak kWh'},
   {key:'ssaKwh',   label:'SS-A kWh'},
-  {key:'ssdMdKwh',     label:'SS-D MD kWh'},
+  {key:'ssdMdKwh',     label:'SS-D MD (kW)'},
   {key:'ssdOnPeakKwh', label:'SS-D On-Peak kWh'},
   {key:'ssdOffPeakKwh',label:'SS-D Off-Peak kWh'},
   {key:'ssdKwh',   label:'SS-D kWh'},
@@ -3854,8 +3859,8 @@ function buildJppfTable(rows){
         <table class="data-table" id="jppf-data-tbl">
           <thead><tr>
             <th>Bulan</th><th>Tahun</th>
-            <th>SS-A MD kWh</th><th>SS-A On-Peak kWh</th><th>SS-A Off-Peak kWh</th><th>SS-A kWh</th>
-            <th>SS-D MD kWh</th><th>SS-D On-Peak kWh</th><th>SS-D Off-Peak kWh</th><th>SS-D kWh</th>
+            <th>SS-A MD (kW)</th><th>SS-A On-Peak kWh</th><th>SS-A Off-Peak kWh</th><th>SS-A kWh</th>
+            <th>SS-D MD (kW)</th><th>SS-D On-Peak kWh</th><th>SS-D Off-Peak kWh</th><th>SS-D kWh</th>
             <th>Solar kWh</th>
             <th>Bil SS-A</th><th>Bil SS-D</th>
             <th>Eksport kWh</th><th>Eksport RM</th><th>Penjimatan RM</th><th>PV Solar RM</th>
