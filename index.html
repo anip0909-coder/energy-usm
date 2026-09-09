@@ -1111,6 +1111,7 @@ function detectColumns(lines){
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('md'))m.ssdMdKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('onpeak'))m.ssdOnPeakKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&hNorm.includes('offpeak'))m.ssdOffPeakKwh=idx;
+      else if(h.includes('smp'))m.smp=idx; // Lajur baharu: SMP (RM/kWh) — untuk formula Kolum F/K jadual Penjimatan Sebenar
       else if((h.includes('ss-a')||h.includes('ssa'))&&h.includes('kwh'))m.ssaKwh=idx;
       else if((h.includes('ss-d')||h.includes('ssd'))&&h.includes('kwh'))m.ssdKwh=idx;
       else if(h.includes('total')&&h.includes('kwh'))m.totalKwh=idx;
@@ -1129,8 +1130,6 @@ function detectColumns(lines){
       else if(h.includes('tenaga')&&h.includes('eksport'))m.eksportKwh=idx;
       else if(h.includes('pv')&&h.includes('solar')&&h.includes('rm'))m.bilPvSolar=idx;
       else if(h.includes('hi-tech')&&h.includes('rm'))m.bilPvSolar=idx;
-      // SMP (System Marginal Price) — RM/kWh, guna dalam jadual Penjimatan Sebenar (Kolum L)
-      else if(h.includes('smp'))m.smp=idx;
     });
     return{headerIdx:i,colMap:m};
   }
@@ -1144,6 +1143,8 @@ function buildRows(lines,headerIdx,colMap){
     const bRaw=row[colMap.bulan];
     if(!bRaw||bRaw==='') continue;
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
+    const smpRaw=colMap.smp!==undefined?String(row[colMap.smp]||'').trim():'';
+    const smpVal=smpRaw===''?null:(isNaN(parseFloat(smpRaw))?null:parseFloat(smpRaw));
     rows.push({
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
@@ -1155,8 +1156,7 @@ function buildRows(lines,headerIdx,colMap){
       eksportRm:n('eksportRm'),
       penjimatan:n('penjimatan'),
       bilPvSolar:n('bilPvSolar'),
-      smp:n('smp'),
-      smpRaw:(colMap.smp!==undefined && row[colMap.smp]!=='') ? row[colMap.smp] : ''
+      smp:smpVal
     });
   }
   return rows;
@@ -1372,7 +1372,7 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
     cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
-    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.tK)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
+    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
     cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
@@ -1435,11 +1435,11 @@ function renderSmpTable(){
     const L=smpData[smpKey(tahun,b)];           // SMP — manual
     const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
     const F=Lval!==null ? (E*Lval) : null;       // Amaun Eksport Tenaga yang ditimbalkan (RM)
-    const G=(onPeak+C)-E;                              // Penggunaan Tenaga Sebenar (kWh)
+    const G=A+C-E;                              // Penggunaan Tenaga Sebenar (kWh)
     const H=B+D;                                // Kos Utiliti Sebenar Ditanggung USM (RM)
     const tarifAfa=sc?sc.kadarSurcaj:0;          // Tarif AFA (RM)
     const cajAfa=sc?sc.surcajSSA:0;              // Caj AFA (RM)
-    const J=(onPeak+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
+    const J=(A+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
     const K=F!==null ? (J-D+F) : null;           // Penjimatan Sebenar dinikmati USM (RM)
 
     if(hasData){ tA+=A;tB+=B;tC+=C;tD+=D;tE+=E;tG+=G;tH+=H;tJ+=J; }
@@ -3605,6 +3605,7 @@ const JPPF_EDIT_FIELDS=[
   {key:'eksportRm', label:'Amaun Eksport (RM)'},
   {key:'penjimatan',label:'Penjimatan USM (RM)'},
   {key:'bilPvSolar',label:'Bil PV Hi-Tech Solar (RM)'},
+  {key:'smp',       label:'SMP (RM/kWh)'},
 ];
 const EPC_EDIT_FIELDS=[
   {key:'chillerTrauma',  label:'Chiller Trauma & PPSG kWh'},
