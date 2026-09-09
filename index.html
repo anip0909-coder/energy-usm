@@ -1434,7 +1434,7 @@ function renderSmpTable(){
     const H=B+D;                                // Kos Utiliti Sebenar Ditanggung USM (RM)
     const tarifAfa=sc?sc.kadarSurcaj:0;          // Tarif AFA (RM)
     const cajAfa=sc?sc.surcajSSA:0;              // Caj AFA (RM)
-    const J=(A+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
+    const J=(onPeak+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
     const K=F!==null ? (J-D+F) : null;           // Penjimatan Sebenar dinikmati USM (RM)
 
     if(hasData){ tA+=A;tB+=B;tC+=C;tD+=D;tE+=E;tG+=G;tH+=H;tJ+=J; }
