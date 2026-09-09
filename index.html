@@ -1280,26 +1280,6 @@ function sortByPeriod(rows){
   return [...rows].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
 }
 
-// Jumlah Penjimatan Sebenar USM (Kolum K) berdasarkan formula dalam Jadual SMP
-// K = J - D + F, dengan J=(TOU Peak + Solar)*0.3132, D=Solar*0.238, F=Eksport*SMP
-function calcSmpSavingK(rows){
-  let totalK=0;
-  rows.forEach(r=>{
-    const onPeak=r?.ssaOnPeakKwh||0;
-    const solar=r?.solarKwh||0;
-    const eksport=r?.eksportKwh||0;
-    const L=smpData[smpKey(r?.tahun,r?.bulan)];
-    const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
-    if(Lval!==null && !isNaN(Lval)){
-      const D=solar*0.238;
-      const F=eksport*Lval;
-      const J=(onPeak+solar)*0.3132;
-      totalK += (J-D+F);
-    }
-  });
-  return totalK;
-}
-
 function sumRows(rows){
   return rows.reduce((a,r)=>({
     ssaKwh:a.ssaKwh+r.ssaKwh,ssdKwh:a.ssdKwh+r.ssdKwh,totalKwh:a.totalKwh+r.totalKwh,
@@ -1373,7 +1353,6 @@ function updateDisplay(){
     return;
   }
   const d=sumRows(filtered);
-  const jumlahK=calcSmpSavingK(filtered);
   const solarPct=d.totalKwh>0?((d.solarKwh/d.totalKwh)*100).toFixed(1):'0.0';
   const label=filtered.length===1?(filtered[0].bulan+' '+filtered[0].tahun):filtered.length+' rekod';
   // Jumlah kWh / Jumlah Bil ikut toggle SS-A/SS-D yang aktif (konsisten dengan carta Trend Bulanan)
@@ -1393,7 +1372,7 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
     cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
-    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(jumlahK)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
+    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
     cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
@@ -1546,13 +1525,11 @@ function updateSmpValue(tahun,bulan,val){
   else { smpData[key]=parseFloat(val); }
   smpSave();
   renderSmpTable();
-  if(typeof updateDisplay==='function') updateDisplay();
 }
 function deleteSmpValue(tahun,bulan){
   delete smpData[smpKey(tahun,bulan)];
   smpSave();
   renderSmpTable();
-  if(typeof updateDisplay==='function') updateDisplay();
 }
 
 function openSSDetailModal(zone){
@@ -1806,7 +1783,7 @@ function renderHealth(d){
       <div class="hstat">Janaan Solar<span>${fmt2d(d.solarKwh)} kWh</span></div>
       <div class="hstat">Eksport kWh<span>${fmt(d.eksportKwh)} kWh</span></div>
       <div class="hstat">Amaun Eksport<span>${fmtRM2d(d.eksportRm)}</span></div>
-      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM2d(jumlahK)}</span></div>
+      <div class="hstat">Penjimatan USM<span style="color:#7c3aed">${fmtRM2d(d.penjimatan)}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.totalKwh>0?(d.solarKwh/d.totalKwh)*500:0,100)}%;background:#e8a020"></div></div>
     </div>`;
 }
@@ -2594,7 +2571,6 @@ function renderCarbonSection(){
     return;
   }
   const d=sumRows(filtered);
-  const jumlahK=calcSmpSavingK(filtered);
 
   const emission = (d.ssaKwh + d.ssdKwh) * CARBON_EF;
   const saving   = d.solarKwh * CARBON_EF;
