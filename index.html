@@ -1372,7 +1372,8 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
     cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
-    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${fmtRM2d(d.penjimatan)}</div><div class="card-unit">Penjimatan bersih · <i class="ti ti-table"></i> Klik jadual</div></div>`;
+    const totalK=sumKForRows(filtered);
+    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${totalK===null?'RM —':fmtRM2d(totalK)}</div><div class="card-unit">${totalK===null?'Perlukan nilai SMP':'Kolum K · Penjimatan Sebenar'} · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
     cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
@@ -1432,7 +1433,7 @@ function renderSmpTable(){
     const C=r?r.solarKwh:0;                     // Jumlah Tenaga Solar Terjana (kWh)
     const D=C*0.238;                            // Bil PV Hi-Tech Solar Sdn Bhd (RM)
     const E=r?r.eksportKwh:0;                   // Eksport Tenaga Solar ke TNB Grid (kWh)
-    const L=smpData[smpKey(tahun,b)];           // SMP — manual
+    const L=(r && r.smp!==undefined && r.smp!==null) ? r.smp : smpData[smpKey(tahun,b)];  // SMP — utama dari Google Sheets, fallback localStorage (rekod lama belum sync)
     const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
     const F=Lval!==null ? (E*Lval) : null;       // Amaun Eksport Tenaga yang ditimbalkan (RM)
     const G=(onPeak+C)-E;                              // Penggunaan Tenaga Sebenar (kWh)
@@ -1519,17 +1520,35 @@ function renderSmpTable(){
   </table>`;
 }
 
-function updateSmpValue(tahun,bulan,val){
-  const key=smpKey(tahun,bulan);
-  if(val==='' || val===null || isNaN(parseFloat(val))){ delete smpData[key]; }
-  else { smpData[key]=parseFloat(val); }
-  smpSave();
+async function updateSmpValue(tahun,bulan,val){
+  const row=document.querySelector(`#smp-table-wrap tr[data-bulan="${bulan}"]`);
+  const input=row?row.querySelector('input'):null;
+  const newVal=(val==='' || val===null || isNaN(parseFloat(val))) ? '' : parseFloat(val);
+
+  if(!adminUnlocked){
+    alert('Sila unlock mod admin dahulu (bahagian Pengurusan Data) untuk kemas kini SMP ke Google Sheets.');
+    renderSmpTable(); // reset input ke nilai asal
+    return;
+  }
+  const pw=localStorage.getItem('usm_admin_pw')||'';
+  if(input){ input.disabled=true; }
+  try{
+    const data=await gasRequest({action:'update',password:pw,tab:'jppf',fields:{bulan,tahun,smp:newVal}});
+    if(data.ok){
+      // kemas kini cache tempatan (allRows) supaya papar terus tanpa perlu refresh penuh
+      const r=allRows.find(x=>x.bulan===bulan && x.tahun===tahun);
+      if(r) r.smp = newVal===''?null:newVal;
+      delete smpData[smpKey(tahun,bulan)]; smpSave(); // buang cache localStorage lama utk rekod ini (dah sync ke sheet)
+    } else {
+      alert('⚠ Gagal kemas kini SMP: '+(data.error||'ralat tidak diketahui'));
+    }
+  }catch(e){
+    alert('⚠ Gagal sambung ke Google Sheets: '+e.message);
+  }
   renderSmpTable();
 }
-function deleteSmpValue(tahun,bulan){
-  delete smpData[smpKey(tahun,bulan)];
-  smpSave();
-  renderSmpTable();
+async function deleteSmpValue(tahun,bulan){
+  await updateSmpValue(tahun,bulan,'');
 }
 
 function openSSDetailModal(zone){
@@ -1625,6 +1644,23 @@ function dlLine(isRM){
   };
 }
 
+// Kira Kolum K (Penjimatan Sebenar dinikmati USM) bagi satu baris — sama formula seperti jadual SMP:
+// K = J − D + F, di mana J=(A+C)×0.3132, D=C×0.238, F=E×SMP (null jika SMP tiada)
+function computeKForRow(r){
+  const A=r.ssaKwh, C=r.solarKwh, E=r.eksportKwh;
+  const D=C*0.238;
+  const J=(A+C)*0.3132;
+  const L=(r.smp!==undefined && r.smp!==null) ? r.smp : smpData[smpKey(r.tahun,r.bulan)];
+  const Lval=(L!==undefined && L!==null && L!=='') ? parseFloat(L) : null;
+  if(Lval===null || isNaN(Lval)) return null;
+  const F=E*Lval;
+  return J-D+F;
+}
+function sumKForRows(rows){
+  let total=0, any=false;
+  rows.forEach(r=>{ const k=computeKForRow(r); if(k!==null){ total+=k; any=true; } });
+  return any ? total : null;
+}
 function renderCharts(filtered,d){
   const sorted=[...filtered].sort((a,b)=>{const yi=r=>parseInt(r.tahun)||0,bi=r=>BULAN_ORDER.indexOf(r.bulan);return yi(a)!==yi(b)?yi(a)-yi(b):bi(a)-bi(b);});
   const multi=sorted.length>1;
