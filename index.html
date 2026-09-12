@@ -872,6 +872,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
       <h3>Settings</h3>
       <p>Gunakan butang Admin <i class="ti ti-settings"></i> pada bar status dalam Energy Overview untuk konfigurasi Google Sheets.</p>
     </div>
+    <div id="jppf-mgmt-target" style="margin-top:18px"></div>
   </div>
 
 </div><!-- end container -->
@@ -1372,8 +1373,11 @@ function updateDisplay(){
   if(showSSD) cardsHtml+=`<div class="card hospital" style="cursor:pointer" onclick="openSSDetailModal('ssd')" title="Klik untuk lihat butiran penuh SS-D"><div class="card-icon"><i class="ti ti-receipt"></i></div><div class="card-label">Bil SS-D (HPUSM)</div><div class="card-value">${fmtRM2d(d.ssdRm)}</div><div class="card-unit">Ringgit</div></div>`;
   if(showSolar){
     cardsHtml+=`<div class="card eksport-rm"><div class="card-icon"><i class="ti ti-arrow-up-right"></i></div><div class="card-label">Amaun Eksport (RM)</div><div class="card-value">${fmtRM2d(d.eksportRm)}</div><div class="card-unit">Hasil jualan solar</div></div>`;
-    const totalK=sumKForRows(filtered);
-    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${totalK===null?'RM —':fmtRM2d(totalK)}</div><div class="card-unit">${totalK===null?'Perlukan nilai SMP':'Kolum K · Penjimatan Sebenar'} · <i class="ti ti-table"></i> Klik jadual</div></div>`;
+    const smpCardYears=[...new Set(allRows.map(r=>r.tahun).filter(Boolean))].sort();
+    const smpCardYear=smpCardYears.length?smpCardYears[smpCardYears.length-1]:null;
+    const smpCardRows=smpCardYear?allRows.filter(r=>r.tahun===smpCardYear):filtered;
+    const totalK=sumKForRows(smpCardRows);
+    cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${totalK===null?'RM —':fmtRM2d(totalK)}</div><div class="card-unit">${totalK===null?'Perlukan nilai SMP':'Kolum K · Jumlah tahun '+(smpCardYear||'semasa')} · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
     cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
@@ -1428,7 +1432,8 @@ function renderSmpTable(){
     const r=getRow(b), sc=getSurcaj(b);
     const hasData = !!r;
     const onPeak=r?r.ssaOnPeakKwh:0, offPeak=r?r.ssaOffPeakKwh:0;
-    const A=r?r.ssaKwh:0;                       // Jumlah Penggunaan Import TNB (kWh)
+    const A=r?r.ssaKwh:0;                       // Jumlah Penggunaan Import TNB (kWh) — lajur paparan
+    const Aformula=onPeak;                      // "A" dalam formula G/J = TOU Peak (SS-A On-Peak kWh)
     const B=r?r.ssaRm:0;                        // Bil TNB bulanan (RM)
     const C=r?r.solarKwh:0;                     // Jumlah Tenaga Solar Terjana (kWh)
     const D=C*0.238;                            // Bil PV Hi-Tech Solar Sdn Bhd (RM)
@@ -1436,11 +1441,11 @@ function renderSmpTable(){
     const L=(r && r.smp!==undefined && r.smp!==null) ? r.smp : smpData[smpKey(tahun,b)];  // SMP — utama dari Google Sheets, fallback localStorage (rekod lama belum sync)
     const Lval=(L!==undefined && L!=='') ? parseFloat(L) : null;
     const F=Lval!==null ? (E*Lval) : null;       // Amaun Eksport Tenaga yang ditimbalkan (RM)
-    const G=(onPeak+C)-E;                              // Penggunaan Tenaga Sebenar (kWh)
+    const G=Aformula+C-E;                       // Penggunaan Tenaga Sebenar (kWh)
     const H=B+D;                                // Kos Utiliti Sebenar Ditanggung USM (RM)
     const tarifAfa=sc?sc.kadarSurcaj:0;          // Tarif AFA (RM)
     const cajAfa=sc?sc.surcajSSA:0;              // Caj AFA (RM)
-    const J=(onPeak+C)*0.3132;                        // Kos tenaga tanpa SOLAR (RM)
+    const J=(Aformula+C)*0.3132;                 // Kos tenaga tanpa SOLAR (RM)
     const K=F!==null ? (J-D+F) : null;           // Penjimatan Sebenar dinikmati USM (RM)
 
     if(hasData){ tA+=A;tB+=B;tC+=C;tD+=D;tE+=E;tG+=G;tH+=H;tJ+=J; }
@@ -1647,7 +1652,7 @@ function dlLine(isRM){
 // Kira Kolum K (Penjimatan Sebenar dinikmati USM) bagi satu baris — sama formula seperti jadual SMP:
 // K = J − D + F, di mana J=(A+C)×0.3132, D=C×0.238, F=E×SMP (null jika SMP tiada)
 function computeKForRow(r){
-  const A=r.ssaKwh, C=r.solarKwh, E=r.eksportKwh;
+  const A=r.ssaOnPeakKwh, C=r.solarKwh, E=r.eksportKwh; // "A" = TOU Peak (SS-A On-Peak kWh), ikut formula G/J sebenar
   const D=C*0.238;
   const J=(A+C)*0.3132;
   const L=(r.smp!==undefined && r.smp!==null) ? r.smp : smpData[smpKey(r.tahun,r.bulan)];
@@ -3871,11 +3876,11 @@ function buildJppfTable(rows){
         Pengurusan Data JPPF
         <span style="font-size:11px;font-weight:400;color:#aaa;margin-left:4px">(klik untuk kecilkan/besarkan)</span>
       </div>
-      <i class="ti ti-chevron-down jppf-mgmt-chevron open" id="jppf-chevron"></i>
+      <i class="ti ti-chevron-down jppf-mgmt-chevron" id="jppf-chevron"></i>
     </div>
 
     <!-- BODY — collapsible -->
-    <div class="jppf-mgmt-body" id="jppf-mgmt-body">
+    <div class="jppf-mgmt-body" id="jppf-mgmt-body" style="display:none">
       ${buildAdminStrip()}
 
       <!-- FILTER BAR -->
@@ -4041,13 +4046,14 @@ function clearEpcFilter(){
 const _origRenderShell = window.renderShell;
 window.renderShell = function(){
   _origRenderShell && _origRenderShell();
-  // append JPPF table after health-row
+  // Pengurusan Data JPPF kini diletakkan dalam tab Settings (bukan KWH USMKK)
   setTimeout(()=>{
-    const hr=document.getElementById('health-row');
-    if(hr&&!document.getElementById('jppf-data-table')){
+    const target=document.getElementById('jppf-mgmt-target');
+    if(target){
+      target.innerHTML='';
       const div=document.createElement('div');div.id='jppf-data-table';
       div.innerHTML=buildJppfTable(allRows);
-      hr.parentElement.appendChild(div);
+      target.appendChild(div);
     }
   },150);
 };
