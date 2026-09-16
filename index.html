@@ -6043,36 +6043,20 @@ function showAddBldMsg(msg,type){const el=document.getElementById('add-bld-msg')
 
 // ══════════════════════════════════════════════
 // POWER MONITORING — Main Switchboard (MSB)
-// Nota: Belum ada integrasi Digital Power Meter (DPM) sebenar setakat ini,
-// jadi paparan ini guna data demo/placeholder mengikut struktur yang
-// dicadangkan. Sedia untuk disambungkan ke backend DPM/Modbus TCP kelak.
+// Data LIVE sepenuhnya dari API gateway (diris-gateway/server.js) yang
+// membaca Modbus TCP terus dari DPM/DIRIS berdaftar. Tiada data demo.
 // ══════════════════════════════════════════════
-const PM_DEMO = {
-  jumlahBeban: 2947, voltage: 415, freq: 50.0, pf: 0.92,
-  trend: [1450,1400,1380,1420,1500,1650,1980,2400,2750,3050,3300,3500,
-          3650,3700,3680,3600,3550,3400,3150,2850,2500,2100,1800,1550,1450],
-  distribusi: [
-    {label:'Bilik Akademik',   kw:1250, pct:42.4, color:'#5fa8ff'},
-    {label:'Bilik Pentadbiran',kw:730,  pct:24.8, color:'#5fa8ff'},
-    {label:'Klinik Kesihatan', kw:360,  pct:12.1, color:'#5fa8ff'},
-    {label:'Kemudahan Sukan',  kw:260,  pct:8.8,  color:'#5fa8ff'},
-    {label:'Lain-lain',        kw:147,  pct:5.0,  color:'#5fa8ff'}
-  ],
-  equipment: [
-    {name:'Transformer 1', lokasi:'MSB 1',         panel:'Main Switchboard', kw:1250, kvar:420, kva:1320, pf:0.95, status:'Normal'},
-    {name:'Transformer 2', lokasi:'MSB 2',         panel:'Main Switchboard', kw:850,  kvar:310, kva:905,  pf:0.94, status:'Normal'},
-    {name:'Chiller Plant', lokasi:'Bilik Mesin',   panel:'Sub Switchboard',  kw:430,  kvar:180, kva:456,  pf:0.92, status:'Normal'},
-    {name:'AHU',           lokasi:'Bilik Akademik',panel:'Sub Switchboard',  kw:230,  kvar:190, kva:341,  pf:0.94, status:'Normal'},
-    {name:'Pam Utama',     lokasi:'Bilik Pam 1',   panel:'Sub Switchboard',  kw:107,  kvar:35,  kva:112,  pf:0.95, status:'Normal'}
-  ],
-  arus:{L1:1250,L2:1230,L3:1210,N:45},
-  voltageDetail:{L1L2:415,L2L3:415,L3L1:415},
-  bebanSeimbang:96,
-  kwh:{importKwh:18420,exportKwh:1280},
-  harmonic:{thdV:4.2,thdI:4.6}
+const PM_STATE = {
+  jumlahBeban: 0, voltage: 0, freq: 0, pf: 0,
+  trend: [],
+  distribusi: [],
+  equipment: [],
+  arus:{L1:0,L2:0,L3:0,N:0},
+  voltageDetail:{L1L2:0,L2L3:0,L3L1:0},
+  kwh:{importKwh:0,exportKwh:0}
 };
 
-let pmChartTrend=null, pmChartGauge=null, pmChartHarmonic=null;
+let pmChartTrend=null, pmChartGauge=null;
 
 let pmShellBuilt=false;
 function renderPowerMonitoring(){
@@ -6100,12 +6084,12 @@ function renderPowerMonitoring(){
 
 // ==========================================================================
 //  LIVE DATA — fetch dari API Gateway (Node.js) yang membaca Modbus TCP
-//  dari DIRIS A30 (10.8.40.14:502, slave 2). Lihat backend "diris-gateway".
+//  daripada semua DPM/meter berdaftar. Lihat backend "diris-gateway".
 // ==========================================================================
 // TUKAR nilai ini kepada URL/IP tempat backend gateway anda berjalan.
-// Contoh: jika gateway dijalankan pada komputer yang sama dengan pelayan web
-// dashboard ini, guna hostname/IP pelayan itu (bukan localhost pengguna).
-const PM_LIVE_API_URL = 'http://localhost:3001/api/power-data';
+// Contoh: jika gateway dijalankan pada komputer/pelayan lain, guna
+// hostname/IP pelayan itu (bukan localhost pengguna).
+const PM_API_BASE = 'http://localhost:3001';
 const PM_LIVE_POLL_MS = 3000;
 let pmLiveTimer = null;
 
@@ -6117,57 +6101,103 @@ function pmStartLivePolling(){
 
 async function pmFetchLiveData(){
   const statusEl = document.getElementById('pm-live-status');
+  const setTxt = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
   try {
-    const res = await fetch(PM_LIVE_API_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('API status ' + res.status);
+    const res = await fetch(PM_API_BASE + '/api/power-data', { cache: 'no-store' });
     const d = await res.json();
-    if (!d.ok) throw new Error(d.error || 'Data tidak sah');
+    if (!d.ok) throw new Error(d.error || 'Tiada device bersambung');
 
     // --- KPI atas ---
-    const setTxt = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
-    setTxt('pm-kpi-beban', fmt(d.power.P_kW) + '<span>kW</span>');
-    const avgV = ((d.voltage.U12 + d.voltage.U23 + d.voltage.U31) / 3);
-    setTxt('pm-kpi-voltage', fmt(avgV) + '<span>V</span>');
-    setTxt('pm-kpi-freq', d.frequency.toFixed(1) + '<span>Hz</span>');
-    setTxt('pm-kpi-pf', d.pf.toFixed(2));
+    setTxt('pm-kpi-beban', fmt(d.jumlahBebanKw) + '<span>kW</span>');
+    setTxt('pm-kpi-voltage', fmt(d.voltageAvg) + '<span>V</span>');
+    setTxt('pm-kpi-freq', d.freqAvg.toFixed(1) + '<span>Hz</span>');
+    setTxt('pm-kpi-pf', d.pfAvg.toFixed(2));
 
-    // --- Detail arus & voltan ---
-    setTxt('pm-arus-l1', fmt(d.current.I1) + ' A');
-    setTxt('pm-arus-l2', fmt(d.current.I2) + ' A');
-    setTxt('pm-arus-l3', fmt(d.current.I3) + ' A');
-    setTxt('pm-arus-n',  fmt(d.current.In) + ' A');
-    setTxt('pm-volt-l1l2', d.voltage.U12.toFixed(1) + ' V');
-    setTxt('pm-volt-l2l3', d.voltage.U23.toFixed(1) + ' V');
-    setTxt('pm-volt-l3l1', d.voltage.U31.toFixed(1) + ' V');
-    setTxt('pm-freq-detail', d.frequency.toFixed(1) + ' Hz');
+    // --- Detail arus & voltan (device MSB) ---
+    if (d.msb) {
+      setTxt('pm-arus-l1', fmt(d.msb.current.I1) + ' A');
+      setTxt('pm-arus-l2', fmt(d.msb.current.I2) + ' A');
+      setTxt('pm-arus-l3', fmt(d.msb.current.I3) + ' A');
+      setTxt('pm-arus-n',  fmt(d.msb.current.In) + ' A');
+      setTxt('pm-volt-l1l2', d.msb.voltage.U12.toFixed(1) + ' V');
+      setTxt('pm-volt-l2l3', d.msb.voltage.U23.toFixed(1) + ' V');
+      setTxt('pm-volt-l3l1', d.msb.voltage.U31.toFixed(1) + ' V');
+      setTxt('pm-freq-detail', d.msb.frequency.toFixed(1) + ' Hz');
 
-    // --- kWh import/export ---
-    setTxt('pm-kwh-import', fmt(d.energy.importKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
-    setTxt('pm-kwh-export', fmt(d.energy.exportKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+      // Beban seimbang (%) dikira dari sisihan arus 3 fasa MSB
+      const iAvg = (d.msb.current.I1 + d.msb.current.I2 + d.msb.current.I3) / 3;
+      const maxDev = Math.max(...[d.msb.current.I1,d.msb.current.I2,d.msb.current.I3].map(i=>Math.abs(i-iAvg)));
+      const seimbang = iAvg > 0 ? Math.max(0, 100 - (maxDev/iAvg*100)) : 0;
+      setTxt('pm-gauge-label', seimbang.toFixed(0) + '%');
+      if (pmChartGauge) {
+        pmChartGauge.data.datasets[0].data = [d.msb.current.I1, d.msb.current.I2, d.msb.current.I3];
+        pmChartGauge.update('none');
+      }
+    }
 
-    // --- Trend chart: tambah titik baru secara live ---
-    if (pmChartTrend) {
-      const now = new Date().toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-      const ds = pmChartTrend.data;
-      ds.labels.push(now);
-      ds.datasets[0].data.push(Number(d.power.P_kW.toFixed(2)));
-      if (ds.labels.length > 30) { ds.labels.shift(); ds.datasets[0].data.shift(); }
+    // --- kWh import/export (jumlah semua device) ---
+    setTxt('pm-kwh-import', fmt(d.importKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+    setTxt('pm-kwh-export', fmt(d.exportKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+
+    // --- Distribusi & Senarai PE/MSB (dari device sebenar) ---
+    const colors=['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2'];
+    pmRenderDistribusi(d.distribusi.map((x,i)=>({...x, color:colors[i%colors.length]})));
+    pmRenderEquipment(d.equipment);
+    PM_STATE.equipment = d.equipment; // utk pmApplyFilter
+
+    // --- Trend chart: guna sejarah dari backend ---
+    if (pmChartTrend && d.trend) {
+      pmChartTrend.data.labels = d.trend.map(p=>new Date(p.t).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+      pmChartTrend.data.datasets[0].data = d.trend.map(p=>p.totalKw);
       pmChartTrend.update('none');
     }
 
     if (statusEl) {
-      statusEl.style.color = d.stale ? '#f0c060' : '#4ade80';
-      statusEl.innerHTML = (d.stale ? '⚠️ Data lapuk (sambungan mungkin terputus). ' : '✅ LIVE — data sebenar dari DIRIS A30 (10.8.40.14). ')
-        + 'Kemaskini terakhir: ' + new Date(d.timestamp).toLocaleTimeString('ms-MY');
+      statusEl.style.color = '#4ade80';
+      statusEl.innerHTML = `✅ LIVE — ${d.equipment.length} device bersambung. Kemaskini terakhir: ${new Date(d.timestamp).toLocaleTimeString('ms-MY')}`;
     }
   } catch (err) {
     if (statusEl) {
       statusEl.style.color = '#e05252';
-      statusEl.innerHTML = '❌ Gagal sambung ke API gateway (' + PM_LIVE_API_URL + '). Pastikan backend Node.js sedang berjalan. [' + err.message + ']';
+      statusEl.innerHTML = '❌ ' + err.message + ' — pastikan backend gateway (diris-gateway) sedang berjalan di ' + PM_API_BASE;
     }
     console.error('pmFetchLiveData error:', err);
   }
+
+  // Kemaskini senarai status device (untuk panel "Device Bersambung" + tab Add Device)
+  pmFetchDeviceList();
 }
+
+async function pmFetchDeviceList(){
+  try {
+    const res = await fetch(PM_API_BASE + '/api/devices', { cache: 'no-store' });
+    const d = await res.json();
+    if (!d.ok) return;
+    PM_DEVICES = d.devices;
+    pmRenderDeviceStatusList(d.devices);
+    pmRenderRegisteredDevices(d.devices); // dalam tab Add Device (jika sedang dipaparkan)
+  } catch (err) {
+    console.error('pmFetchDeviceList error:', err);
+  }
+}
+
+function pmRenderDeviceStatusList(devices){
+  const el = document.getElementById('pm-device-status-list');
+  if (!el) return;
+  if (!devices.length){ el.innerHTML = '<p style="font-size:12px;color:#7d93ad">Belum ada device berdaftar. Pergi ke tab "Add Device".</p>'; return; }
+  el.innerHTML = devices.map(dv => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#0a1526;border:1px solid #1c2f48;border-radius:8px;padding:8px 10px">
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:#e2e8f0">${dv.name}</div>
+        <div style="font-size:10.5px;color:#7d93ad">${dv.ip} · slave ${dv.slaveId} · ${dv.lokasi}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:${dv.connected?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${dv.connected?'#4ade80':'#f0897c'}">
+        ${dv.connected ? '● LIVE' : '○ OFFLINE'}
+      </span>
+    </div>`).join('');
+}
+
+let PM_DEVICES = [];
 
 function switchPowerTab(tab){
   const ov=document.getElementById('panel-power-overview');
@@ -6186,8 +6216,8 @@ function switchPowerTab(tab){
 function pmRenderOverview(){
   const el=document.getElementById('panel-power-overview');
   if(!el) return;
-  const lokasiSet=[...new Set(PM_DEMO.equipment.map(e=>e.lokasi))];
-  const panelSet=[...new Set(PM_DEMO.equipment.map(e=>e.panel))];
+  const lokasiSet=[...new Set(PM_STATE.equipment.map(e=>e.lokasi))];
+  const panelSet=[...new Set(PM_STATE.equipment.map(e=>e.panel))];
   const lokasiOpts=['<option value="">All</option>',...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
   const panelOpts=['<option value="">All</option>',...panelSet.map(p=>`<option value="${p}">${p}</option>`)].join('');
 
@@ -6208,10 +6238,10 @@ function pmRenderOverview(){
 
       <div class="pm-main">
         <div class="pm-kpi-row">
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#5fa8ff">Jumlah Beban</div><div class="pm-kpi-value" id="pm-kpi-beban">${fmt(PM_DEMO.jumlahBeban)}<span>kW</span></div></div>
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${PM_DEMO.voltage}<span>V</span></div></div>
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#f0c060">Frequency</div><div class="pm-kpi-value" id="pm-kpi-freq">${PM_DEMO.freq.toFixed(1)}<span>Hz</span></div></div>
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Power Factor</div><div class="pm-kpi-value" id="pm-kpi-pf">${PM_DEMO.pf.toFixed(2)}</div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#5fa8ff">Jumlah Beban</div><div class="pm-kpi-value" id="pm-kpi-beban">${fmt(PM_STATE.jumlahBeban)}<span>kW</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${PM_STATE.voltage}<span>V</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#f0c060">Frequency</div><div class="pm-kpi-value" id="pm-kpi-freq">${PM_STATE.freq.toFixed(1)}<span>Hz</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Power Factor</div><div class="pm-kpi-value" id="pm-kpi-pf">${PM_STATE.pf.toFixed(2)}</div></div>
         </div>
 
         <div class="pm-row2">
@@ -6242,50 +6272,53 @@ function pmRenderOverview(){
             <div class="pm-detail-grid" style="margin-top:12px">
               <div class="pm-detail-col">
                 <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">ARUS (A)</div>
-                <div class="row"><span>L1</span><b id="pm-arus-l1">${fmt(PM_DEMO.arus.L1)} A</b></div>
-                <div class="row"><span>L2</span><b id="pm-arus-l2">${fmt(PM_DEMO.arus.L2)} A</b></div>
-                <div class="row"><span>L3</span><b id="pm-arus-l3">${fmt(PM_DEMO.arus.L3)} A</b></div>
-                <div class="row"><span>Neutral</span><b id="pm-arus-n">${fmt(PM_DEMO.arus.N)} A</b></div>
+                <div class="row"><span>L1</span><b id="pm-arus-l1">${fmt(PM_STATE.arus.L1)} A</b></div>
+                <div class="row"><span>L2</span><b id="pm-arus-l2">${fmt(PM_STATE.arus.L2)} A</b></div>
+                <div class="row"><span>L3</span><b id="pm-arus-l3">${fmt(PM_STATE.arus.L3)} A</b></div>
+                <div class="row"><span>Neutral</span><b id="pm-arus-n">${fmt(PM_STATE.arus.N)} A</b></div>
               </div>
               <div style="position:relative;width:120px;height:120px"><canvas id="pmChartGauge"></canvas>
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                  <div class="pm-gauge-label">${PM_DEMO.bebanSeimbang}%</div>
+                  <div class="pm-gauge-label" id="pm-gauge-label">--%</div>
                   <div class="pm-gauge-sub">Beban<br>Seimbang</div>
                 </div>
               </div>
               <div class="pm-detail-col">
                 <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">VOLTAGE (V)</div>
-                <div class="row"><span>L1-L2</span><b id="pm-volt-l1l2">${PM_DEMO.voltageDetail.L1L2} V</b></div>
-                <div class="row"><span>L2-L3</span><b id="pm-volt-l2l3">${PM_DEMO.voltageDetail.L2L3} V</b></div>
-                <div class="row"><span>L3-L1</span><b id="pm-volt-l3l1">${PM_DEMO.voltageDetail.L3L1} V</b></div>
-                <div class="row"><span>Frequency</span><b id="pm-freq-detail">${PM_DEMO.freq.toFixed(1)} Hz</b></div>
+                <div class="row"><span>L1-L2</span><b id="pm-volt-l1l2">${PM_STATE.voltageDetail.L1L2} V</b></div>
+                <div class="row"><span>L2-L3</span><b id="pm-volt-l2l3">${PM_STATE.voltageDetail.L2L3} V</b></div>
+                <div class="row"><span>L3-L1</span><b id="pm-volt-l3l1">${PM_STATE.voltageDetail.L3L1} V</b></div>
+                <div class="row"><span>Frequency</span><b id="pm-freq-detail">${PM_STATE.freq.toFixed(1)} Hz</b></div>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #1c2f48">
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
                 <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> kWh Import</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt(PM_DEMO.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt(PM_STATE.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
                 <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> kWh Export</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt(PM_DEMO.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt(PM_STATE.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
             </div>
           </div>
           <div class="dpanel">
-            <div class="dpanel-title">HARMONIC DISTORTION</div>
-            <div style="position:relative;width:100%;height:200px"><canvas id="pmChartHarmonic"></canvas></div>
+            <div class="dpanel-title">DEVICE BERSAMBUNG</div>
+            <div class="dpanel-sub">Status sambungan DPM/meter berdaftar</div>
+            <div id="pm-device-status-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+              <p style="font-size:12px;color:#7d93ad">Memuatkan senarai device...</p>
+            </div>
           </div>
         </div>
 
-        <p style="font-size:11px;color:#7d93ad;margin-top:4px" id="pm-live-status">⏳ Menyambung ke DIRIS A30 (10.8.40.14)...</p>
+        <p style="font-size:11px;color:#7d93ad;margin-top:4px" id="pm-live-status">⏳ Menyambung ke gateway...</p>
       </div>
     </div>
   `;
 
   pmRenderCharts();
-  pmRenderDistribusi(PM_DEMO.distribusi);
-  pmRenderEquipment(PM_DEMO.equipment);
+  pmRenderDistribusi(PM_STATE.distribusi);
+  pmRenderEquipment(PM_STATE.equipment);
 }
 
 function pmRenderDistribusi(list){
@@ -6595,48 +6628,123 @@ function pmRenderAddDevice(){
   const el=document.getElementById('panel-power-adddevice');
   if(!el) return;
   el.innerHTML = `
-    <div class="dpanel" style="max-width:560px">
-      <div class="dpanel-title"><i class="ti ti-circle-plus"></i> ADD DEVICE</div>
-      <div class="dpanel-sub">Daftar Digital Power Meter (DPM) / peralatan baharu untuk pemantauan</div>
-      <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
-        <div class="pm-filter-field"><label>Nama Peralatan / Meter</label><input type="text" id="pm-add-name" placeholder="cth: Transformer 3" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
-        <div class="pm-filter-field"><label>Serial No.</label><input type="text" id="pm-add-serial" placeholder="cth: 201700010150" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
-        <div class="pm-filter-field"><label>Lokasi</label><input type="text" id="pm-add-lokasi" placeholder="cth: Bilik Mesin" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
-        <div class="pm-filter-field"><label>Panel</label>
-          <select id="pm-add-panel" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-            <option>Main Switchboard</option><option>Sub Switchboard</option>
-          </select>
+    <div class="pm-row2" style="align-items:start">
+      <div class="dpanel" style="max-width:520px">
+        <div class="dpanel-title"><i class="ti ti-circle-plus"></i> ADD DEVICE</div>
+        <div class="dpanel-sub">Daftar Digital Power Meter (DPM) baharu untuk pemantauan live</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+          <div class="pm-filter-field"><label>Nama Peralatan / Meter</label><input type="text" id="pm-add-name" placeholder="cth: DIRIS A30 - Sub Switchboard 2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          <div class="pm-filter-field"><label>Lokasi</label><input type="text" id="pm-add-lokasi" placeholder="cth: Bilik Pam 2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          <div class="pm-filter-field"><label>Panel</label>
+            <select id="pm-add-panel" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+              <option>Main Switchboard</option><option>Sub Switchboard</option>
+            </select>
+          </div>
+          <div class="pm-filter-field"><label>IP Address</label><input type="text" id="pm-add-ip" placeholder="cth: 10.8.40.15" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px;font-family:monospace"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="pm-filter-field"><label>Modbus/Slave Address</label><input type="number" id="pm-add-modbus" placeholder="cth: 2" min="1" max="247" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+            <div class="pm-filter-field"><label>Port (pilihan)</label><input type="number" id="pm-add-port" placeholder="502" value="502" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          </div>
+          <button class="pm-view-btn" style="margin-top:4px;width:fit-content" id="pm-add-btn" onclick="pmSubmitAddDevice()"><i class="ti ti-device-floppy"></i> Simpan & Sambung</button>
+          <div id="pm-add-msg" style="display:none;font-size:12.5px;padding:9px 12px;border-radius:8px"></div>
         </div>
-        <button class="pm-view-btn" style="margin-top:4px;width:fit-content" onclick="pmSubmitAddDevice()"><i class="ti ti-device-floppy"></i> Simpan Peralatan</button>
-        <div id="pm-add-msg" style="display:none;font-size:12.5px;padding:9px 12px;border-radius:8px"></div>
+        <p style="font-size:11px;color:#7d93ad;margin-top:14px">Selepas disimpan, gateway (backend) akan terus cuba sambung ke meter ini melalui Modbus TCP dan bacaan akan muncul di tab Overview.</p>
       </div>
-      <p style="font-size:11px;color:#7d93ad;margin-top:14px">Nota: Ciri ini masih dalam demo — pendaftaran peralatan sebenar memerlukan integrasi backend DPM/Modbus.</p>
+
+      <div class="dpanel">
+        <div class="dpanel-title"><i class="ti ti-list-details"></i> DEVICE BERDAFTAR</div>
+        <div class="dpanel-sub">Semua DPM yang sedang dipantau oleh gateway</div>
+        <div id="pm-registered-devices" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          <p style="font-size:12px;color:#7d93ad">Memuatkan...</p>
+        </div>
+      </div>
     </div>
   `;
+  pmFetchDeviceList();
 }
 
-function pmSubmitAddDevice(){
-  const name=document.getElementById('pm-add-name')?.value.trim();
-  const serial=document.getElementById('pm-add-serial')?.value.trim();
-  const msg=document.getElementById('pm-add-msg');
+async function pmSubmitAddDevice(){
+  const name   = document.getElementById('pm-add-name')?.value.trim();
+  const lokasi = document.getElementById('pm-add-lokasi')?.value.trim();
+  const panel  = document.getElementById('pm-add-panel')?.value;
+  const ip     = document.getElementById('pm-add-ip')?.value.trim();
+  const modbusAddress = document.getElementById('pm-add-modbus')?.value.trim();
+  const port   = document.getElementById('pm-add-port')?.value.trim() || 502;
+  const msg = document.getElementById('pm-add-msg');
+  const btn = document.getElementById('pm-add-btn');
   if(!msg) return;
-  if(!name || !serial){
-    msg.textContent='⚠ Sila isi Nama Peralatan dan Serial No.';
-    msg.style.cssText='display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:rgba(224,90,74,.15);color:#f0897c';
+
+  const showMsg = (text, ok) => {
+    msg.textContent = text;
+    msg.style.cssText = `display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:${ok?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${ok?'#4ade80':'#f0897c'}`;
+  };
+
+  if(!name || !lokasi || !panel || !ip || !modbusAddress){
+    showMsg('⚠ Sila lengkapkan semua medan (Nama, Lokasi, Panel, IP Address, Modbus Address).', false);
     return;
   }
-  msg.textContent=`✓ "${name}" (${serial}) berjaya didaftarkan (demo — belum disimpan ke backend sebenar).`;
-  msg.style.cssText='display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:rgba(74,222,128,.15);color:#4ade80';
+  if(!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)){
+    showMsg('⚠ Format IP Address tidak sah. Contoh: 10.8.40.14', false);
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Menyambung...';
+  try {
+    const res = await fetch(PM_API_BASE + '/api/devices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, lokasi, panel, ip, port, modbusAddress })
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Gagal daftar device');
+
+    showMsg(`✓ "${name}" (${ip}, slave ${modbusAddress}) berjaya didaftarkan dan gateway sedang cuba sambung.`, true);
+    ['pm-add-name','pm-add-lokasi','pm-add-ip','pm-add-modbus'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    pmFetchDeviceList();
+  } catch (err) {
+    showMsg('❌ ' + err.message + ' — pastikan backend gateway sedang berjalan.', false);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Simpan & Sambung';
+  }
+}
+
+async function pmDeleteDevice(id, name){
+  if(!confirm(`Buang device "${name}" daripada pemantauan?`)) return;
+  try {
+    const res = await fetch(PM_API_BASE + '/api/devices/' + encodeURIComponent(id), { method: 'DELETE' });
+    const d = await res.json();
+    if (!d.ok) throw new Error('Gagal buang device');
+    pmFetchDeviceList();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  }
+}
+
+function pmRenderRegisteredDevices(devices){
+  const el = document.getElementById('pm-registered-devices');
+  if (!el) return; // tab Add Device tidak sedang dipaparkan
+  if (!devices.length){ el.innerHTML = '<p style="font-size:12px;color:#7d93ad">Belum ada device berdaftar.</p>'; return; }
+  el.innerHTML = devices.map(dv => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0a1526;border:1px solid #1c2f48;border-radius:8px;padding:10px 12px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0">${dv.name}
+          <span style="font-size:10px;font-weight:700;margin-left:6px;padding:2px 7px;border-radius:20px;background:${dv.connected?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${dv.connected?'#4ade80':'#f0897c'}">${dv.connected?'● LIVE':'○ OFFLINE'}</span>
+        </div>
+        <div style="font-size:11px;color:#7d93ad;margin-top:2px">${dv.lokasi} · ${dv.panel} · ${dv.ip}:${dv.port} · slave ${dv.slaveId}</div>
+        ${dv.data ? `<div style="font-size:11px;color:#5fa8ff;margin-top:3px">${fmt(dv.data.power.P_kW)} kW · ${fmt((dv.data.voltage.U12+dv.data.voltage.U23+dv.data.voltage.U31)/3)} V · PF ${dv.data.pf.toFixed(2)}</div>` : dv.lastError ? `<div style="font-size:11px;color:#f0897c;margin-top:3px">${dv.lastError}</div>` : ''}
+      </div>
+      <button onclick="pmDeleteDevice('${dv.id}','${dv.name.replace(/'/g,"\\'")}')" style="background:none;border:1px solid #3a2530;color:#f0897c;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:11px"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
 }
 
 function pmApplyFilter(){
   const lokasi=document.getElementById('pm-f-lokasi')?.value||'';
   const panel=document.getElementById('pm-f-panel')?.value||'';
-  const filtered=PM_DEMO.equipment.filter(e=>(!lokasi||e.lokasi===lokasi)&&(!panel||e.panel===panel));
+  const filtered=PM_STATE.equipment.filter(e=>(!lokasi||e.lokasi===lokasi)&&(!panel||e.panel===panel));
   pmRenderEquipment(filtered);
   const totalKw=filtered.reduce((s,e)=>s+e.kw,0);
   const kpiEl=document.getElementById('pm-kpi-beban');
-  if(kpiEl) kpiEl.innerHTML = (lokasi||panel) ? `${fmt(totalKw)}<span>kW (ditapis)</span>` : `${fmt(PM_DEMO.jumlahBeban)}<span>kW</span>`;
+  if(kpiEl) kpiEl.innerHTML = (lokasi||panel) ? `${fmt(totalKw)}<span>kW (ditapis)</span>` : `${fmt(PM_STATE.jumlahBeban)}<span>kW</span>`;
 }
 function pmResetFilter(){
   const l=document.getElementById('pm-f-lokasi'), p=document.getElementById('pm-f-panel'), pr=document.getElementById('pm-f-param');
@@ -6648,10 +6756,10 @@ function pmRenderCharts(){
   const canvasTrend=document.getElementById('pmChartTrend');
   if(canvasTrend){
     if(pmChartTrend) pmChartTrend.destroy();
-    const labels=PM_DEMO.trend.map((v,i)=>i%4===0?String(i).padStart(2,'0')+':00':'');
+    const labels=PM_STATE.trend.map((v,i)=>i%4===0?String(i).padStart(2,'0')+':00':'');
     pmChartTrend=new Chart(canvasTrend,{
       type:'line',
-      data:{labels,datasets:[{label:'Beban (kW)',data:PM_DEMO.trend,borderColor:'#5fa8ff',backgroundColor:'rgba(95,168,255,.12)',pointRadius:2,tension:.35,borderWidth:2,fill:true}]},
+      data:{labels,datasets:[{label:'Beban (kW)',data:PM_STATE.trend,borderColor:'#5fa8ff',backgroundColor:'rgba(95,168,255,.12)',pointRadius:2,tension:.35,borderWidth:2,fill:true}]},
       options:{
         responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`Beban: ${fmt(ctx.parsed.y)} kW`}}},
@@ -6668,28 +6776,11 @@ function pmRenderCharts(){
     if(pmChartGauge) pmChartGauge.destroy();
     pmChartGauge=new Chart(canvasGauge,{
       type:'doughnut',
-      data:{labels:['L1','L2','L3'],datasets:[{data:[PM_DEMO.arus.L1,PM_DEMO.arus.L2,PM_DEMO.arus.L3],backgroundColor:['#e05a4a','#5fa8ff','#f0c060'],borderWidth:2,borderColor:'#0f1e34'}]},
+      data:{labels:['L1','L2','L3'],datasets:[{data:[PM_STATE.arus.L1,PM_STATE.arus.L2,PM_STATE.arus.L3],backgroundColor:['#e05a4a','#5fa8ff','#f0c060'],borderWidth:2,borderColor:'#0f1e34'}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.parsed)} A`}}}}
     });
   }
 
-  const canvasHarmonic=document.getElementById('pmChartHarmonic');
-  if(canvasHarmonic){
-    if(pmChartHarmonic) pmChartHarmonic.destroy();
-    pmChartHarmonic=new Chart(canvasHarmonic,{
-      type:'bar',
-      data:{labels:['THD Voltage','THD Current'],datasets:[{data:[PM_DEMO.harmonic.thdV,PM_DEMO.harmonic.thdI],backgroundColor:['#7c3aed','#7c3aed'],borderRadius:6,maxBarThickness:60,
-        datalabels:{color:'#fff',font:{size:10,weight:'700'},anchor:'end',align:'top',formatter:v=>v+'%'}}]},
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.y}%`}}},
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#7d93ad',font:{size:10}}},
-          y:{grid:{color:'#1c2f48'},ticks:{color:'#7d93ad',font:{size:10},callback:v=>v+'%'},max:6}
-        }
-      }
-    });
-  }
 }
 
 // ══════════════════════════════════════════════
