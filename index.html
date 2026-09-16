@@ -1006,6 +1006,7 @@ const BULAN_SHORT=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt',
 
 function normBulan(v){const s=String(v).trim().toLowerCase().substring(0,3);const m={jan:'Januari',feb:'Februari',mar:'Mac',mac:'Mac',apr:'April',may:'Mei',mei:'Mei',jun:'Jun',jul:'Julai',aug:'Ogos',ogos:'Ogos',sep:'September',oct:'Oktober',okt:'Oktober',nov:'November',dec:'Disember',dis:'Disember'};return m[s]||String(v).trim()}
 function fmt(n){return(!n||isNaN(n))?'—':Math.round(n).toLocaleString('ms-MY')}
+function fmt2(n){return(n===null||n===undefined||isNaN(n))?'—':Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmt2d(n){return(!n||isNaN(n))?'—':Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmtRM(n){return(!n||isNaN(n))?'—':'RM '+Math.round(n).toLocaleString('ms-MY')}
 function fmtRM2d(n){return(!n||isNaN(n))?'—':'RM '+Number(n).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -6048,7 +6049,6 @@ function showAddBldMsg(msg,type){const el=document.getElementById('add-bld-msg')
 // ══════════════════════════════════════════════
 const PM_STATE = {
   jumlahBeban: 0, voltage: 0, freq: 0, pf: 0,
-  kw:0,
   trend: [],
   distribusi: [],
   equipment: [],
@@ -6100,58 +6100,16 @@ function pmStartLivePolling(){
   pmLiveTimer = setInterval(pmFetchLiveData, PM_LIVE_POLL_MS);
 }
 
+let PM_LAST_AGGREGATE = null; // cache respons terkini /api/power-data
+let PM_DEVICES = [];           // cache respons terkini /api/devices
+
 async function pmFetchLiveData(){
   const statusEl = document.getElementById('pm-live-status');
-  const setTxt = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
   try {
     const res = await fetch(PM_API_BASE + '/api/power-data', { cache: 'no-store' });
     const d = await res.json();
     if (!d.ok) throw new Error(d.error || 'Tiada device bersambung');
-
-    // --- KPI atas ---
-    setTxt('pm-kpi-beban', fmt(d.jumlahBebanKw) + '<span>kW</span>');
-    setTxt('pm-kpi-voltage', fmt(d.voltageAvg) + '<span>V</span>');
-    setTxt('pm-kpi-freq', d.freqAvg.toFixed(1) + '<span>Hz</span>');
-    setTxt('pm-kpi-pf', d.pfAvg.toFixed(2));
-
-    // --- Detail arus & voltan (device MSB) ---
-    if (d.msb) {
-      setTxt('pm-arus-l1', fmt(d.msb.current.I1) + ' A');
-      setTxt('pm-arus-l2', fmt(d.msb.current.I2) + ' A');
-      setTxt('pm-arus-l3', fmt(d.msb.current.I3) + ' A');
-      setTxt('pm-arus-n',  fmt(d.msb.current.In) + ' A');
-      setTxt('pm-volt-l1l2', d.msb.voltage.U12.toFixed(1) + ' V');
-      setTxt('pm-volt-l2l3', d.msb.voltage.U23.toFixed(1) + ' V');
-      setTxt('pm-volt-l3l1', d.msb.voltage.U31.toFixed(1) + ' V');
-      setTxt('pm-freq-detail', d.msb.frequency.toFixed(1) + ' Hz');
-
-      // Beban seimbang (%) dikira dari sisihan arus 3 fasa MSB
-      const iAvg = (d.msb.current.I1 + d.msb.current.I2 + d.msb.current.I3) / 3;
-      const maxDev = Math.max(...[d.msb.current.I1,d.msb.current.I2,d.msb.current.I3].map(i=>Math.abs(i-iAvg)));
-      const seimbang = iAvg > 0 ? Math.max(0, 100 - (maxDev/iAvg*100)) : 0;
-      setTxt('pm-gauge-label', seimbang.toFixed(0) + '%');
-      if (pmChartGauge) {
-        pmChartGauge.data.datasets[0].data = [d.msb.current.I1, d.msb.current.I2, d.msb.current.I3];
-        pmChartGauge.update('none');
-      }
-    }
-
-    // --- kWh import/export (jumlah semua device) ---
-    setTxt('pm-kwh-import', fmt(d.importKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
-    setTxt('pm-kwh-export', fmt(d.exportKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
-
-    // --- Distribusi & Senarai PE/MSB (dari device sebenar) ---
-    const colors=['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2'];
-    pmRenderDistribusi(d.distribusi.map((x,i)=>({...x, color:colors[i%colors.length]})));
-    pmRenderEquipment(d.equipment);
-    PM_STATE.equipment = d.equipment; // utk pmApplyFilter
-
-    // --- Trend chart: guna sejarah dari backend ---
-    if (pmChartTrend && d.trend) {
-      pmChartTrend.data.labels = d.trend.map(p=>new Date(p.t).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
-      pmChartTrend.data.datasets[0].data = d.trend.map(p=>p.totalKw);
-      pmChartTrend.update('none');
-    }
+    PM_LAST_AGGREGATE = d;
 
     if (statusEl) {
       statusEl.style.color = '#4ade80';
@@ -6165,8 +6123,9 @@ async function pmFetchLiveData(){
     console.error('pmFetchLiveData error:', err);
   }
 
-  // Kemaskini senarai status device (untuk panel "Device Bersambung" + tab Add Device)
-  pmFetchDeviceList();
+  // Kemaskini senarai device (turut memuatkan trend individu setiap device)
+  await pmFetchDeviceList();
+  pmRenderLiveView();
 }
 
 async function pmFetchDeviceList(){
@@ -6174,12 +6133,108 @@ async function pmFetchDeviceList(){
     const res = await fetch(PM_API_BASE + '/api/devices', { cache: 'no-store' });
     const d = await res.json();
     if (!d.ok) return;
+    const namesChanged = PM_DEVICES.map(x=>x.id).join(',') !== d.devices.map(x=>x.id).join(',');
     PM_DEVICES = d.devices;
     pmRenderDeviceStatusList(d.devices);
     pmRenderRegisteredDevices(d.devices); // dalam tab Add Device (jika sedang dipaparkan)
+    if (namesChanged) pmPopulateDeviceFilter();
   } catch (err) {
     console.error('pmFetchDeviceList error:', err);
   }
+}
+
+// Bina semula dropdown filter "Device" ikut senarai DPM berdaftar,
+// tanpa hilangkan pilihan semasa pengguna.
+function pmPopulateDeviceFilter(){
+  const sel = document.getElementById('pm-f-device');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = ['<option value="">Semua Device</option>',
+    ...PM_DEVICES.map(dv => `<option value="${dv.id}">${dv.name}${dv.connected?'':' (offline)'}</option>`)].join('');
+  if ([...sel.options].some(o=>o.value===current)) sel.value = current;
+}
+
+// Render semula KPI/trend/detail/jadual berdasarkan filter device yang dipilih.
+// Dipanggil selepas setiap fetch DAN bila pengguna tukar filter (tanpa fetch baru).
+function pmRenderLiveView(){
+  const setTxt = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
+  const selId = document.getElementById('pm-f-device')?.value || '';
+  const selDevice = selId ? PM_DEVICES.find(dv => dv.id === selId) : null;
+
+  // --- Tentukan sumber data ikut filter ---
+  let kw, voltAvg, freq, pf, importKwh, exportKwh, current, voltage, trendPoints, statusName;
+  if (selDevice && selDevice.data) {
+    const dd = selDevice.data;
+    kw = dd.power.P_kW; voltAvg = (dd.voltage.U12+dd.voltage.U23+dd.voltage.U31)/3;
+    freq = dd.frequency; pf = dd.pf;
+    importKwh = dd.energy.importKwh; exportKwh = dd.energy.exportKwh;
+    current = dd.current; voltage = dd.voltage;
+    trendPoints = (selDevice.trend||[]).map(p=>({t:p.t, v:p.kw}));
+    statusName = selDevice.name;
+  } else if (PM_LAST_AGGREGATE) {
+    const d = PM_LAST_AGGREGATE;
+    kw = d.jumlahBebanKw; voltAvg = d.voltageAvg; freq = d.freqAvg; pf = d.pfAvg;
+    importKwh = d.importKwh; exportKwh = d.exportKwh;
+    current = d.msb ? d.msb.current : null; voltage = d.msb ? d.msb.voltage : null;
+    trendPoints = (d.trend||[]).map(p=>({t:p.t, v:p.totalKw}));
+    statusName = 'Semua Device (Jumlah)';
+  } else { return; }
+
+  // --- KPI atas ---
+  setTxt('pm-kpi-beban', fmt(kw) + '<span>kW</span>');
+  setTxt('pm-kpi-voltage', fmt2(voltAvg) + '<span>V</span>');
+  setTxt('pm-kpi-freq', (freq||0).toFixed(1) + '<span>Hz</span>');
+  setTxt('pm-kpi-pf', (pf||0).toFixed(2));
+
+  // --- Detail arus & voltan ---
+  if (current && voltage) {
+    setTxt('pm-arus-l1', fmt2(current.I1) + ' A');
+    setTxt('pm-arus-l2', fmt2(current.I2) + ' A');
+    setTxt('pm-arus-l3', fmt2(current.I3) + ' A');
+    setTxt('pm-arus-n',  fmt2(current.In) + ' A');
+    setTxt('pm-volt-l1l2', fmt2(voltage.U12) + ' V');
+    setTxt('pm-volt-l2l3', fmt2(voltage.U23) + ' V');
+    setTxt('pm-volt-l3l1', fmt2(voltage.U31) + ' V');
+    setTxt('pm-freq-detail', (freq||0).toFixed(1) + ' Hz');
+
+    const iAvg = (current.I1 + current.I2 + current.I3) / 3;
+    const maxDev = Math.max(...[current.I1,current.I2,current.I3].map(i=>Math.abs(i-iAvg)));
+    const seimbang = iAvg > 0 ? Math.max(0, 100 - (maxDev/iAvg*100)) : 0;
+    setTxt('pm-gauge-label', seimbang.toFixed(0) + '%');
+    if (pmChartGauge) {
+      pmChartGauge.data.datasets[0].data = [current.I1, current.I2, current.I3];
+      pmChartGauge.update('none');
+    }
+  }
+
+  // --- kWh import/export ---
+  setTxt('pm-kwh-import', fmt2(importKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+  setTxt('pm-kwh-export', fmt2(exportKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+
+  // --- Trend chart (ikut device terpilih, atau jumlah semua) ---
+  if (pmChartTrend) {
+    pmChartTrend.data.labels = trendPoints.map(p=>new Date(p.t).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+    pmChartTrend.data.datasets[0].data = trendPoints.map(p=>p.v);
+    pmChartTrend.data.datasets[0].label = selDevice ? `Beban ${selDevice.name} (kW)` : 'Jumlah Beban (kW)';
+    pmChartTrend.update('none');
+  }
+  const trendTitle = document.getElementById('pm-trend-title');
+  if (trendTitle) trendTitle.textContent = 'TREND BEBAN (kW) — ' + statusName;
+
+  // --- Distribusi & Senarai PE/MSB ---
+  if (PM_LAST_AGGREGATE) {
+    const colors=['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2'];
+    pmRenderDistribusi(PM_LAST_AGGREGATE.distribusi.map((x,i)=>({...x, color:colors[i%colors.length]})));
+    const eqList = selDevice
+      ? PM_LAST_AGGREGATE.equipment.filter(e => e.name === selDevice.name)
+      : PM_LAST_AGGREGATE.equipment;
+    pmRenderEquipment(eqList);
+    PM_STATE.equipment = PM_LAST_AGGREGATE.equipment;
+  }
+}
+
+function pmApplyDeviceFilter(){
+  pmRenderLiveView();
 }
 
 function pmRenderDeviceStatusList(devices){
@@ -6198,8 +6253,6 @@ function pmRenderDeviceStatusList(devices){
     </div>`).join('');
 }
 
-let PM_DEVICES = [];
-
 function switchPowerTab(tab){
   const ov=document.getElementById('panel-power-overview');
   const bl=document.getElementById('panel-power-billing');
@@ -6217,37 +6270,28 @@ function switchPowerTab(tab){
 function pmRenderOverview(){
   const el=document.getElementById('panel-power-overview');
   if(!el) return;
-  const lokasiSet=[...new Set(PM_STATE.equipment.map(e=>e.lokasi))];
-  const panelSet=[...new Set(PM_STATE.equipment.map(e=>e.panel))];
-  const lokasiOpts=['<option value="">All</option>',...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
-  const panelOpts=['<option value="">All</option>',...panelSet.map(p=>`<option value="${p}">${p}</option>`)].join('');
+  const deviceOpts=['<option value="">Semua Device</option>',
+    ...PM_DEVICES.map(dv=>`<option value="${dv.id}">${dv.name}${dv.connected?'':' (offline)'}</option>`)].join('');
 
   el.innerHTML = `
     <div class="pm-layout">
       <div class="pm-filter-card">
         <div class="pm-filter-title"><i class="ti ti-filter"></i> Filter</div>
-        <div class="pm-filter-field"><label>Lokasi</label><select id="pm-f-lokasi" onchange="pmApplyFilter()">${lokasiOpts}</select></div>
-        <div class="pm-filter-field"><label>Panel</label><select id="pm-f-panel" onchange="pmApplyFilter()">${panelOpts}</select></div>
-        <div class="pm-filter-field"><label>Parameter</label>
-          <select id="pm-f-param" onchange="pmApplyFilter()">
-            <option value="">All</option><option value="kw">kW</option><option value="kvar">kVAr</option><option value="kva">kVA</option><option value="pf">PF</option>
-            <option value="kwh">kWh</option><option value="voltage">Voltage (V)</option><option value="current">Current (I)</option>
-          </select>
-        </div>
+        <div class="pm-filter-field"><label>Device (DPM)</label><select id="pm-f-device" onchange="pmApplyDeviceFilter()">${deviceOpts}</select></div>
         <button class="pm-reset-btn" onclick="pmResetFilter()"><i class="ti ti-refresh"></i> Reset</button>
       </div>
 
       <div class="pm-main">
         <div class="pm-kpi-row">
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#5fa8ff">Jumlah Beban</div><div class="pm-kpi-value" id="pm-kpi-beban">${fmt(PM_STATE.jumlahBeban)}<span>kW</span></div></div>
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${PM_STATE.voltage}<span>V</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${fmt2(PM_STATE.voltage)}<span>V</span></div></div>
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#f0c060">Frequency</div><div class="pm-kpi-value" id="pm-kpi-freq">${PM_STATE.freq.toFixed(1)}<span>Hz</span></div></div>
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Power Factor</div><div class="pm-kpi-value" id="pm-kpi-pf">${PM_STATE.pf.toFixed(2)}</div></div>
         </div>
 
         <div class="pm-row2">
           <div class="dpanel">
-            <div class="dpanel-title">TREND BEBAN (kW)</div>
+            <div class="dpanel-title" id="pm-trend-title">TREND BEBAN (kW)</div>
             <div style="position:relative;width:100%;height:230px"><canvas id="pmChartTrend"></canvas></div>
           </div>
           <div class="dpanel">
@@ -6273,10 +6317,10 @@ function pmRenderOverview(){
             <div class="pm-detail-grid" style="margin-top:12px">
               <div class="pm-detail-col">
                 <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">ARUS (A)</div>
-                <div class="row"><span>L1</span><b id="pm-arus-l1">${fmt(PM_STATE.arus.L1)} A</b></div>
-                <div class="row"><span>L2</span><b id="pm-arus-l2">${fmt(PM_STATE.arus.L2)} A</b></div>
-                <div class="row"><span>L3</span><b id="pm-arus-l3">${fmt(PM_STATE.arus.L3)} A</b></div>
-                <div class="row"><span>Neutral</span><b id="pm-arus-n">${fmt(PM_STATE.arus.N)} A</b></div>
+                <div class="row"><span>L1</span><b id="pm-arus-l1">${fmt2(PM_STATE.arus.L1)} A</b></div>
+                <div class="row"><span>L2</span><b id="pm-arus-l2">${fmt2(PM_STATE.arus.L2)} A</b></div>
+                <div class="row"><span>L3</span><b id="pm-arus-l3">${fmt2(PM_STATE.arus.L3)} A</b></div>
+                <div class="row"><span>Neutral</span><b id="pm-arus-n">${fmt2(PM_STATE.arus.N)} A</b></div>
               </div>
               <div style="position:relative;width:120px;height:120px"><canvas id="pmChartGauge"></canvas>
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
@@ -6286,20 +6330,20 @@ function pmRenderOverview(){
               </div>
               <div class="pm-detail-col">
                 <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">VOLTAGE (V)</div>
-                <div class="row"><span>L1-L2</span><b id="pm-volt-l1l2">${PM_STATE.voltageDetail.L1L2} V</b></div>
-                <div class="row"><span>L2-L3</span><b id="pm-volt-l2l3">${PM_STATE.voltageDetail.L2L3} V</b></div>
-                <div class="row"><span>L3-L1</span><b id="pm-volt-l3l1">${PM_STATE.voltageDetail.L3L1} V</b></div>
+                <div class="row"><span>L1-L2</span><b id="pm-volt-l1l2">${fmt2(PM_STATE.voltageDetail.L1L2)} V</b></div>
+                <div class="row"><span>L2-L3</span><b id="pm-volt-l2l3">${fmt2(PM_STATE.voltageDetail.L2L3)} V</b></div>
+                <div class="row"><span>L3-L1</span><b id="pm-volt-l3l1">${fmt2(PM_STATE.voltageDetail.L3L1)} V</b></div>
                 <div class="row"><span>Frequency</span><b id="pm-freq-detail">${PM_STATE.freq.toFixed(1)} Hz</b></div>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #1c2f48">
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
                 <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> kWh Import</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt(PM_STATE.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt2(PM_STATE.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
                 <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> kWh Export</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt(PM_STATE.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt2(PM_STATE.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
             </div>
           </div>
@@ -6738,19 +6782,10 @@ function pmRenderRegisteredDevices(devices){
     </div>`).join('');
 }
 
-function pmApplyFilter(){
-  const lokasi=document.getElementById('pm-f-lokasi')?.value||'';
-  const panel=document.getElementById('pm-f-panel')?.value||'';
-  const filtered=PM_STATE.equipment.filter(e=>(!lokasi||e.lokasi===lokasi)&&(!panel||e.panel===panel));
-  pmRenderEquipment(filtered);
-  const totalKw=filtered.reduce((s,e)=>s+e.kw,0);
-  const kpiEl=document.getElementById('pm-kpi-beban');
-  if(kpiEl) kpiEl.innerHTML = (lokasi||panel) ? `${fmt(totalKw)}<span>kW (ditapis)</span>` : `${fmt(PM_STATE.jumlahBeban)}<span>kW</span>`;
-}
 function pmResetFilter(){
-  const l=document.getElementById('pm-f-lokasi'), p=document.getElementById('pm-f-panel'), pr=document.getElementById('pm-f-param');
-  if(l)l.value=''; if(p)p.value=''; if(pr)pr.value='';
-  pmApplyFilter();
+  const sel=document.getElementById('pm-f-device');
+  if(sel) sel.value='';
+  pmRenderLiveView();
 }
 
 function pmRenderCharts(){
