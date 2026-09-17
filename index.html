@@ -6208,8 +6208,8 @@ function pmRenderLiveView(){
   }
 
   // --- kWh import/export ---
-  setTxt('pm-kwh-import', fmt2(importKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
-  setTxt('pm-kwh-export', fmt2(exportKwh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+  setTxt('pm-kwh-import', fmt2(importKwh/1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
+  setTxt('pm-kwh-export', fmt2(exportKwh/1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
 
   // --- Trend chart (ikut device terpilih, atau jumlah semua) ---
   if (pmChartTrend) {
@@ -6338,12 +6338,12 @@ function pmRenderOverview(){
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #1c2f48">
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
-                <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> kWh Import</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt2(PM_STATE.kwh.importKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> MWh Import</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt2(PM_STATE.kwh.importKwh/1000)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span></div>
               </div>
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
-                <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> kWh Export</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt2(PM_STATE.kwh.exportKwh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
+                <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> MWh Export</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt2(PM_STATE.kwh.exportKwh/1000)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span></div>
               </div>
             </div>
           </div>
@@ -6385,19 +6385,7 @@ function pmRenderEquipment(list){
   el.innerHTML = list.map(e=>`
     <tr>
       <td><strong>${e.name}</strong></td><td>${e.lokasi}</td>
-      <td>${fmt(e.kw)}</td><td>${fmt(e.kvar)}</td><td>${fmt(e.kva)}</td><td>${e.pf.toFixed(2)}</td>
-      <td><span class="pm-status-badge">${e.status}</span></td>
-    </tr>`).join('');
-}
-
-function pmRenderEquipment(list){
-  const el=document.getElementById('pm-eq-body');
-  if(!el) return;
-  if(!list.length){ el.innerHTML='<tr><td colspan="7" style="text-align:center;color:#7d93ad">Tiada peralatan sepadan dengan filter.</td></tr>'; return; }
-  el.innerHTML = list.map(e=>`
-    <tr>
-      <td><strong>${e.name}</strong></td><td>${e.lokasi}</td>
-      <td>${fmt(e.kw)}</td><td>${fmt(e.kvar)}</td><td>${fmt(e.kva)}</td><td>${e.pf.toFixed(2)}</td>
+      <td>${fmt2(e.kw)}</td><td>${fmt2(e.kvar)}</td><td>${fmt2(e.kva)}</td><td>${e.pf.toFixed(2)}</td>
       <td><span class="pm-status-badge">${e.status}</span></td>
     </tr>`).join('');
 }
@@ -6690,10 +6678,13 @@ function pmRenderAddDevice(){
             <div class="pm-filter-field"><label>Modbus/Slave Address</label><input type="number" id="pm-add-modbus" placeholder="cth: 2" min="1" max="247" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
             <div class="pm-filter-field"><label>Port (pilihan)</label><input type="number" id="pm-add-port" placeholder="502" value="502" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
           </div>
+          <div class="pm-filter-field"><label>Faktor Pembetulan (pilihan)</label><input type="number" id="pm-add-calib" placeholder="1" value="1" step="0.001" min="0.001" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+            <span style="font-size:10.5px;color:#7d93ad;display:block;margin-top:4px">Laras jika bacaan kW/A/kWh tak sepadan dengan Ptot sebenar di panel meter (cth: nisbah CT belum betul). Contoh: bacaan sistem 0.14kW, sebenar 11.2kW → faktor = 11.2/0.14 ≈ 80.</span>
+          </div>
           <button class="pm-view-btn" style="margin-top:4px;width:fit-content" id="pm-add-btn" onclick="pmSubmitAddDevice()"><i class="ti ti-device-floppy"></i> Simpan & Sambung</button>
           <div id="pm-add-msg" style="display:none;font-size:12.5px;padding:9px 12px;border-radius:8px"></div>
         </div>
-        <p style="font-size:11px;color:#7d93ad;margin-top:14px">Selepas disimpan, gateway (backend) akan terus cuba sambung ke meter ini melalui Modbus TCP dan bacaan akan muncul di tab Overview.</p>
+        <p style="font-size:11px;color:#7d93ad;margin-top:14px">Selepas disimpan, gateway (backend) akan terus cuba sambung ke meter ini melalui Modbus TCP dan bacaan akan muncul di tab Overview. Penyelesaian jangka panjang: betulkan nisbah CT Primary/Secondary di Easy Config meter supaya faktor = 1.</p>
       </div>
 
       <div class="dpanel">
@@ -6715,6 +6706,7 @@ async function pmSubmitAddDevice(){
   const ip     = document.getElementById('pm-add-ip')?.value.trim();
   const modbusAddress = document.getElementById('pm-add-modbus')?.value.trim();
   const port   = document.getElementById('pm-add-port')?.value.trim() || 502;
+  const calibFactor = document.getElementById('pm-add-calib')?.value.trim() || 1;
   const msg = document.getElementById('pm-add-msg');
   const btn = document.getElementById('pm-add-btn');
   if(!msg) return;
@@ -6738,13 +6730,14 @@ async function pmSubmitAddDevice(){
     const res = await fetch(PM_API_BASE + '/api/devices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, lokasi, panel, ip, port, modbusAddress })
+      body: JSON.stringify({ name, lokasi, panel, ip, port, modbusAddress, calibFactor })
     });
     const d = await res.json();
     if (!d.ok) throw new Error(d.error || 'Gagal daftar device');
 
     showMsg(`✓ "${name}" (${ip}, slave ${modbusAddress}) berjaya didaftarkan dan gateway sedang cuba sambung.`, true);
     ['pm-add-name','pm-add-lokasi','pm-add-ip','pm-add-modbus'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    const calibEl = document.getElementById('pm-add-calib'); if(calibEl) calibEl.value='1';
     pmFetchDeviceList();
   } catch (err) {
     showMsg('❌ ' + err.message + ' — pastikan backend gateway sedang berjalan.', false);
@@ -6771,15 +6764,38 @@ function pmRenderRegisteredDevices(devices){
   if (!devices.length){ el.innerHTML = '<p style="font-size:12px;color:#7d93ad">Belum ada device berdaftar.</p>'; return; }
   el.innerHTML = devices.map(dv => `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0a1526;border:1px solid #1c2f48;border-radius:8px;padding:10px 12px">
-      <div>
+      <div style="flex:1">
         <div style="font-size:13px;font-weight:700;color:#e2e8f0">${dv.name}
           <span style="font-size:10px;font-weight:700;margin-left:6px;padding:2px 7px;border-radius:20px;background:${dv.connected?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${dv.connected?'#4ade80':'#f0897c'}">${dv.connected?'● LIVE':'○ OFFLINE'}</span>
         </div>
         <div style="font-size:11px;color:#7d93ad;margin-top:2px">${dv.lokasi} · ${dv.panel} · ${dv.ip}:${dv.port} · slave ${dv.slaveId}</div>
-        ${dv.data ? `<div style="font-size:11px;color:#5fa8ff;margin-top:3px">${fmt(dv.data.power.P_kW)} kW · ${fmt((dv.data.voltage.U12+dv.data.voltage.U23+dv.data.voltage.U31)/3)} V · PF ${dv.data.pf.toFixed(2)}</div>` : dv.lastError ? `<div style="font-size:11px;color:#f0897c;margin-top:3px">${dv.lastError}</div>` : ''}
+        ${dv.data ? `<div style="font-size:11px;color:#5fa8ff;margin-top:3px">${fmt2(dv.data.power.P_kW)} kW · ${fmt2((dv.data.voltage.U12+dv.data.voltage.U23+dv.data.voltage.U31)/3)} V · PF ${dv.data.pf.toFixed(2)}</div>` : dv.lastError ? `<div style="font-size:11px;color:#f0897c;margin-top:3px">${dv.lastError}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:7px">
+          <span style="font-size:10.5px;color:#7d93ad">Faktor:</span>
+          <input type="number" value="${dv.calibFactor}" step="0.001" min="0.001" id="calib-${dv.id}" style="width:80px;padding:4px 6px;border-radius:6px;border:1px solid #29456b;background:#0d1c30;color:#e2e8f0;font-size:11.5px">
+          <button onclick="pmUpdateCalibFactor('${dv.id}')" style="background:none;border:1px solid #29456b;color:#5fa8ff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10.5px">Laras</button>
+        </div>
       </div>
-      <button onclick="pmDeleteDevice('${dv.id}','${dv.name.replace(/'/g,"\\'")}')" style="background:none;border:1px solid #3a2530;color:#f0897c;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:11px"><i class="ti ti-trash"></i></button>
+      <button onclick="pmDeleteDevice('${dv.id}','${dv.name.replace(/'/g,"\\'")}')" style="background:none;border:1px solid #3a2530;color:#f0897c;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:11px;align-self:flex-start"><i class="ti ti-trash"></i></button>
     </div>`).join('');
+}
+
+async function pmUpdateCalibFactor(id){
+  const input = document.getElementById('calib-'+id);
+  if(!input) return;
+  const calibFactor = Number(input.value) || 1;
+  try {
+    const res = await fetch(PM_API_BASE + '/api/devices/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ calibFactor })
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error('Gagal kemaskini faktor');
+    pmFetchDeviceList();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  }
 }
 
 function pmResetFilter(){
