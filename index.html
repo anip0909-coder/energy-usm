@@ -605,6 +605,7 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('power')"></i></div>
   <div class="sidebar-sub" id="side-power-sub">
     <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
+    <div class="sidebar-sub-item" id="subside-pm-energy" onclick="switchSection('power');switchPowerTab('energy')"><i class="ti ti-chart-histogram"></i> Energy Consumption</div>
     <div class="sidebar-sub-item" id="subside-pm-billing" onclick="switchSection('power');switchPowerTab('billing')"><i class="ti ti-receipt"></i> Billing</div>
     <div class="sidebar-sub-item" id="subside-pm-adddevice" onclick="switchSection('power');switchPowerTab('adddevice')"><i class="ti ti-circle-plus"></i> Add Device</div>
   </div>
@@ -6075,6 +6076,7 @@ function renderPowerMonitoring(){
     </div>
 
     <div id="panel-power-overview"></div>
+    <div id="panel-power-energy" style="display:none"></div>
     <div id="panel-power-billing" style="display:none"></div>
     <div id="panel-power-adddevice" style="display:none"></div>
   `;
@@ -6296,16 +6298,222 @@ function pmRenderDeviceStatusList(devices){
 
 function switchPowerTab(tab){
   const ov=document.getElementById('panel-power-overview');
+  const en=document.getElementById('panel-power-energy');
   const bl=document.getElementById('panel-power-billing');
   const ad=document.getElementById('panel-power-adddevice');
   if(ov) ov.style.display = tab==='overview' ? 'block' : 'none';
+  if(en) en.style.display = tab==='energy' ? 'block' : 'none';
   if(bl) bl.style.display = tab==='billing' ? 'block' : 'none';
   if(ad) ad.style.display = tab==='adddevice' ? 'block' : 'none';
   document.getElementById('subside-pm-overview')?.classList.toggle('active', tab==='overview');
+  document.getElementById('subside-pm-energy')?.classList.toggle('active', tab==='energy');
   document.getElementById('subside-pm-billing')?.classList.toggle('active', tab==='billing');
   document.getElementById('subside-pm-adddevice')?.classList.toggle('active', tab==='adddevice');
+  if(tab==='energy' && en && !en.dataset.built){ pmRenderEnergyConsumption(); en.dataset.built='1'; }
   if(tab==='billing' && bl && !bl.dataset.built){ pmRenderBilling(); bl.dataset.built='1'; }
   if(tab==='adddevice' && ad && !ad.dataset.built){ pmRenderAddDevice(); ad.dataset.built='1'; }
+}
+
+// ══════════════════════════════════════════════
+// POWER MONITORING — ENERGY CONSUMPTION
+// Filter (Meter multi-select, Energy Type, Period, Date Range, Chart) +
+// jadual penggunaan tenaga per meter, dikira dari snapshot harian backend.
+// ══════════════════════════════════════════════
+let pmEcChart = null;
+
+function pmRenderEnergyConsumption(){
+  const el = document.getElementById('panel-power-energy');
+  if (!el) return;
+  const today = new Date();
+  const d7 = new Date(today.getTime() - 6*86400000);
+  const toStr = d => d.toISOString().slice(0,10);
+
+  const meterCheckboxes = PM_DEVICES.map(dv =>
+    `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#e2e8f0;cursor:pointer">
+       <input type="checkbox" class="pm-ec-meter-cb" value="${dv.id}" checked onchange="pmUpdateMeterBtnLabel()"> ${dv.name}
+     </label>`).join('');
+
+  el.innerHTML = `
+    <div class="dpanel" style="margin-bottom:16px">
+      <div class="dpanel-title"><i class="ti ti-filter"></i> FILTER</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;align-items:end">
+        <div class="pm-filter-field" style="position:relative">
+          <label>Meter</label>
+          <button type="button" id="pm-ec-meter-btn" onclick="pmToggleMeterPicker()" style="width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+            <span id="pm-ec-meter-label">Semua Meter</span><i class="ti ti-chevron-down" style="font-size:14px"></i>
+          </button>
+          <div id="pm-ec-meter-panel" style="display:none;position:absolute;z-index:30;top:100%;left:0;margin-top:4px;width:260px;max-height:260px;overflow-y:auto;background:#0d1c30;border:1px solid #29456b;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+            <label style="display:flex;align-items:center;gap:7px;padding:8px 10px;font-size:12.5px;color:#5fa8ff;font-weight:700;cursor:pointer;border-bottom:1px solid #1c2f48">
+              <input type="checkbox" id="pm-ec-meter-all" checked onchange="pmToggleAllMeters(this)"> Semua Meter
+            </label>
+            ${meterCheckboxes || '<div style="padding:10px;font-size:12px;color:#7d93ad">Tiada device berdaftar</div>'}
+          </div>
+        </div>
+        <div class="pm-filter-field"><label>Energy Type</label>
+          <select id="pm-ec-energytype" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+            <option value="active">Total Active Energy</option>
+          </select>
+        </div>
+        <div class="pm-filter-field"><label>Period</label>
+          <select id="pm-ec-period" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+            <option value="day">By day</option>
+            <option value="week">By week</option>
+            <option value="month">By month</option>
+          </select>
+        </div>
+        <div class="pm-filter-field"><label>Dari</label>
+          <input type="date" id="pm-ec-from" value="${toStr(d7)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+        </div>
+        <div class="pm-filter-field"><label>Hingga</label>
+          <input type="date" id="pm-ec-to" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+        </div>
+        <div class="pm-filter-field"><label>Chart</label>
+          <select id="pm-ec-charttype" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+          </select>
+        </div>
+        <button class="pm-view-btn" onclick="pmGenerateEnergyReport()" style="height:37px"><i class="ti ti-chart-bar"></i> View</button>
+      </div>
+    </div>
+
+    <div class="dpanel" style="margin-bottom:16px">
+      <div class="dpanel-title">CARTA PENGGUNAAN TENAGA</div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="pmEcChartCanvas"></canvas></div>
+    </div>
+
+    <div class="dpanel">
+      <div class="dpanel-title">SENARAI PENGGUNAAN TENAGA</div>
+      <div id="pm-ec-status" style="font-size:11.5px;color:#7d93ad;margin:4px 0 10px"></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead>
+            <tr style="border-bottom:1px solid #1c2f48;color:#7d93ad;text-align:left">
+              <th style="padding:8px 10px">Meter</th>
+              <th style="padding:8px 10px">Lokasi</th>
+              <th style="padding:8px 10px">Serial No.</th>
+              <th style="padding:8px 10px">Period</th>
+              <th style="padding:8px 10px;text-align:right">Import (kWh)</th>
+              <th style="padding:8px 10px;text-align:right">Export (kWh)</th>
+              <th style="padding:8px 10px;text-align:right">Total kWh</th>
+            </tr>
+          </thead>
+          <tbody id="pm-ec-table-body">
+            <tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Tekan "View" untuk jana laporan.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  document.addEventListener('click', pmDocClickCloseMeterPicker);
+  pmGenerateEnergyReport(); // paparan default bila tab dibuka kali pertama
+}
+
+function pmToggleMeterPicker(){
+  const panel = document.getElementById('pm-ec-meter-panel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+function pmDocClickCloseMeterPicker(e){
+  const panel = document.getElementById('pm-ec-meter-panel');
+  const btn = document.getElementById('pm-ec-meter-btn');
+  if (!panel || panel.style.display === 'none') return;
+  if (!panel.contains(e.target) && e.target !== btn && !btn?.contains(e.target)) panel.style.display = 'none';
+}
+function pmToggleAllMeters(master){
+  document.querySelectorAll('.pm-ec-meter-cb').forEach(cb => cb.checked = master.checked);
+  pmUpdateMeterBtnLabel();
+}
+function pmUpdateMeterBtnLabel(){
+  const boxes = [...document.querySelectorAll('.pm-ec-meter-cb')];
+  const checked = boxes.filter(cb => cb.checked);
+  const allCb = document.getElementById('pm-ec-meter-all');
+  if (allCb) allCb.checked = checked.length === boxes.length && boxes.length > 0;
+  const label = document.getElementById('pm-ec-meter-label');
+  if (!label) return;
+  if (checked.length === 0) label.textContent = 'Tiada dipilih';
+  else if (checked.length === boxes.length) label.textContent = 'Semua Meter';
+  else label.textContent = checked.length + ' dipilih';
+}
+
+async function pmGenerateEnergyReport(){
+  const statusEl = document.getElementById('pm-ec-status');
+  const tbody = document.getElementById('pm-ec-table-body');
+  const meterIds = [...document.querySelectorAll('.pm-ec-meter-cb:checked')].map(cb => cb.value);
+  const period = document.getElementById('pm-ec-period')?.value || 'day';
+  const from = document.getElementById('pm-ec-from')?.value;
+  const to = document.getElementById('pm-ec-to')?.value;
+  const chartType = document.getElementById('pm-ec-charttype')?.value || 'bar';
+
+  if (!from || !to) return;
+  if (!meterIds.length){
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Sila pilih sekurang-kurangnya satu meter.</td></tr>';
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = 'Memuatkan...';
+  try {
+    const params = new URLSearchParams({ meters: meterIds.join(','), period, from, to });
+    const res = await fetch(PM_API_BASE + '/api/energy-report?' + params.toString(), { cache: 'no-store' });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Gagal jana laporan');
+
+    if (!d.rows.length){
+      const cov = d.logCoverage;
+      const covMsg = cov ? `Log tenaga tersedia dari ${cov.earliest} hingga ${cov.latest}.` : 'Belum ada log tenaga direkod lagi (sistem baru mula memantau).';
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Tiada data untuk julat/meter dipilih. ${covMsg}</td></tr>`;
+      if (statusEl) statusEl.textContent = '';
+      if (pmEcChart){ pmEcChart.data.labels=[]; pmEcChart.data.datasets=[]; pmEcChart.update(); }
+      return;
+    }
+
+    if (tbody) tbody.innerHTML = d.rows.map(r => `
+      <tr style="border-bottom:1px solid #14233a">
+        <td style="padding:8px 10px;color:#e2e8f0;font-weight:600">${r.meter}</td>
+        <td style="padding:8px 10px;color:#a9bdd4">${r.lokasi}</td>
+        <td style="padding:8px 10px;color:#a9bdd4">${r.serialNo}</td>
+        <td style="padding:8px 10px;color:#a9bdd4">${r.period}</td>
+        <td style="padding:8px 10px;text-align:right;color:#5fa8ff">${fmt2(r.importKwh)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#4ade80">${fmt2(r.exportKwh)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#fff;font-weight:700">${fmt2(r.totalKwh)}</td>
+      </tr>`).join('');
+
+    if (statusEl) statusEl.textContent = d.rows.length + ' rekod dijumpai.';
+    pmRenderEcChart(d.rows, chartType);
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#f0897c">❌ ${err.message}</td></tr>`;
+    if (statusEl) statusEl.textContent = '';
+    console.error('pmGenerateEnergyReport error:', err);
+  }
+}
+
+function pmRenderEcChart(rows, chartType){
+  const canvas = document.getElementById('pmEcChartCanvas');
+  if (!canvas) return;
+  const periods = [...new Set(rows.map(r => r.period))];
+  const meters = [...new Set(rows.map(r => r.meter))];
+  const colors = ['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2','#f472b6','#a3e635'];
+  const datasets = meters.map((m,i) => ({
+    label: m,
+    data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.totalKwh : 0; }),
+    backgroundColor: colors[i%colors.length], borderColor: colors[i%colors.length],
+    borderWidth: chartType==='line' ? 2 : 0, tension: .3, fill:false,
+  }));
+
+  if (pmEcChart) pmEcChart.destroy();
+  pmEcChart = new Chart(canvas, {
+    type: chartType,
+    data: { labels: periods, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{ color:'#e2e8f0', font:{size:11} } },
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
+      scales:{
+        x:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, maxRotation:0, autoSkip:true } },
+        y:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, callback:v=>fmt2(v) }, title:{display:true,text:'kWh',color:'#7d93ad'} }
+      }
+    }
+  });
 }
 
 function pmRenderOverview(){
@@ -6719,6 +6927,7 @@ function pmRenderAddDevice(){
         <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
           <div class="pm-filter-field"><label>Nama Peralatan / Meter</label><input type="text" id="pm-add-name" placeholder="cth: DIRIS A30 - Sub Switchboard 2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
           <div class="pm-filter-field"><label>Lokasi</label><input type="text" id="pm-add-lokasi" placeholder="cth: Bilik Pam 2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          <div class="pm-filter-field"><label>Serial No. (pilihan)</label><input type="text" id="pm-add-serial" placeholder="cth: 201700010150" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
           <div class="pm-filter-field"><label>Panel</label>
             <select id="pm-add-panel" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
               <option>Main Switchboard</option><option>Sub Switchboard</option>
@@ -6757,6 +6966,7 @@ async function pmSubmitAddDevice(){
   const ip     = document.getElementById('pm-add-ip')?.value.trim();
   const modbusAddress = document.getElementById('pm-add-modbus')?.value.trim();
   const port   = document.getElementById('pm-add-port')?.value.trim() || 502;
+  const serialNo = document.getElementById('pm-add-serial')?.value.trim() || '';
   const calibFactor = document.getElementById('pm-add-calib')?.value.trim() || 1;
   const msg = document.getElementById('pm-add-msg');
   const btn = document.getElementById('pm-add-btn');
@@ -6781,13 +6991,13 @@ async function pmSubmitAddDevice(){
     const res = await fetch(PM_API_BASE + '/api/devices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, lokasi, panel, ip, port, modbusAddress, calibFactor })
+      body: JSON.stringify({ name, lokasi, panel, ip, port, modbusAddress, calibFactor, serialNo })
     });
     const d = await res.json();
     if (!d.ok) throw new Error(d.error || 'Gagal daftar device');
 
     showMsg(`✓ "${name}" (${ip}, slave ${modbusAddress}) berjaya didaftarkan dan gateway sedang cuba sambung.`, true);
-    ['pm-add-name','pm-add-lokasi','pm-add-ip','pm-add-modbus'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['pm-add-name','pm-add-lokasi','pm-add-ip','pm-add-modbus','pm-add-serial'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const calibEl = document.getElementById('pm-add-calib'); if(calibEl) calibEl.value='1';
     pmFetchDeviceList();
   } catch (err) {
