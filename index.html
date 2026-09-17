@@ -6147,35 +6147,65 @@ async function pmFetchDeviceList(){
 // tanpa hilangkan pilihan semasa pengguna.
 function pmPopulateDeviceFilter(){
   const sel = document.getElementById('pm-f-device');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = ['<option value="">Semua Device</option>',
-    ...PM_DEVICES.map(dv => `<option value="${dv.id}">${dv.name}${dv.connected?'':' (offline)'}</option>`)].join('');
-  if ([...sel.options].some(o=>o.value===current)) sel.value = current;
+  if (sel) {
+    const current = sel.value;
+    sel.innerHTML = ['<option value="">Semua Device</option>',
+      ...PM_DEVICES.map(dv => `<option value="${dv.id}">${dv.name}${dv.connected?'':' (offline)'}</option>`)].join('');
+    if ([...sel.options].some(o=>o.value===current)) sel.value = current;
+  }
+  const selL = document.getElementById('pm-f-lokasi');
+  if (selL) {
+    const currentL = selL.value;
+    const lokasiSet=[...new Set(PM_DEVICES.map(dv=>dv.lokasi))];
+    selL.innerHTML = ['<option value="">Semua Lokasi</option>',
+      ...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
+    if ([...selL.options].some(o=>o.value===currentL)) selL.value = currentL;
+  }
 }
 
 // Render semula KPI/trend/detail/jadual berdasarkan filter device yang dipilih.
 // Dipanggil selepas setiap fetch DAN bila pengguna tukar filter (tanpa fetch baru).
 function pmRenderLiveView(){
   const setTxt = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML = html; };
+  const selLokasi = document.getElementById('pm-f-lokasi')?.value || '';
   const selId = document.getElementById('pm-f-device')?.value || '';
+  const voltType = document.getElementById('pm-f-volttype')?.value || 'll';
   const selDevice = selId ? PM_DEVICES.find(dv => dv.id === selId) : null;
+  // Device dalam skop lokasi terpilih (untuk agregat bila tiada device spesifik dipilih)
+  const lokasiDevices = selLokasi ? PM_DEVICES.filter(dv => dv.lokasi === selLokasi) : PM_DEVICES;
 
   // --- Tentukan sumber data ikut filter ---
   let kw, voltAvg, freq, pf, importKwh, exportKwh, current, voltage, trendPoints, statusName;
   if (selDevice && selDevice.data) {
     const dd = selDevice.data;
-    kw = dd.power.P_kW; voltAvg = (dd.voltage.U12+dd.voltage.U23+dd.voltage.U31)/3;
+    kw = dd.power.P_kW;
     freq = dd.frequency; pf = dd.pf;
     importKwh = dd.energy.importKwh; exportKwh = dd.energy.exportKwh;
     current = dd.current; voltage = dd.voltage;
+    voltAvg = voltType==='ln' ? (voltage.V1+voltage.V2+voltage.V3)/3 : (voltage.U12+voltage.U23+voltage.U31)/3;
     trendPoints = (selDevice.trend||[]).map(p=>({t:p.t, v:p.kw}));
     statusName = selDevice.name;
+  } else if (selLokasi && lokasiDevices.length) {
+    // Agregat khusus untuk device dalam lokasi terpilih
+    const live = lokasiDevices.filter(dv => dv.connected && dv.data);
+    if (!live.length) { statusName = selLokasi + ' (tiada device live)'; kw=0; voltAvg=0; freq=0; pf=0; importKwh=0; exportKwh=0; current=null; voltage=null; trendPoints=[]; }
+    else {
+      kw = live.reduce((s,d)=>s+d.data.power.P_kW,0);
+      voltAvg = live.reduce((s,d)=>s+(voltType==='ln' ? (d.data.voltage.V1+d.data.voltage.V2+d.data.voltage.V3)/3 : (d.data.voltage.U12+d.data.voltage.U23+d.data.voltage.U31)/3),0)/live.length;
+      freq = live.reduce((s,d)=>s+d.data.frequency,0)/live.length;
+      pf = live.reduce((s,d)=>s+d.data.pf,0)/live.length;
+      importKwh = live.reduce((s,d)=>s+d.data.energy.importKwh,0);
+      exportKwh = live.reduce((s,d)=>s+d.data.energy.exportKwh,0);
+      current = live[0].data.current; voltage = live[0].data.voltage; // wakili paparan detail dgn device pertama dlm lokasi
+      trendPoints = (PM_LAST_AGGREGATE?.trend||[]).map(p=>({t:p.t, v:p.totalKw})); // trend keseluruhan (anggaran)
+      statusName = selLokasi + ' (' + live.length + ' device)';
+    }
   } else if (PM_LAST_AGGREGATE) {
     const d = PM_LAST_AGGREGATE;
-    kw = d.jumlahBebanKw; voltAvg = d.voltageAvg; freq = d.freqAvg; pf = d.pfAvg;
+    kw = d.jumlahBebanKw; freq = d.freqAvg; pf = d.pfAvg;
     importKwh = d.importKwh; exportKwh = d.exportKwh;
     current = d.msb ? d.msb.current : null; voltage = d.msb ? d.msb.voltage : null;
+    voltAvg = voltage ? (voltType==='ln' ? (voltage.V1+voltage.V2+voltage.V3)/3 : (voltage.U12+voltage.U23+voltage.U31)/3) : d.voltageAvg;
     trendPoints = (d.trend||[]).map(p=>({t:p.t, v:p.totalKw}));
     statusName = 'Semua Device (Jumlah)';
   } else { return; }
@@ -6183,6 +6213,7 @@ function pmRenderLiveView(){
   // --- KPI atas ---
   setTxt('pm-kpi-beban', fmt2(kw) + '<span>kW</span>');
   setTxt('pm-kpi-voltage', fmt2(voltAvg) + '<span>V</span>');
+  setTxt('pm-kpi-voltage-label', voltType==='ln' ? 'Voltage (L-N Avg)' : 'Voltage (L-L Avg)');
   setTxt('pm-kpi-freq', (freq||0).toFixed(1) + '<span>Hz</span>');
   setTxt('pm-kpi-pf', (pf||0).toFixed(2));
 
@@ -6192,9 +6223,19 @@ function pmRenderLiveView(){
     setTxt('pm-arus-l2', fmt2(current.I2) + ' A');
     setTxt('pm-arus-l3', fmt2(current.I3) + ' A');
     setTxt('pm-arus-n',  fmt2(current.In) + ' A');
-    setTxt('pm-volt-l1l2', fmt2(voltage.U12) + ' V');
-    setTxt('pm-volt-l2l3', fmt2(voltage.U23) + ' V');
-    setTxt('pm-volt-l3l1', fmt2(voltage.U31) + ' V');
+    if (voltType === 'ln') {
+      setTxt('pm-volt-title', 'VOLTAGE LINE-NEUTRAL (V)');
+      setTxt('pm-volt-label1','L1-N'); setTxt('pm-volt-label2','L2-N'); setTxt('pm-volt-label3','L3-N');
+      setTxt('pm-volt-l1l2', fmt2(voltage.V1) + ' V');
+      setTxt('pm-volt-l2l3', fmt2(voltage.V2) + ' V');
+      setTxt('pm-volt-l3l1', fmt2(voltage.V3) + ' V');
+    } else {
+      setTxt('pm-volt-title', 'VOLTAGE LINE-LINE (V)');
+      setTxt('pm-volt-label1','L1-L2'); setTxt('pm-volt-label2','L2-L3'); setTxt('pm-volt-label3','L3-L1');
+      setTxt('pm-volt-l1l2', fmt2(voltage.U12) + ' V');
+      setTxt('pm-volt-l2l3', fmt2(voltage.U23) + ' V');
+      setTxt('pm-volt-l3l1', fmt2(voltage.U31) + ' V');
+    }
     setTxt('pm-freq-detail', (freq||0).toFixed(1) + ' Hz');
 
     const iAvg = (current.I1 + current.I2 + current.I3) / 3;
@@ -6207,7 +6248,7 @@ function pmRenderLiveView(){
     }
   }
 
-  // --- kWh import/export ---
+  // --- kWh import/export (dipaparkan dalam MWh) ---
   setTxt('pm-kwh-import', fmt2(importKwh/1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
   setTxt('pm-kwh-export', fmt2(exportKwh/1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
 
@@ -6225,9 +6266,9 @@ function pmRenderLiveView(){
   if (PM_LAST_AGGREGATE) {
     const colors=['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2'];
     pmRenderDistribusi(PM_LAST_AGGREGATE.distribusi.map((x,i)=>({...x, color:colors[i%colors.length]})));
-    const eqList = selDevice
-      ? PM_LAST_AGGREGATE.equipment.filter(e => e.name === selDevice.name)
-      : PM_LAST_AGGREGATE.equipment;
+    let eqList = PM_LAST_AGGREGATE.equipment;
+    if (selDevice) eqList = eqList.filter(e => e.name === selDevice.name);
+    else if (selLokasi) eqList = eqList.filter(e => e.lokasi === selLokasi);
     pmRenderEquipment(eqList);
     PM_STATE.equipment = PM_LAST_AGGREGATE.equipment;
   }
@@ -6272,19 +6313,29 @@ function pmRenderOverview(){
   if(!el) return;
   const deviceOpts=['<option value="">Semua Device</option>',
     ...PM_DEVICES.map(dv=>`<option value="${dv.id}">${dv.name}${dv.connected?'':' (offline)'}</option>`)].join('');
+  const lokasiSet=[...new Set(PM_DEVICES.map(dv=>dv.lokasi))];
+  const lokasiOpts=['<option value="">Semua Lokasi</option>',
+    ...lokasiSet.map(l=>`<option value="${l}">${l}</option>`)].join('');
 
   el.innerHTML = `
     <div class="pm-layout">
       <div class="pm-filter-card">
         <div class="pm-filter-title"><i class="ti ti-filter"></i> Filter</div>
+        <div class="pm-filter-field"><label>Lokasi</label><select id="pm-f-lokasi" onchange="pmApplyDeviceFilter()">${lokasiOpts}</select></div>
         <div class="pm-filter-field"><label>Device (DPM)</label><select id="pm-f-device" onchange="pmApplyDeviceFilter()">${deviceOpts}</select></div>
+        <div class="pm-filter-field"><label>Paparan Voltan</label>
+          <select id="pm-f-volttype" onchange="pmApplyDeviceFilter()">
+            <option value="ll">Line-Line (U12/U23/U31)</option>
+            <option value="ln">Line-Neutral (V1/V2/V3)</option>
+          </select>
+        </div>
         <button class="pm-reset-btn" onclick="pmResetFilter()"><i class="ti ti-refresh"></i> Reset</button>
       </div>
 
       <div class="pm-main">
         <div class="pm-kpi-row">
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#5fa8ff">Jumlah Beban</div><div class="pm-kpi-value" id="pm-kpi-beban">${fmt2(PM_STATE.jumlahBeban)}<span>kW</span></div></div>
-          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${fmt2(PM_STATE.voltage)}<span>V</span></div></div>
+          <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80" id="pm-kpi-voltage-label">Voltage (L-L Avg)</div><div class="pm-kpi-value" id="pm-kpi-voltage">${fmt2(PM_STATE.voltage)}<span>V</span></div></div>
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#f0c060">Frequency</div><div class="pm-kpi-value" id="pm-kpi-freq">${PM_STATE.freq.toFixed(1)}<span>Hz</span></div></div>
           <div class="pm-kpi-card"><div class="pm-kpi-label" style="color:#4ade80">Power Factor</div><div class="pm-kpi-value" id="pm-kpi-pf">${PM_STATE.pf.toFixed(2)}</div></div>
         </div>
@@ -6329,10 +6380,10 @@ function pmRenderOverview(){
                 </div>
               </div>
               <div class="pm-detail-col">
-                <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px">VOLTAGE (V)</div>
-                <div class="row"><span>L1-L2</span><b id="pm-volt-l1l2">${fmt2(PM_STATE.voltageDetail.L1L2)} V</b></div>
-                <div class="row"><span>L2-L3</span><b id="pm-volt-l2l3">${fmt2(PM_STATE.voltageDetail.L2L3)} V</b></div>
-                <div class="row"><span>L3-L1</span><b id="pm-volt-l3l1">${fmt2(PM_STATE.voltageDetail.L3L1)} V</b></div>
+                <div style="font-size:10.5px;color:#7d93ad;font-weight:700;margin-bottom:6px" id="pm-volt-title">VOLTAGE LINE-LINE (V)</div>
+                <div class="row"><span id="pm-volt-label1">L1-L2</span><b id="pm-volt-l1l2">${fmt2(PM_STATE.voltageDetail.L1L2)} V</b></div>
+                <div class="row"><span id="pm-volt-label2">L2-L3</span><b id="pm-volt-l2l3">${fmt2(PM_STATE.voltageDetail.L2L3)} V</b></div>
+                <div class="row"><span id="pm-volt-label3">L3-L1</span><b id="pm-volt-l3l1">${fmt2(PM_STATE.voltageDetail.L3L1)} V</b></div>
                 <div class="row"><span>Frequency</span><b id="pm-freq-detail">${PM_STATE.freq.toFixed(1)} Hz</b></div>
               </div>
             </div>
@@ -6800,7 +6851,11 @@ async function pmUpdateCalibFactor(id){
 
 function pmResetFilter(){
   const sel=document.getElementById('pm-f-device');
+  const lok=document.getElementById('pm-f-lokasi');
+  const vt=document.getElementById('pm-f-volttype');
   if(sel) sel.value='';
+  if(lok) lok.value='';
+  if(vt) vt.value='ll';
   pmRenderLiveView();
 }
 
