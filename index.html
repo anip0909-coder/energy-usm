@@ -600,14 +600,14 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
     <div class="sidebar-sub-item" id="subside-surcaj" onclick="switchSection('energy');switchTab('surcaj')"><i class="ti ti-receipt-2"></i> Surcaj</div>
   </div>
 
-  <div class="sidebar-item" id="side-solar" onclick="switchSection('solar')"><i class="ti ti-sun"></i> Solar Monitoring</div>
-
+  
   <div class="sidebar-item" id="side-power" onclick="switchSection('power')"><i class="ti ti-plug"></i> Power Monitoring<i class="ti ti-chevron-right chev" onclick="event.stopPropagation();toggleSidebarGroup('power')"></i></div>
   <div class="sidebar-sub" id="side-power-sub">
     <div class="sidebar-sub-item active" id="subside-pm-overview" onclick="switchSection('power');switchPowerTab('overview')"><i class="ti ti-layout-dashboard"></i> Overview</div>
     <div class="sidebar-sub-item" id="subside-pm-energy" onclick="switchSection('power');switchPowerTab('energy')"><i class="ti ti-chart-histogram"></i> Energy Consumption</div>
     <div class="sidebar-sub-item" id="subside-pm-billing" onclick="switchSection('power');switchPowerTab('billing')"><i class="ti ti-receipt"></i> Billing</div>
     <div class="sidebar-sub-item" id="subside-pm-adddevice" onclick="switchSection('power');switchPowerTab('adddevice')"><i class="ti ti-circle-plus"></i> Add Device</div>
+    <div class="sidebar-sub-item" id="subside-pm-tariff" onclick="switchSection('power');switchPowerTab('tariff')"><i class="ti ti-cash"></i> Tariff Management</div>
   </div>
 
   <div class="sidebar-item" id="side-carbon" onclick="switchSection('carbon')"><i class="ti ti-leaf-2"></i> Carbon &amp; Sustainability</div>
@@ -754,14 +754,6 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   </div>
 
   </div><!-- end section-energy -->
-
-  <!-- ═══════ SECTION: SOLAR MONITORING ═══════ -->
-  <div class="content-section" id="section-solar">
-    <div class="placeholder-box"><i class="ti ti-sun"></i>
-      <h3>Solar Monitoring</h3>
-      <p>Data pemantauan solar/PV akan dipaparkan di sini.</p>
-    </div>
-  </div>
 
   <!-- ═══════ SECTION: POWER MONITORING (Main Switchboard) ═══════ -->
   <div class="content-section" id="section-power">
@@ -2376,7 +2368,7 @@ function toggleSidebarGroup(section){
 
 function switchSection(section){
   activeSection = section;
-  ['dashboard','energy','solar','power','carbon','analysis','settings'].forEach(s=>{
+  ['dashboard','energy','power','carbon','analysis','settings'].forEach(s=>{
     const panel = document.getElementById('section-'+s);
     if(panel) panel.classList.toggle('active', s===section);
     const nav = document.getElementById('side-'+s);
@@ -2978,7 +2970,7 @@ function renderDashboardSection(){
       ${deltaBadge(costElec, prevCostElec)}
       ${barSparkSVG(costSpark,'#f0c060')}
     </div>
-    <div class="dcard dcard-clickable" onclick="dashGo('solar')" title="Lihat Solar Monitoring">
+    <div class="dcard" title="Solar Generation">
       <div class="dcard-top"><div class="dcard-icon" style="background:rgba(232,160,32,.14);color:#e8a020"><i class="ti ti-sun"></i></div><div class="dcard-label">Solar Generation</div></div>
       <div class="dcard-value">${fmt(d.solarKwh)}<span>kWh</span></div>
       ${deltaBadge(d.solarKwh, prevAgg?prevAgg.solarKwh:null)}
@@ -6079,6 +6071,7 @@ function renderPowerMonitoring(){
     <div id="panel-power-energy" style="display:none"></div>
     <div id="panel-power-billing" style="display:none"></div>
     <div id="panel-power-adddevice" style="display:none"></div>
+    <div id="panel-power-tariff" style="display:none"></div>
   `;
 
   pmRenderOverview();
@@ -6301,25 +6294,28 @@ function switchPowerTab(tab){
   const en=document.getElementById('panel-power-energy');
   const bl=document.getElementById('panel-power-billing');
   const ad=document.getElementById('panel-power-adddevice');
+  const tf=document.getElementById('panel-power-tariff');
   if(ov) ov.style.display = tab==='overview' ? 'block' : 'none';
   if(en) en.style.display = tab==='energy' ? 'block' : 'none';
   if(bl) bl.style.display = tab==='billing' ? 'block' : 'none';
   if(ad) ad.style.display = tab==='adddevice' ? 'block' : 'none';
+  if(tf) tf.style.display = tab==='tariff' ? 'block' : 'none';
   document.getElementById('subside-pm-overview')?.classList.toggle('active', tab==='overview');
   document.getElementById('subside-pm-energy')?.classList.toggle('active', tab==='energy');
   document.getElementById('subside-pm-billing')?.classList.toggle('active', tab==='billing');
   document.getElementById('subside-pm-adddevice')?.classList.toggle('active', tab==='adddevice');
+  document.getElementById('subside-pm-tariff')?.classList.toggle('active', tab==='tariff');
   if(tab==='energy' && en && !en.dataset.built){ pmRenderEnergyConsumption(); en.dataset.built='1'; }
   if(tab==='billing' && bl && !bl.dataset.built){ pmRenderBilling(); bl.dataset.built='1'; }
   if(tab==='adddevice' && ad && !ad.dataset.built){ pmRenderAddDevice(); ad.dataset.built='1'; }
+  if(tab==='tariff' && tf && !tf.dataset.built){ pmRenderTariffManagement(); tf.dataset.built='1'; }
 }
 
 // ══════════════════════════════════════════════
 // POWER MONITORING — ENERGY CONSUMPTION
-// Filter (Meter multi-select, Energy Type, Period, Date Range, Chart) +
+// Filter (Meter multi-select, Energy Type, Period, Date Range) +
 // jadual penggunaan tenaga per meter, dikira dari snapshot harian backend.
 // ══════════════════════════════════════════════
-let pmEcChart = null;
 
 function pmRenderEnergyConsumption(){
   const el = document.getElementById('panel-power-energy');
@@ -6367,19 +6363,8 @@ function pmRenderEnergyConsumption(){
         <div class="pm-filter-field"><label>Hingga</label>
           <input type="date" id="pm-ec-to" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
         </div>
-        <div class="pm-filter-field"><label>Chart</label>
-          <select id="pm-ec-charttype" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-          </select>
-        </div>
         <button class="pm-view-btn" onclick="pmGenerateEnergyReport()" style="height:37px"><i class="ti ti-chart-bar"></i> View</button>
       </div>
-    </div>
-
-    <div class="dpanel" style="margin-bottom:16px">
-      <div class="dpanel-title">CARTA PENGGUNAAN TENAGA</div>
-      <div style="position:relative;width:100%;height:280px"><canvas id="pmEcChartCanvas"></canvas></div>
     </div>
 
     <div class="dpanel">
@@ -6443,7 +6428,6 @@ async function pmGenerateEnergyReport(){
   const period = document.getElementById('pm-ec-period')?.value || 'day';
   const from = document.getElementById('pm-ec-from')?.value;
   const to = document.getElementById('pm-ec-to')?.value;
-  const chartType = document.getElementById('pm-ec-charttype')?.value || 'bar';
 
   if (!from || !to) return;
   if (!meterIds.length){
@@ -6463,7 +6447,6 @@ async function pmGenerateEnergyReport(){
       const covMsg = cov ? `Log tenaga tersedia dari ${cov.earliest} hingga ${cov.latest}.` : 'Belum ada log tenaga direkod lagi (sistem baru mula memantau).';
       if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Tiada data untuk julat/meter dipilih. ${covMsg}</td></tr>`;
       if (statusEl) statusEl.textContent = '';
-      if (pmEcChart){ pmEcChart.data.labels=[]; pmEcChart.data.datasets=[]; pmEcChart.update(); }
       return;
     }
 
@@ -6479,7 +6462,6 @@ async function pmGenerateEnergyReport(){
       </tr>`).join('');
 
     if (statusEl) statusEl.textContent = d.rows.length + ' rekod dijumpai.';
-    pmRenderEcChart(d.rows, chartType);
   } catch (err) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#f0897c">❌ ${err.message}</td></tr>`;
     if (statusEl) statusEl.textContent = '';
@@ -6487,33 +6469,172 @@ async function pmGenerateEnergyReport(){
   }
 }
 
-function pmRenderEcChart(rows, chartType){
-  const canvas = document.getElementById('pmEcChartCanvas');
-  if (!canvas) return;
-  const periods = [...new Set(rows.map(r => r.period))];
-  const meters = [...new Set(rows.map(r => r.meter))];
-  const colors = ['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2','#f472b6','#a3e635'];
-  const datasets = meters.map((m,i) => ({
-    label: m,
-    data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.totalKwh : 0; }),
-    backgroundColor: colors[i%colors.length], borderColor: colors[i%colors.length],
-    borderWidth: chartType==='line' ? 2 : 0, tension: .3, fill:false,
-  }));
+// ══════════════════════════════════════════════
+// POWER MONITORING — TARIFF MANAGEMENT
+// Urus struktur tarif elektrik (kadar tenaga, permintaan maksimum, ICPT, dll)
+// untuk digunakan dalam pengiraan bil/kos tenaga.
+// ══════════════════════════════════════════════
+let PM_TARIFFS = [];
 
-  if (pmEcChart) pmEcChart.destroy();
-  pmEcChart = new Chart(canvas, {
-    type: chartType,
-    data: { labels: periods, datasets },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:true, labels:{ color:'#e2e8f0', font:{size:11} } },
-        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
-      scales:{
-        x:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, maxRotation:0, autoSkip:true } },
-        y:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, callback:v=>fmt2(v) }, title:{display:true,text:'kWh',color:'#7d93ad'} }
-      }
-    }
-  });
+async function pmRenderTariffManagement(){
+  const el = document.getElementById('panel-power-tariff');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="pm-row2" style="align-items:start">
+      <div class="dpanel" style="max-width:520px">
+        <div class="dpanel-title"><i class="ti ti-cash"></i> TAMBAH TARIF BAHARU</div>
+        <div class="dpanel-sub">Tetapkan struktur kadar tarif elektrik (cth: Tarif E1, E2, C1 TNB)</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+          <div class="pm-filter-field"><label>Nama Tarif</label><input type="text" id="pm-tf-name" placeholder="cth: Tarif E1 - USMKK" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          <div class="pm-filter-field"><label>Kategori</label>
+            <select id="pm-tf-category" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
+              <option value="E1">E1 — Medium Voltage General</option>
+              <option value="E2">E2 — Medium Voltage Peak/Off-Peak</option>
+              <option value="C1">C1 — Low Voltage Commercial</option>
+              <option value="D">D — Low Voltage Residential</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="pm-filter-field"><label>Caj Tenaga (RM/kWh)</label><input type="number" id="pm-tf-energy" placeholder="0.365" step="0.001" min="0" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+            <div class="pm-filter-field"><label>Caj Permintaan (RM/kW)</label><input type="number" id="pm-tf-demand" placeholder="30.30" step="0.01" min="0" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="pm-filter-field"><label>Caj Tenaga Peak (RM/kWh) <span style="color:#7d93ad;font-weight:400">— jika TOU</span></label><input type="number" id="pm-tf-peak" placeholder="pilihan" step="0.001" min="0" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+            <div class="pm-filter-field"><label>Caj Tenaga Off-Peak (RM/kWh)</label><input type="number" id="pm-tf-offpeak" placeholder="pilihan" step="0.001" min="0" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="pm-filter-field"><label>ICPT (RM/kWh)</label><input type="number" id="pm-tf-icpt" placeholder="cth: -0.02" step="0.001" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+            <div class="pm-filter-field"><label>Caj Minimum (RM)</label><input type="number" id="pm-tf-min" placeholder="pilihan" step="0.01" min="0" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          </div>
+          <div class="pm-filter-field"><label>Tarikh Kuatkuasa</label><input type="date" id="pm-tf-date" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px"></div>
+          <button class="pm-view-btn" style="margin-top:4px;width:fit-content" id="pm-tf-btn" onclick="pmSubmitTariff()"><i class="ti ti-device-floppy"></i> Simpan Tarif</button>
+          <div id="pm-tf-msg" style="display:none;font-size:12.5px;padding:9px 12px;border-radius:8px"></div>
+        </div>
+      </div>
+
+      <div class="dpanel">
+        <div class="dpanel-title"><i class="ti ti-list-details"></i> SENARAI TARIF</div>
+        <div class="dpanel-sub">Tarif "Aktif" akan digunakan dalam pengiraan kos tenaga</div>
+        <div id="pm-tariff-list" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          <p style="font-size:12px;color:#7d93ad">Memuatkan...</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('pm-tf-date').value = new Date().toISOString().slice(0,10);
+  pmFetchTariffs();
+}
+
+async function pmFetchTariffs(){
+  try {
+    const res = await fetch(PM_API_BASE + '/api/tariffs', { cache: 'no-store' });
+    const d = await res.json();
+    if (!d.ok) return;
+    PM_TARIFFS = d.tariffs;
+    pmRenderTariffList(d.tariffs);
+  } catch (err) {
+    console.error('pmFetchTariffs error:', err);
+  }
+}
+
+function pmRenderTariffList(tariffs){
+  const el = document.getElementById('pm-tariff-list');
+  if (!el) return;
+  if (!tariffs.length){ el.innerHTML = '<p style="font-size:12px;color:#7d93ad">Belum ada tarif ditetapkan.</p>'; return; }
+  el.innerHTML = tariffs.map(t => `
+    <div style="background:#0a1526;border:1px solid ${t.active?'#2f6fd6':'#1c2f48'};border-radius:8px;padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0">${t.name}
+          <span style="font-size:10px;font-weight:700;margin-left:6px;padding:2px 7px;border-radius:20px;background:rgba(95,168,255,.15);color:#5fa8ff">${t.category}</span>
+          ${t.active ? '<span style="font-size:10px;font-weight:700;margin-left:6px;padding:2px 7px;border-radius:20px;background:rgba(74,222,128,.15);color:#4ade80">✓ AKTIF</span>' : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${!t.active ? `<button onclick="pmActivateTariff('${t.id}')" style="background:none;border:1px solid #29456b;color:#5fa8ff;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:10.5px">Aktifkan</button>` : ''}
+          <button onclick="pmDeleteTariff('${t.id}','${t.name.replace(/'/g,"\\'")}')" style="background:none;border:1px solid #3a2530;color:#f0897c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#a9bdd4;margin-top:6px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px 10px">
+        <span>Tenaga: <b style="color:#e2e8f0">RM${fmt2(t.energyRate)}/kWh</b></span>
+        <span>Permintaan: <b style="color:#e2e8f0">RM${fmt2(t.demandRate)}/kW</b></span>
+        ${t.peakRate ? `<span>Peak: <b style="color:#e2e8f0">RM${fmt2(t.peakRate)}/kWh</b></span>` : ''}
+        ${t.offPeakRate ? `<span>Off-Peak: <b style="color:#e2e8f0">RM${fmt2(t.offPeakRate)}/kWh</b></span>` : ''}
+        <span>ICPT: <b style="color:#e2e8f0">RM${fmt2(t.icptRate)}/kWh</b></span>
+        ${t.minCharge ? `<span>Min: <b style="color:#e2e8f0">RM${fmt2(t.minCharge)}</b></span>` : ''}
+      </div>
+      <div style="font-size:10.5px;color:#7d93ad;margin-top:5px">Kuatkuasa: ${t.effectiveDate}</div>
+    </div>`).join('');
+}
+
+async function pmSubmitTariff(){
+  const name = document.getElementById('pm-tf-name')?.value.trim();
+  const category = document.getElementById('pm-tf-category')?.value;
+  const energyRate = document.getElementById('pm-tf-energy')?.value.trim();
+  const demandRate = document.getElementById('pm-tf-demand')?.value.trim() || 0;
+  const peakRate = document.getElementById('pm-tf-peak')?.value.trim() || 0;
+  const offPeakRate = document.getElementById('pm-tf-offpeak')?.value.trim() || 0;
+  const icptRate = document.getElementById('pm-tf-icpt')?.value.trim() || 0;
+  const minCharge = document.getElementById('pm-tf-min')?.value.trim() || 0;
+  const effectiveDate = document.getElementById('pm-tf-date')?.value;
+  const msg = document.getElementById('pm-tf-msg');
+  const btn = document.getElementById('pm-tf-btn');
+  if (!msg) return;
+
+  const showMsg = (text, ok) => {
+    msg.textContent = text;
+    msg.style.cssText = `display:block;font-size:12.5px;padding:9px 12px;border-radius:8px;background:${ok?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${ok?'#4ade80':'#f0897c'}`;
+  };
+
+  if (!name || !category) {
+    showMsg('⚠ Sila lengkapkan Nama Tarif dan Kategori.', false);
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    const res = await fetch(PM_API_BASE + '/api/tariffs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, category, energyRate, demandRate, peakRate, offPeakRate, icptRate, minCharge, effectiveDate })
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Gagal simpan tarif');
+
+    showMsg(`✓ Tarif "${name}" berjaya disimpan.`, true);
+    ['pm-tf-name','pm-tf-energy','pm-tf-demand','pm-tf-peak','pm-tf-offpeak','pm-tf-icpt','pm-tf-min'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    pmFetchTariffs();
+  } catch (err) {
+    showMsg('❌ ' + err.message, false);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Simpan Tarif';
+  }
+}
+
+async function pmActivateTariff(id){
+  try {
+    const res = await fetch(PM_API_BASE + '/api/tariffs/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setActive: true })
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error('Gagal aktifkan tarif');
+    pmFetchTariffs();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  }
+}
+
+async function pmDeleteTariff(id, name){
+  if (!confirm(`Padam tarif "${name}"?`)) return;
+  try {
+    const res = await fetch(PM_API_BASE + '/api/tariffs/' + encodeURIComponent(id), { method: 'DELETE' });
+    const d = await res.json();
+    if (!d.ok) throw new Error('Gagal padam tarif');
+    pmFetchTariffs();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  }
 }
 
 function pmRenderOverview(){
