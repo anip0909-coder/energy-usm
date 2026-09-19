@@ -6322,7 +6322,7 @@ function pmRenderEnergyConsumption(){
   if (!el) return;
   const today = new Date();
   const d7 = new Date(today.getTime() - 6*86400000);
-  const toStr = d => d.toISOString().slice(0,10);
+  const toStr = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 
   const meterCheckboxes = PM_DEVICES.map(dv =>
     `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#e2e8f0;cursor:pointer">
@@ -6541,6 +6541,8 @@ function pmOpenEnergyReportModal(rows, period, from, to){
   const subtitle = document.getElementById('pm-ec-modal-subtitle');
   if (!modal || !tbody) return;
 
+  modal.style.display = 'flex'; // buka modal DULU (sebelum carta) supaya jadual pasti kelihatan
+
   const periodLabel = { day:'Harian', week:'Mingguan', month:'Bulanan' }[period] || period;
   if (subtitle) subtitle.textContent = `${periodLabel} · ${from} hingga ${to} · Dijana ${new Date().toLocaleString('ms-MY')}`;
 
@@ -6562,33 +6564,36 @@ function pmOpenEnergyReportModal(rows, period, from, to){
   document.getElementById('pm-ec-modal-total-total').textContent = fmt2(totalImport+totalExport);
 
   // Bar chart: Total kWh, satu siri warna per meter, dikumpul ikut Period
-  const canvas = document.getElementById('pm-ec-modal-chart');
-  if (canvas) {
-    const periods = [...new Set(rows.map(r => r.period))];
-    const meters = [...new Set(rows.map(r => r.meter))];
-    const colors = ['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2','#f472b6','#a3e635'];
-    const datasets = meters.map((m,i) => ({
-      label: m,
-      data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.totalKwh : 0; }),
-      backgroundColor: colors[i%colors.length],
-    }));
-    if (pmEcModalChart) pmEcModalChart.destroy();
-    pmEcModalChart = new Chart(canvas, {
-      type: 'bar',
-      data: { labels: periods, datasets },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:true, labels:{ color:'#e2e8f0', font:{size:11} } },
-          tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
-        scales:{
-          x:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, maxRotation:0, autoSkip:true } },
-          y:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, callback:v=>fmt2(v) }, title:{display:true,text:'Total kWh',color:'#7d93ad'} }
+  // Dibungkus try/catch supaya jika carta gagal, jadual di atas tetap kelihatan.
+  try {
+    const canvas = document.getElementById('pm-ec-modal-chart');
+    if (canvas) {
+      const periods = [...new Set(rows.map(r => r.period))];
+      const meters = [...new Set(rows.map(r => r.meter))];
+      const colors = ['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2','#f472b6','#a3e635'];
+      const datasets = meters.map((m,i) => ({
+        label: m,
+        data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.totalKwh : 0; }),
+        backgroundColor: colors[i%colors.length],
+      }));
+      if (pmEcModalChart) pmEcModalChart.destroy();
+      pmEcModalChart = new Chart(canvas, {
+        type: 'bar',
+        data: { labels: periods, datasets },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:true, labels:{ color:'#e2e8f0', font:{size:11} } },
+            tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
+          scales:{
+            x:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, maxRotation:0, autoSkip:true } },
+            y:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, callback:v=>fmt2(v) }, title:{display:true,text:'Total kWh',color:'#7d93ad'} }
+          }
         }
-      }
-    });
+      });
+    }
+  } catch (chartErr) {
+    console.error('Carta gagal dibina (jadual tetap dipaparkan):', chartErr);
   }
-
-  modal.style.display = 'flex';
 }
 
 function pmCloseEnergyModal(){
