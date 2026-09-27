@@ -6086,6 +6086,47 @@ function renderPowerMonitoring(){
 // Contoh: jika gateway dijalankan pada komputer/pelayan lain, guna
 // hostname/IP pelayan itu (bukan localhost pengguna).
 const PM_API_BASE = 'http://localhost:3001';
+
+// Isi dengan URL Web App Google Apps Script anda selepas deploy (lihat arahan setup).
+// Jika diisi, tab "Energy Consumption" akan baca terus dari Google Sheets (berfungsi
+// dari MANA-MANA device — dalam & luar rangkaian) dan bukan dari PM_API_BASE.
+const PM_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztfLhjsMN_s3kQusCeiNIAPE3oqCPNgX69H6qB1g286JPACXMteC5CyNPbjUYZHwoE-A/exec';
+
+// Fungsi grouping period (day/week/month) — versi client-side, sama logik dgn backend
+function pmMondayOf(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  d.setDate(d.getDate() + ((day===0?-6:1)-day));
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function pmSundayOf(mondayStr){
+  const d = new Date(mondayStr + 'T00:00:00');
+  d.setDate(d.getDate()+6);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function pmMonthLabelOf(key){
+  const [y,m]=key.split('-');
+  const names=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+  return names[Number(m)-1]+' '+y;
+}
+function pmGroupRowsByPeriod(flatRows, period){
+  const buckets = new Map();
+  for (const row of flatRows) {
+    let label, sortKey;
+    if (period==='week'){ const mon=pmMondayOf(row.date); label=mon+' - '+pmSundayOf(mon); sortKey=mon; }
+    else if (period==='month'){ const key=row.date.slice(0,7); label=pmMonthLabelOf(key); sortKey=key; }
+    else { label=row.date; sortKey=row.date; }
+    const bKey = row.meterId+'|'+sortKey;
+    if (!buckets.has(bKey)) buckets.set(bKey, { meterId:row.meterId, meter:row.meter, lokasi:row.lokasi, serialNo:row.serialNo, label, sortKey, importKwh:0, exportKwh:0 });
+    const b = buckets.get(bKey);
+    b.importKwh += Number(row.importKwh)||0;
+    b.exportKwh += Number(row.exportKwh)||0;
+  }
+  return [...buckets.values()]
+    .sort((a,b)=> a.sortKey===b.sortKey ? a.meterId.localeCompare(b.meterId) : a.sortKey.localeCompare(b.sortKey))
+    .map(b => ({ meterId:b.meterId, meter:b.meter, lokasi:b.lokasi, serialNo:b.serialNo, period:b.label,
+      importKwh:Number(b.importKwh.toFixed(2)), exportKwh:Number(b.exportKwh.toFixed(2)) }));
+}
 const PM_LIVE_POLL_MS = 3000;
 let pmLiveTimer = null;
 
@@ -6324,7 +6365,7 @@ function pmRenderEnergyConsumption(){
   const d7 = new Date(today.getTime() - 6*86400000);
   const toStr = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 
-  const meterCheckboxes = PM_DEVICES.map(dv =>
+  const meterCheckboxes = PM_SHEETS_URL ? '' : PM_DEVICES.map(dv =>
     `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#1e293b;cursor:pointer">
        <input type="checkbox" class="pm-ec-meter-cb" value="${dv.id}" checked onchange="pmUpdateMeterBtnLabel()"> ${dv.name}
      </label>`).join('');
@@ -6344,7 +6385,7 @@ function pmRenderEnergyConsumption(){
               <label style="display:flex;align-items:center;gap:7px;padding:8px 10px;font-size:12.5px;color:#2563eb;font-weight:700;cursor:pointer;border-bottom:1px solid #e2e8f0">
                 <input type="checkbox" id="pm-ec-meter-all" checked onchange="pmToggleAllMeters(this)"> Semua Meter
               </label>
-              ${meterCheckboxes || '<div style="padding:10px;font-size:12px;color:#94a3b8">Tiada device berdaftar</div>'}
+              ${meterCheckboxes || `<div style="padding:10px;font-size:12px;color:#94a3b8">${PM_SHEETS_URL ? 'Tekan "View" — senarai meter akan diisi automatik dari Google Sheets.' : 'Tiada device berdaftar'}</div>`}
             </div>
           </div>
           <div class="pm-filter-field"><label style="color:#64748b">Energy Type</label>
@@ -6406,15 +6447,9 @@ function pmRenderEnergyConsumption(){
           </div>
         </div>
         <div style="padding:20px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-            <div>
-              <div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:6px">IMPORT (kWh)</div>
-              <div style="position:relative;width:100%;height:240px"><canvas id="pm-ec-modal-chart-import"></canvas></div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:6px">EXPORT (kWh)</div>
-              <div style="position:relative;width:100%;height:240px"><canvas id="pm-ec-modal-chart-export"></canvas></div>
-            </div>
+          <div style="margin-bottom:20px">
+            <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px">IMPORT vs EXPORT (kWh)</div>
+            <div style="position:relative;width:100%;height:320px"><canvas id="pm-ec-modal-chart"></canvas></div>
           </div>
           <div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;font-size:12.5px">
@@ -6480,6 +6515,33 @@ function pmToggleAllMeters(master){
   document.querySelectorAll('.pm-ec-meter-cb').forEach(cb => cb.checked = master.checked);
   pmUpdateMeterBtnLabel();
 }
+// Bina/kemaskini panel checkbox "Meter" terus dari data Google Sheets (utk mod jauh —
+// tak perlu capai backend tempatan langsung). Kekalkan status checked pilihan sedia ada.
+let pmSheetMeterListBuilt = false;
+function pmSyncMeterCheckboxesFromSheetRows(sheetRows){
+  const panel = document.getElementById('pm-ec-meter-panel');
+  if (!panel) return;
+  const prevChecked = new Set([...document.querySelectorAll('.pm-ec-meter-cb')].filter(cb=>cb.checked).map(cb=>cb.value));
+  const seen = new Map();
+  sheetRows.forEach(r => { if (!seen.has(r.meterId)) seen.set(r.meterId, r.meter); });
+  if (!seen.size) return;
+
+  const wasEmpty = !pmSheetMeterListBuilt;
+  const html = [...seen.entries()].map(([id,name]) => {
+    const checked = wasEmpty ? true : prevChecked.has(id); // kali pertama: semua checked
+    return `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#1e293b;cursor:pointer">
+       <input type="checkbox" class="pm-ec-meter-cb" value="${id}" ${checked?'checked':''} onchange="pmUpdateMeterBtnLabel()"> ${name}
+     </label>`;
+  }).join('');
+
+  const allLabel = panel.querySelector('label'); // baris "Semua Meter" (pertama)
+  panel.innerHTML = '';
+  if (allLabel) panel.appendChild(allLabel);
+  panel.insertAdjacentHTML('beforeend', html);
+  pmSheetMeterListBuilt = true;
+  pmUpdateMeterBtnLabel();
+}
+
 function pmUpdateMeterBtnLabel(){
   const boxes = [...document.querySelectorAll('.pm-ec-meter-cb')];
   const checked = boxes.filter(cb => cb.checked);
@@ -6495,33 +6557,50 @@ function pmUpdateMeterBtnLabel(){
 async function pmGenerateEnergyReport(openModal){
   const statusEl = document.getElementById('pm-ec-status');
   const tbody = document.getElementById('pm-ec-table-body');
-  const meterIds = [...document.querySelectorAll('.pm-ec-meter-cb:checked')].map(cb => cb.value);
+  const checkboxEls = [...document.querySelectorAll('.pm-ec-meter-cb')];
+  // Tiada checkbox lagi (cth: mod Sheets sebelum data pertama dimuat) = anggap "semua"
+  const meterIds = checkboxEls.length ? checkboxEls.filter(cb => cb.checked).map(cb => cb.value) : null;
   const period = document.getElementById('pm-ec-period')?.value || 'day';
   const from = document.getElementById('pm-ec-from')?.value;
   const to = document.getElementById('pm-ec-to')?.value;
 
   if (!from || !to) return;
-  if (!meterIds.length){
+  if (checkboxEls.length && !meterIds.length){
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Sila pilih sekurang-kurangnya satu meter.</td></tr>';
     return;
   }
 
   if (statusEl) statusEl.textContent = 'Memuatkan...';
   try {
-    const params = new URLSearchParams({ meters: meterIds.join(','), period, from, to });
-    const res = await fetch(PM_API_BASE + '/api/energy-report?' + params.toString(), { cache: 'no-store' });
-    const d = await res.json();
-    if (!d.ok) throw new Error(d.error || 'Gagal jana laporan');
-
-    if (!d.rows.length){
+    let rows, coverageMsg;
+    if (PM_SHEETS_URL) {
+      // ── Sumber: Google Sheets (berfungsi dari mana-mana device, dalam & luar rangkaian) ──
+      const res = await fetch(PM_SHEETS_URL, { cache: 'no-store' });
+      const d = await res.json();
+      if (!d.ok) throw new Error(d.error || 'Gagal capai Google Sheets');
+      pmSyncMeterCheckboxesFromSheetRows(d.rows); // bina/kemaskini senarai checkbox meter
+      const activeIds = meterIds || [...document.querySelectorAll('.pm-ec-meter-cb:checked')].map(cb => cb.value);
+      const flat = d.rows.filter(r => activeIds.includes(String(r.meterId)) && r.date >= from && r.date <= to);
+      rows = pmGroupRowsByPeriod(flat, period);
+      coverageMsg = d.rows.length ? `Data dari Google Sheets (${d.rows.length} rekod keseluruhan).` : 'Google Sheets masih kosong.';
+    } else {
+      // ── Sumber: backend tempatan (perlu sama rangkaian/WiFi dgn server) ──
+      const params = new URLSearchParams({ meters: meterIds.join(','), period, from, to });
+      const res = await fetch(PM_API_BASE + '/api/energy-report?' + params.toString(), { cache: 'no-store' });
+      const d = await res.json();
+      if (!d.ok) throw new Error(d.error || 'Gagal jana laporan');
+      rows = d.rows;
       const cov = d.logCoverage;
-      const covMsg = cov ? `Log tenaga tersedia dari ${cov.earliest} hingga ${cov.latest}.` : 'Belum ada log tenaga direkod lagi (sistem baru mula memantau).';
-      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Tiada data untuk julat/meter dipilih. ${covMsg}</td></tr>`;
+      coverageMsg = cov ? `Log tenaga tersedia dari ${cov.earliest} hingga ${cov.latest}.` : 'Belum ada log tenaga direkod lagi (sistem baru mula memantau).';
+    }
+
+    if (!rows.length){
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Tiada data untuk julat/meter dipilih. ${coverageMsg}</td></tr>`;
       if (statusEl) statusEl.textContent = '';
       return;
     }
 
-    if (tbody) tbody.innerHTML = d.rows.map(r => `
+    if (tbody) tbody.innerHTML = rows.map(r => `
       <tr style="border-bottom:1px solid #f1f5f9">
         <td style="padding:8px 10px;color:#1e293b;font-weight:600">${r.meter}</td>
         <td style="padding:8px 10px;color:#475569">${r.lokasi}</td>
@@ -6531,8 +6610,8 @@ async function pmGenerateEnergyReport(openModal){
         <td style="padding:8px 10px;text-align:right;color:#16a34a">${fmt2(r.exportKwh)}</td>
       </tr>`).join('');
 
-    if (statusEl) statusEl.textContent = d.rows.length + ' rekod dijumpai.';
-    if (openModal) pmOpenEnergyReportModal(d.rows, period, from, to);
+    if (statusEl) statusEl.textContent = rows.length + ' rekod dijumpai.' + (PM_SHEETS_URL ? ' (Google Sheets)' : ' (Server tempatan)');
+    if (openModal) pmOpenEnergyReportModal(rows, period, from, to);
   } catch (err) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:14px;text-align:center;color:#dc2626">❌ ${err.message}</td></tr>`;
     if (statusEl) statusEl.textContent = '';
@@ -6541,7 +6620,7 @@ async function pmGenerateEnergyReport(openModal){
 }
 
 // ── Pop-up laporan: jadual + bar chart, boleh cetak/simpan (PDF) ──
-let pmEcModalChartImport = null, pmEcModalChartExport = null;
+let pmEcModalChart = null;
 
 function pmOpenEnergyReportModal(rows, period, from, to){
   const modal = document.getElementById('pm-ec-modal');
@@ -6569,46 +6648,56 @@ function pmOpenEnergyReportModal(rows, period, from, to){
   document.getElementById('pm-ec-modal-total-import').textContent = fmt2(totalImport);
   document.getElementById('pm-ec-modal-total-export').textContent = fmt2(totalExport);
 
-  // 2 carta bar berasingan: Import & Export (kWh), satu siri warna per meter, ikut Period.
+  // 1 carta bar gabungan: Import & Export (kWh) bersebelahan, satu warna per meter x jenis.
+  // Label nilai dipaparkan terus atas setiap bar (chartjs-plugin-datalabels).
   // Dibungkus try/catch supaya jika carta gagal, jadual di atas tetap kelihatan.
   try {
     const periods = [...new Set(rows.map(r => r.period))];
     const meters = [...new Set(rows.map(r => r.meter))];
-    const colors = ['#2563eb','#16a34a','#f59e0b','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d'];
+    const importColors = ['#2563eb','#0891b2','#7c3aed','#0d9488'];
+    const exportColors = ['#16a34a','#65a30d','#f59e0b','#ca8a04'];
 
-    const lightScales = {
-      x:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, maxRotation:0, autoSkip:true } },
-      y:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, callback:v=>fmt2(v) } }
+    const dl = {
+      display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+      formatter: v => fmt2(v),
+      color: '#1e293b', font: { size: 10, weight: '700' },
+      anchor: 'end', align: 'end', offset: 2, clip: false,
     };
-    const lightLegend = { display:true, labels:{ color:'#1e293b', font:{size:11} } };
 
-    const buildDatasets = (field) => meters.map((m,i) => ({
-      label: m,
-      data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row[field] : 0; }),
-      backgroundColor: colors[i%colors.length],
-    }));
-
-    const canvasImport = document.getElementById('pm-ec-modal-chart-import');
-    if (canvasImport) {
-      if (pmEcModalChartImport) pmEcModalChartImport.destroy();
-      pmEcModalChartImport = new Chart(canvasImport, {
-        type: 'bar',
-        data: { labels: periods, datasets: buildDatasets('importKwh') },
-        options: { responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:lightLegend, tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
-          scales: lightScales }
+    const datasets = [];
+    meters.forEach((m,i) => {
+      datasets.push({
+        label: m + ' - Import',
+        data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.importKwh : 0; }),
+        backgroundColor: importColors[i%importColors.length],
+        datalabels: dl,
       });
-    }
+      datasets.push({
+        label: m + ' - Export',
+        data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.exportKwh : 0; }),
+        backgroundColor: exportColors[i%exportColors.length],
+        datalabels: dl,
+      });
+    });
 
-    const canvasExport = document.getElementById('pm-ec-modal-chart-export');
-    if (canvasExport) {
-      if (pmEcModalChartExport) pmEcModalChartExport.destroy();
-      pmEcModalChartExport = new Chart(canvasExport, {
+    const canvas = document.getElementById('pm-ec-modal-chart');
+    if (canvas) {
+      if (pmEcModalChart) pmEcModalChart.destroy();
+      pmEcModalChart = new Chart(canvas, {
         type: 'bar',
-        data: { labels: periods, datasets: buildDatasets('exportKwh') },
-        options: { responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:lightLegend, tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
-          scales: lightScales }
+        data: { labels: periods, datasets },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          layout:{ padding:{ top:20 } },
+          plugins:{
+            legend:{ display:true, labels:{ color:'#1e293b', font:{size:11} } },
+            tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } },
+          },
+          scales:{
+            x:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, maxRotation:0, autoSkip:true } },
+            y:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, callback:v=>fmt2(v) } }
+          }
+        }
       });
     }
   } catch (chartErr) {
