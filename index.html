@@ -6325,106 +6325,115 @@ function pmRenderEnergyConsumption(){
   const toStr = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 
   const meterCheckboxes = PM_DEVICES.map(dv =>
-    `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#e2e8f0;cursor:pointer">
+    `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#1e293b;cursor:pointer">
        <input type="checkbox" class="pm-ec-meter-cb" value="${dv.id}" checked onchange="pmUpdateMeterBtnLabel()"> ${dv.name}
      </label>`).join('');
 
+  // Tema cerah/putih khusus tab Energy Consumption (bahagian lain dashboard kekal gelap)
   el.innerHTML = `
-    <div class="dpanel" style="margin-bottom:16px">
-      <div class="dpanel-title"><i class="ti ti-filter"></i> FILTER</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;align-items:end">
-        <div class="pm-filter-field" style="position:relative">
-          <label>Meter</label>
-          <button type="button" id="pm-ec-meter-btn" onclick="pmToggleMeterPicker()" style="width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
-            <span id="pm-ec-meter-label">Semua Meter</span><i class="ti ti-chevron-down" style="font-size:14px"></i>
-          </button>
-          <div id="pm-ec-meter-panel" style="display:none;position:absolute;z-index:30;top:100%;left:0;margin-top:4px;width:260px;max-height:260px;overflow-y:auto;background:#0d1c30;border:1px solid #29456b;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-            <label style="display:flex;align-items:center;gap:7px;padding:8px 10px;font-size:12.5px;color:#5fa8ff;font-weight:700;cursor:pointer;border-bottom:1px solid #1c2f48">
-              <input type="checkbox" id="pm-ec-meter-all" checked onchange="pmToggleAllMeters(this)"> Semua Meter
-            </label>
-            ${meterCheckboxes || '<div style="padding:10px;font-size:12px;color:#7d93ad">Tiada device berdaftar</div>'}
+    <div id="pm-ec-light-wrap" style="background:#f4f6f9;border-radius:14px;padding:18px;color:#1e293b">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+        <div style="font-size:13px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px"><i class="ti ti-filter"></i> FILTER</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;align-items:end">
+          <div class="pm-filter-field" style="position:relative">
+            <label style="color:#64748b">Meter</label>
+            <button type="button" id="pm-ec-meter-btn" onclick="pmToggleMeterPicker()" style="width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+              <span id="pm-ec-meter-label">Semua Meter</span><i class="ti ti-chevron-down" style="font-size:14px"></i>
+            </button>
+            <div id="pm-ec-meter-panel" style="display:none;position:absolute;z-index:30;top:100%;left:0;margin-top:4px;width:260px;max-height:260px;overflow-y:auto;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+              <label style="display:flex;align-items:center;gap:7px;padding:8px 10px;font-size:12.5px;color:#2563eb;font-weight:700;cursor:pointer;border-bottom:1px solid #e2e8f0">
+                <input type="checkbox" id="pm-ec-meter-all" checked onchange="pmToggleAllMeters(this)"> Semua Meter
+              </label>
+              ${meterCheckboxes || '<div style="padding:10px;font-size:12px;color:#94a3b8">Tiada device berdaftar</div>'}
+            </div>
           </div>
+          <div class="pm-filter-field"><label style="color:#64748b">Energy Type</label>
+            <select id="pm-ec-energytype" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+              <option value="active">Total Active Energy</option>
+            </select>
+          </div>
+          <div class="pm-filter-field"><label style="color:#64748b">Period</label>
+            <select id="pm-ec-period" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+              <option value="day">By day</option>
+              <option value="week">By week</option>
+              <option value="month">By month</option>
+            </select>
+          </div>
+          <div class="pm-filter-field"><label style="color:#64748b">Dari</label>
+            <input type="date" id="pm-ec-from" value="${toStr(d7)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+          </div>
+          <div class="pm-filter-field"><label style="color:#64748b">Hingga</label>
+            <input type="date" id="pm-ec-to" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+          </div>
+          <button onclick="pmGenerateEnergyReport(true)" style="height:37px;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-chart-bar"></i> View</button>
         </div>
-        <div class="pm-filter-field"><label>Energy Type</label>
-          <select id="pm-ec-energytype" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-            <option value="active">Total Active Energy</option>
-          </select>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+        <div style="font-size:13px;font-weight:800;color:#1e293b">SENARAI PENGGUNAAN TENAGA</div>
+        <div id="pm-ec-status" style="font-size:11.5px;color:#64748b;margin:4px 0 10px"></div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="border-bottom:1px solid #e2e8f0;color:#64748b;text-align:left">
+                <th style="padding:8px 10px">Meter</th>
+                <th style="padding:8px 10px">Lokasi</th>
+                <th style="padding:8px 10px">Serial No.</th>
+                <th style="padding:8px 10px">Period</th>
+                <th style="padding:8px 10px;text-align:right">Import (kWh)</th>
+                <th style="padding:8px 10px;text-align:right">Export (kWh)</th>
+              </tr>
+            </thead>
+            <tbody id="pm-ec-table-body">
+              <tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Tekan "View" untuk jana laporan.</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="pm-filter-field"><label>Period</label>
-          <select id="pm-ec-period" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-            <option value="day">By day</option>
-            <option value="week">By week</option>
-            <option value="month">By month</option>
-          </select>
-        </div>
-        <div class="pm-filter-field"><label>Dari</label>
-          <input type="date" id="pm-ec-from" value="${toStr(d7)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-        </div>
-        <div class="pm-filter-field"><label>Hingga</label>
-          <input type="date" id="pm-ec-to" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #29456b;background:#0a1526;color:#e2e8f0;font-size:13px">
-        </div>
-        <button class="pm-view-btn" onclick="pmGenerateEnergyReport(true)" style="height:37px"><i class="ti ti-chart-bar"></i> View</button>
       </div>
     </div>
 
-    <div class="dpanel">
-      <div class="dpanel-title">SENARAI PENGGUNAAN TENAGA</div>
-      <div id="pm-ec-status" style="font-size:11.5px;color:#7d93ad;margin:4px 0 10px"></div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
-          <thead>
-            <tr style="border-bottom:1px solid #1c2f48;color:#7d93ad;text-align:left">
-              <th style="padding:8px 10px">Meter</th>
-              <th style="padding:8px 10px">Lokasi</th>
-              <th style="padding:8px 10px">Serial No.</th>
-              <th style="padding:8px 10px">Period</th>
-              <th style="padding:8px 10px;text-align:right">Import (kWh)</th>
-              <th style="padding:8px 10px;text-align:right">Export (kWh)</th>
-              <th style="padding:8px 10px;text-align:right">Total kWh</th>
-            </tr>
-          </thead>
-          <tbody id="pm-ec-table-body">
-            <tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Tekan "View" untuk jana laporan.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══ MODAL: Laporan Penggunaan Tenaga (boleh cetak/simpan) ═══ -->
-    <div id="pm-ec-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:20px">
-      <div style="background:#0d1c30;border:1px solid #29456b;border-radius:14px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #1c2f48;position:sticky;top:0;background:#0d1c30;z-index:2">
+    <!-- ═══ MODAL: Laporan Penggunaan Tenaga (boleh cetak/simpan) — tema cerah ═══ -->
+    <div id="pm-ec-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;width:100%;max-width:1000px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);color:#1e293b">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff;z-index:2">
           <div>
-            <div style="font-size:15px;font-weight:800;color:#fff">Laporan Penggunaan Tenaga</div>
-            <div id="pm-ec-modal-subtitle" style="font-size:11.5px;color:#7d93ad;margin-top:2px"></div>
+            <div style="font-size:15px;font-weight:800;color:#1e293b">Laporan Penggunaan Tenaga</div>
+            <div id="pm-ec-modal-subtitle" style="font-size:11.5px;color:#64748b;margin-top:2px"></div>
           </div>
           <div style="display:flex;gap:8px">
-            <button onclick="pmPrintEnergyReport()" class="pm-view-btn" style="padding:8px 14px"><i class="ti ti-printer"></i> Cetak / Simpan PDF</button>
-            <button onclick="pmCloseEnergyModal()" style="background:none;border:1px solid #29456b;color:#a9bdd4;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px"><i class="ti ti-x"></i></button>
+            <button onclick="pmPrintEnergyReport()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer"><i class="ti ti-printer"></i> Cetak / Simpan PDF</button>
+            <button onclick="pmCloseEnergyModal()" style="background:none;border:1px solid #cbd5e1;color:#475569;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px"><i class="ti ti-x"></i></button>
           </div>
         </div>
         <div style="padding:20px">
-          <div style="position:relative;width:100%;height:280px;margin-bottom:20px"><canvas id="pm-ec-modal-chart"></canvas></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:6px">IMPORT (kWh)</div>
+              <div style="position:relative;width:100%;height:240px"><canvas id="pm-ec-modal-chart-import"></canvas></div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:6px">EXPORT (kWh)</div>
+              <div style="position:relative;width:100%;height:240px"><canvas id="pm-ec-modal-chart-export"></canvas></div>
+            </div>
+          </div>
           <div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;font-size:12.5px">
               <thead>
-                <tr style="border-bottom:1px solid #1c2f48;color:#7d93ad;text-align:left">
+                <tr style="border-bottom:1px solid #e2e8f0;color:#64748b;text-align:left">
                   <th style="padding:8px 10px">Meter</th>
                   <th style="padding:8px 10px">Lokasi</th>
                   <th style="padding:8px 10px">Serial No.</th>
                   <th style="padding:8px 10px">Period</th>
                   <th style="padding:8px 10px;text-align:right">Import (kWh)</th>
                   <th style="padding:8px 10px;text-align:right">Export (kWh)</th>
-                  <th style="padding:8px 10px;text-align:right">Total kWh</th>
                 </tr>
               </thead>
               <tbody id="pm-ec-modal-table-body"></tbody>
               <tfoot>
-                <tr style="border-top:2px solid #29456b">
-                  <td colspan="4" style="padding:9px 10px;font-weight:700;color:#e2e8f0">JUMLAH</td>
-                  <td id="pm-ec-modal-total-import" style="padding:9px 10px;text-align:right;font-weight:800;color:#5fa8ff"></td>
-                  <td id="pm-ec-modal-total-export" style="padding:9px 10px;text-align:right;font-weight:800;color:#4ade80"></td>
-                  <td id="pm-ec-modal-total-total" style="padding:9px 10px;text-align:right;font-weight:800;color:#fff"></td>
+                <tr style="border-top:2px solid #cbd5e1">
+                  <td colspan="4" style="padding:9px 10px;font-weight:700;color:#1e293b">JUMLAH</td>
+                  <td id="pm-ec-modal-total-import" style="padding:9px 10px;text-align:right;font-weight:800;color:#2563eb"></td>
+                  <td id="pm-ec-modal-total-export" style="padding:9px 10px;text-align:right;font-weight:800;color:#16a34a"></td>
                 </tr>
               </tfoot>
             </table>
@@ -6493,7 +6502,7 @@ async function pmGenerateEnergyReport(openModal){
 
   if (!from || !to) return;
   if (!meterIds.length){
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Sila pilih sekurang-kurangnya satu meter.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Sila pilih sekurang-kurangnya satu meter.</td></tr>';
     return;
   }
 
@@ -6507,33 +6516,32 @@ async function pmGenerateEnergyReport(openModal){
     if (!d.rows.length){
       const cov = d.logCoverage;
       const covMsg = cov ? `Log tenaga tersedia dari ${cov.earliest} hingga ${cov.latest}.` : 'Belum ada log tenaga direkod lagi (sistem baru mula memantau).';
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#7d93ad">Tiada data untuk julat/meter dipilih. ${covMsg}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Tiada data untuk julat/meter dipilih. ${covMsg}</td></tr>`;
       if (statusEl) statusEl.textContent = '';
       return;
     }
 
     if (tbody) tbody.innerHTML = d.rows.map(r => `
-      <tr style="border-bottom:1px solid #14233a">
-        <td style="padding:8px 10px;color:#e2e8f0;font-weight:600">${r.meter}</td>
-        <td style="padding:8px 10px;color:#a9bdd4">${r.lokasi}</td>
-        <td style="padding:8px 10px;color:#a9bdd4">${r.serialNo}</td>
-        <td style="padding:8px 10px;color:#a9bdd4">${r.period}</td>
-        <td style="padding:8px 10px;text-align:right;color:#5fa8ff">${fmt2(r.importKwh)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#4ade80">${fmt2(r.exportKwh)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#fff;font-weight:700">${fmt2(r.totalKwh)}</td>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:8px 10px;color:#1e293b;font-weight:600">${r.meter}</td>
+        <td style="padding:8px 10px;color:#475569">${r.lokasi}</td>
+        <td style="padding:8px 10px;color:#475569">${r.serialNo}</td>
+        <td style="padding:8px 10px;color:#475569">${r.period}</td>
+        <td style="padding:8px 10px;text-align:right;color:#2563eb">${fmt2(r.importKwh)}</td>
+        <td style="padding:8px 10px;text-align:right;color:#16a34a">${fmt2(r.exportKwh)}</td>
       </tr>`).join('');
 
     if (statusEl) statusEl.textContent = d.rows.length + ' rekod dijumpai.';
     if (openModal) pmOpenEnergyReportModal(d.rows, period, from, to);
   } catch (err) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding:14px;text-align:center;color:#f0897c">❌ ${err.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:14px;text-align:center;color:#dc2626">❌ ${err.message}</td></tr>`;
     if (statusEl) statusEl.textContent = '';
     console.error('pmGenerateEnergyReport error:', err);
   }
 }
 
 // ── Pop-up laporan: jadual + bar chart, boleh cetak/simpan (PDF) ──
-let pmEcModalChart = null;
+let pmEcModalChartImport = null, pmEcModalChartExport = null;
 
 function pmOpenEnergyReportModal(rows, period, from, to){
   const modal = document.getElementById('pm-ec-modal');
@@ -6547,48 +6555,60 @@ function pmOpenEnergyReportModal(rows, period, from, to){
   if (subtitle) subtitle.textContent = `${periodLabel} · ${from} hingga ${to} · Dijana ${new Date().toLocaleString('ms-MY')}`;
 
   tbody.innerHTML = rows.map(r => `
-    <tr style="border-bottom:1px solid #1c2f48">
-      <td style="padding:8px 10px;font-weight:600">${r.meter}</td>
-      <td style="padding:8px 10px">${r.lokasi}</td>
-      <td style="padding:8px 10px">${r.serialNo}</td>
-      <td style="padding:8px 10px">${r.period}</td>
-      <td style="padding:8px 10px;text-align:right">${fmt2(r.importKwh)}</td>
-      <td style="padding:8px 10px;text-align:right">${fmt2(r.exportKwh)}</td>
-      <td style="padding:8px 10px;text-align:right;font-weight:700">${fmt2(r.totalKwh)}</td>
+    <tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;font-weight:600;color:#1e293b">${r.meter}</td>
+      <td style="padding:8px 10px;color:#475569">${r.lokasi}</td>
+      <td style="padding:8px 10px;color:#475569">${r.serialNo}</td>
+      <td style="padding:8px 10px;color:#475569">${r.period}</td>
+      <td style="padding:8px 10px;text-align:right;color:#2563eb">${fmt2(r.importKwh)}</td>
+      <td style="padding:8px 10px;text-align:right;color:#16a34a">${fmt2(r.exportKwh)}</td>
     </tr>`).join('');
 
   const totalImport = rows.reduce((s,r)=>s+r.importKwh,0);
   const totalExport = rows.reduce((s,r)=>s+r.exportKwh,0);
   document.getElementById('pm-ec-modal-total-import').textContent = fmt2(totalImport);
   document.getElementById('pm-ec-modal-total-export').textContent = fmt2(totalExport);
-  document.getElementById('pm-ec-modal-total-total').textContent = fmt2(totalImport+totalExport);
 
-  // Bar chart: Total kWh, satu siri warna per meter, dikumpul ikut Period
+  // 2 carta bar berasingan: Import & Export (kWh), satu siri warna per meter, ikut Period.
   // Dibungkus try/catch supaya jika carta gagal, jadual di atas tetap kelihatan.
   try {
-    const canvas = document.getElementById('pm-ec-modal-chart');
-    if (canvas) {
-      const periods = [...new Set(rows.map(r => r.period))];
-      const meters = [...new Set(rows.map(r => r.meter))];
-      const colors = ['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2','#f472b6','#a3e635'];
-      const datasets = meters.map((m,i) => ({
-        label: m,
-        data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row.totalKwh : 0; }),
-        backgroundColor: colors[i%colors.length],
-      }));
-      if (pmEcModalChart) pmEcModalChart.destroy();
-      pmEcModalChart = new Chart(canvas, {
+    const periods = [...new Set(rows.map(r => r.period))];
+    const meters = [...new Set(rows.map(r => r.meter))];
+    const colors = ['#2563eb','#16a34a','#f59e0b','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d'];
+
+    const lightScales = {
+      x:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, maxRotation:0, autoSkip:true } },
+      y:{ grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{size:10}, callback:v=>fmt2(v) } }
+    };
+    const lightLegend = { display:true, labels:{ color:'#1e293b', font:{size:11} } };
+
+    const buildDatasets = (field) => meters.map((m,i) => ({
+      label: m,
+      data: periods.map(p => { const row = rows.find(r => r.meter===m && r.period===p); return row ? row[field] : 0; }),
+      backgroundColor: colors[i%colors.length],
+    }));
+
+    const canvasImport = document.getElementById('pm-ec-modal-chart-import');
+    if (canvasImport) {
+      if (pmEcModalChartImport) pmEcModalChartImport.destroy();
+      pmEcModalChartImport = new Chart(canvasImport, {
         type: 'bar',
-        data: { labels: periods, datasets },
-        options: {
-          responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{ display:true, labels:{ color:'#e2e8f0', font:{size:11} } },
-            tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
-          scales:{
-            x:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, maxRotation:0, autoSkip:true } },
-            y:{ grid:{ color:'#1c2f48' }, ticks:{ color:'#7d93ad', font:{size:10}, callback:v=>fmt2(v) }, title:{display:true,text:'Total kWh',color:'#7d93ad'} }
-          }
-        }
+        data: { labels: periods, datasets: buildDatasets('importKwh') },
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:lightLegend, tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
+          scales: lightScales }
+      });
+    }
+
+    const canvasExport = document.getElementById('pm-ec-modal-chart-export');
+    if (canvasExport) {
+      if (pmEcModalChartExport) pmEcModalChartExport.destroy();
+      pmEcModalChartExport = new Chart(canvasExport, {
+        type: 'bar',
+        data: { labels: periods, datasets: buildDatasets('exportKwh') },
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:lightLegend, tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmt2(ctx.parsed.y)} kWh` } } },
+          scales: lightScales }
       });
     }
   } catch (chartErr) {
