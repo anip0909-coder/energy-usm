@@ -6090,7 +6090,7 @@ const PM_API_BASE = 'http://localhost:3001';
 // Isi dengan URL Web App Google Apps Script anda selepas deploy (lihat arahan setup).
 // Jika diisi, tab "Energy Consumption" akan baca terus dari Google Sheets (berfungsi
 // dari MANA-MANA device — dalam & luar rangkaian) dan bukan dari PM_API_BASE.
-const PM_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztfLhjsMN_s3kQusCeiNIAPE3oqCPNgX69H6qB1g286JPACXMteC5CyNPbjUYZHwoE-A/exec';
+const PM_SHEETS_URL = '';
 
 // Fungsi grouping period (day/week/month) — versi client-side, sama logik dgn backend
 function pmMondayOf(dateStr){
@@ -6108,6 +6108,35 @@ function pmMonthLabelOf(key){
   const [y,m]=key.split('-');
   const names=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
   return names[Number(m)-1]+' '+y;
+}
+// Normalisasi baris dari Google Sheets: tarikh (buang T16:00:00.000Z) & serialNo (elak undefined)
+function pmNormDate(v){
+  if (v === null || v === undefined || v === '') return '';
+  const str = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;           // sudah betul
+  const d = new Date(v);
+  if (isNaN(d)) return str.slice(0,10);
+  // Sheets hantar Date sebagai ISO UTC (cth 2026-09-22T16:00Z = 23 Sep waktu Malaysia)
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' });
+}
+function pmNormalizeSheetRow(r){
+  const keyOf = re => Object.keys(r).find(k => re.test(k));
+  const serialKey = keyOf(/serial/i);
+  const serialRaw = serialKey ? r[serialKey] : '';
+  const serial = (serialRaw === undefined || serialRaw === null || String(serialRaw).trim() === '') ? '-' : String(serialRaw);
+  return {
+    date: pmNormDate(r.date),
+    meterId: String(r.meterId ?? ''),
+    meter: r.meter ?? '',
+    lokasi: r.lokasi ?? '',
+    serialNo: serial,
+    importKwh: Number(r.importKwh) || 0,
+    exportKwh: Number(r.exportKwh) || 0,
+  };
+}
+function pmOnMeterChange(){
+  pmUpdateMeterBtnLabel();
+  pmGenerateEnergyReport(false); // jadual dikemaskini terus bila pilihan meter berubah
 }
 function pmGroupRowsByPeriod(flatRows, period){
   const buckets = new Map();
@@ -6367,7 +6396,7 @@ function pmRenderEnergyConsumption(){
 
   const meterCheckboxes = PM_SHEETS_URL ? '' : PM_DEVICES.map(dv =>
     `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#1e293b;cursor:pointer">
-       <input type="checkbox" class="pm-ec-meter-cb" value="${dv.id}" checked onchange="pmUpdateMeterBtnLabel()"> ${dv.name}
+       <input type="checkbox" class="pm-ec-meter-cb" value="${dv.id}" checked onchange="pmOnMeterChange()"> ${dv.name}
      </label>`).join('');
 
   // Tema cerah/putih khusus tab Energy Consumption (bahagian lain dashboard kekal gelap)
@@ -6394,17 +6423,17 @@ function pmRenderEnergyConsumption(){
             </select>
           </div>
           <div class="pm-filter-field"><label style="color:#64748b">Period</label>
-            <select id="pm-ec-period" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+            <select id="pm-ec-period" onchange="pmGenerateEnergyReport(false)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
               <option value="day">By day</option>
               <option value="week">By week</option>
               <option value="month">By month</option>
             </select>
           </div>
           <div class="pm-filter-field"><label style="color:#64748b">Dari</label>
-            <input type="date" id="pm-ec-from" value="${toStr(d7)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+            <input type="date" id="pm-ec-from" onchange="pmGenerateEnergyReport(false)" value="${toStr(d7)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
           </div>
           <div class="pm-filter-field"><label style="color:#64748b">Hingga</label>
-            <input type="date" id="pm-ec-to" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
+            <input type="date" id="pm-ec-to" onchange="pmGenerateEnergyReport(false)" value="${toStr(today)}" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-size:13px">
           </div>
           <button onclick="pmGenerateEnergyReport(true)" style="height:37px;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-chart-bar"></i> View</button>
         </div>
@@ -6513,7 +6542,7 @@ function pmDocClickCloseMeterPicker(e){
 }
 function pmToggleAllMeters(master){
   document.querySelectorAll('.pm-ec-meter-cb').forEach(cb => cb.checked = master.checked);
-  pmUpdateMeterBtnLabel();
+  pmOnMeterChange();
 }
 // Bina/kemaskini panel checkbox "Meter" terus dari data Google Sheets (utk mod jauh —
 // tak perlu capai backend tempatan langsung). Kekalkan status checked pilihan sedia ada.
@@ -6527,10 +6556,11 @@ function pmSyncMeterCheckboxesFromSheetRows(sheetRows){
   if (!seen.size) return;
 
   const wasEmpty = !pmSheetMeterListBuilt;
+  const prevKnown = new Set([...document.querySelectorAll('.pm-ec-meter-cb')].map(cb=>cb.value));
   const html = [...seen.entries()].map(([id,name]) => {
-    const checked = wasEmpty ? true : prevChecked.has(id); // kali pertama: semua checked
+    const checked = wasEmpty || !prevKnown.has(id) || prevChecked.has(id); // kali pertama & meter baharu: checked
     return `<label style="display:flex;align-items:center;gap:7px;padding:6px 10px;font-size:12.5px;color:#1e293b;cursor:pointer">
-       <input type="checkbox" class="pm-ec-meter-cb" value="${id}" ${checked?'checked':''} onchange="pmUpdateMeterBtnLabel()"> ${name}
+       <input type="checkbox" class="pm-ec-meter-cb" value="${id}" ${checked?'checked':''} onchange="pmOnMeterChange()"> ${name}
      </label>`;
   }).join('');
 
@@ -6549,7 +6579,8 @@ function pmUpdateMeterBtnLabel(){
   if (allCb) allCb.checked = checked.length === boxes.length && boxes.length > 0;
   const label = document.getElementById('pm-ec-meter-label');
   if (!label) return;
-  if (checked.length === 0) label.textContent = 'Tiada dipilih';
+  if (boxes.length === 0) label.textContent = 'Semua Meter';
+  else if (checked.length === 0) label.textContent = 'Tiada dipilih';
   else if (checked.length === boxes.length) label.textContent = 'Semua Meter';
   else label.textContent = checked.length + ' dipilih';
 }
@@ -6578,11 +6609,12 @@ async function pmGenerateEnergyReport(openModal){
       const res = await fetch(PM_SHEETS_URL, { cache: 'no-store' });
       const d = await res.json();
       if (!d.ok) throw new Error(d.error || 'Gagal capai Google Sheets');
-      pmSyncMeterCheckboxesFromSheetRows(d.rows); // bina/kemaskini senarai checkbox meter
-      const activeIds = meterIds || [...document.querySelectorAll('.pm-ec-meter-cb:checked')].map(cb => cb.value);
-      const flat = d.rows.filter(r => activeIds.includes(String(r.meterId)) && r.date >= from && r.date <= to);
+      const sheetRows = (d.rows || []).map(pmNormalizeSheetRow);
+      pmSyncMeterCheckboxesFromSheetRows(sheetRows); // bina/kemaskini senarai checkbox meter
+      const activeIds = [...document.querySelectorAll('.pm-ec-meter-cb:checked')].map(cb => cb.value);
+      const flat = sheetRows.filter(r => activeIds.includes(r.meterId) && r.date >= from && r.date <= to);
       rows = pmGroupRowsByPeriod(flat, period);
-      coverageMsg = d.rows.length ? `Data dari Google Sheets (${d.rows.length} rekod keseluruhan).` : 'Google Sheets masih kosong.';
+      coverageMsg = sheetRows.length ? `Data dari Google Sheets (${sheetRows.length} rekod keseluruhan).` : 'Google Sheets masih kosong.';
     } else {
       // ── Sumber: backend tempatan (perlu sama rangkaian/WiFi dgn server) ──
       const params = new URLSearchParams({ meters: meterIds.join(','), period, from, to });
