@@ -6090,7 +6090,7 @@ const PM_API_BASE = 'http://localhost:3001';
 // Isi dengan URL Web App Google Apps Script anda selepas deploy (lihat arahan setup).
 // Jika diisi, tab "Energy Consumption" akan baca terus dari Google Sheets (berfungsi
 // dari MANA-MANA device — dalam & luar rangkaian) dan bukan dari PM_API_BASE.
-const PM_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztfLhjsMN_s3kQusCeiNIAPE3oqCPNgX69H6qB1g286JPACXMteC5CyNPbjUYZHwoE-A/exec';
+const PM_SHEETS_URL = '';
 
 // Fungsi grouping period (day/week/month) — versi client-side, sama logik dgn backend
 function pmMondayOf(dateStr){
@@ -6165,8 +6165,13 @@ function pmStartLivePolling(){
   pmLiveTimer = setInterval(pmFetchLiveData, PM_LIVE_POLL_MS);
 }
 
-let PM_LAST_AGGREGATE = null; // cache respons terkini /api/power-data
-let PM_DEVICES = [];           // cache respons terkini /api/devices
+let PM_LAST_AGGREGATE = null; // cache respons terkini /api/power-data (atau dibina dari Sheets)
+let PM_DEVICES = [];           // cache respons terkini /api/devices (atau dibina dari Sheets)
+let PM_OVERVIEW_SOURCE = 'backend'; // 'backend' | 'sheets' — mod sumber data Overview semasa
+let pmClientTotalTrend = [];   // trend jumlah beban dibina sisi klien (mod Sheets, sejak tab dibuka)
+const pmClientDeviceTrend = new Map(); // id -> [{t,kw}] dibina sisi klien (mod Sheets)
+let pmLastSheetLiveFetch = 0;
+const PM_SHEET_LIVE_MIN_INTERVAL_MS = 10000; // elak baca Sheets lebih kerap dari backend push (~12s)
 
 async function pmFetchLiveData(){
   const statusEl = document.getElementById('pm-live-status');
@@ -6175,22 +6180,110 @@ async function pmFetchLiveData(){
     const d = await res.json();
     if (!d.ok) throw new Error(d.error || 'Tiada device bersambung');
     PM_LAST_AGGREGATE = d;
+    PM_OVERVIEW_SOURCE = 'backend';
 
     if (statusEl) {
       statusEl.style.color = '#4ade80';
       statusEl.innerHTML = `✅ LIVE — ${d.equipment.length} device bersambung. Kemaskini terakhir: ${new Date(d.timestamp).toLocaleTimeString('ms-MY')}`;
     }
+    // Kemaskini senarai device (turut memuatkan trend individu setiap device)
+    await pmFetchDeviceList();
   } catch (err) {
-    if (statusEl) {
+    console.error('pmFetchLiveData error (backend):', err);
+    // ── Backend tempatan tak boleh dicapai (device luar rangkaian) — fallback ke Google Sheets ──
+    if (PM_SHEETS_URL) {
+      const ok = await pmFetchLiveDataFromSheets(statusEl);
+      if (!ok && statusEl) {
+        statusEl.style.color = '#e05252';
+        statusEl.innerHTML = '❌ Backend tempatan & Google Sheets kedua-duanya gagal dicapai.';
+      }
+    } else if (statusEl) {
       statusEl.style.color = '#e05252';
-      statusEl.innerHTML = '❌ ' + err.message + ' — pastikan backend gateway (diris-gateway) sedang berjalan di ' + PM_API_BASE;
+      statusEl.innerHTML = '❌ ' + err.message + ' — pastikan backend gateway (diris-gateway) sedang berjalan di ' + PM_API_BASE + ', atau isi PM_SHEETS_URL utk akses dari luar rangkaian.';
     }
-    console.error('pmFetchLiveData error:', err);
   }
 
-  // Kemaskini senarai device (turut memuatkan trend individu setiap device)
-  await pmFetchDeviceList();
   pmRenderLiveView();
+}
+
+// Baca tab "LiveStatus" dari Google Sheets dan bina semula struktur PM_DEVICES /
+// PM_LAST_AGGREGATE yang sama bentuk dengan respons backend, supaya pmRenderLiveView()
+// tak perlu tahu bezanya. Trend dibina & dikumpul sisi klien (session semasa sahaja),
+// sebab Sheets cuma simpan snapshot TERKINI (bukan sejarah).
+async function pmFetchLiveDataFromSheets(statusEl){
+  const now = Date.now();
+  if (now - pmLastSheetLiveFetch < PM_SHEET_LIVE_MIN_INTERVAL_MS && PM_OVERVIEW_SOURCE === 'sheets') {
+    return true; // guna cache sedia ada, elak baca Sheets terlalu kerap (kuota Apps Script)
+  }
+  try {
+    const res = await fetch(PM_SHEETS_URL + '?sheet=live', { cache: 'no-store' });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'Gagal baca LiveStatus dari Google Sheets');
+    pmLastSheetLiveFetch = now;
+    PM_OVERVIEW_SOURCE = 'sheets';
+
+    const nowIso = new Date().toISOString();
+    PM_DEVICES = (d.rows || []).map(r => {
+      const connected = r.connected === true || r.connected === 'TRUE' || r.connected === 'true';
+      const data = connected ? {
+        power: { P_kW: Number(r.P_kW)||0, Q_kVAr:0, S_kVA:0 },
+        voltage: { U12:Number(r.U12)||0, U23:Number(r.U23)||0, U31:Number(r.U31)||0, V1:Number(r.V1)||0, V2:Number(r.V2)||0, V3:Number(r.V3)||0 },
+        frequency: Number(r.frequency)||0,
+        current: { I1:Number(r.I1)||0, I2:Number(r.I2)||0, I3:Number(r.I3)||0, In:Number(r.In)||0 },
+        pf: Number(r.pf)||0,
+        energy: { importMWh:Number(r.importMWh)||0, exportMWh:Number(r.exportMWh)||0 },
+      } : null;
+
+      // Kumpul trend sisi klien (bertambah selagi tab dashboard ni terbuka)
+      if (data) {
+        if (!pmClientDeviceTrend.has(r.meterId)) pmClientDeviceTrend.set(r.meterId, []);
+        const arr = pmClientDeviceTrend.get(r.meterId);
+        arr.push({ t: nowIso, kw: data.power.P_kW });
+        if (arr.length > 30) arr.shift();
+      }
+
+      return { id: r.meterId, name: r.meter, lokasi: r.lokasi, panel: r.panel, connected, data, trend: pmClientDeviceTrend.get(r.meterId) || [] };
+    });
+
+    const live = PM_DEVICES.filter(dv => dv.connected && dv.data);
+    if (live.length) {
+      const totalKw = live.reduce((s,dv)=>s+dv.data.power.P_kW,0);
+      pmClientTotalTrend.push({ t: nowIso, totalKw: Number(totalKw.toFixed(3)) });
+      if (pmClientTotalTrend.length > 30) pmClientTotalTrend.shift();
+
+      const avgV = live.reduce((s,dv)=>s+((dv.data.voltage.U12+dv.data.voltage.U23+dv.data.voltage.U31)/3),0)/live.length;
+      const avgF = live.reduce((s,dv)=>s+dv.data.frequency,0)/live.length;
+      const avgPf = live.reduce((s,dv)=>s+dv.data.pf,0)/live.length;
+      const importMWh = live.reduce((s,dv)=>s+dv.data.energy.importMWh,0);
+      const exportMWh = live.reduce((s,dv)=>s+dv.data.energy.exportMWh,0);
+      const msb = live.find(dv => dv.panel === 'Main Switchboard') || live[0];
+      const byLokasi = {};
+      live.forEach(dv => { byLokasi[dv.lokasi] = (byLokasi[dv.lokasi]||0) + dv.data.power.P_kW; });
+      const distribusi = Object.entries(byLokasi).map(([label,kw]) => ({ label, kw:Number(kw.toFixed(2)), pct:Number(((kw/totalKw)*100).toFixed(1)) }));
+
+      PM_LAST_AGGREGATE = {
+        ok:true, timestamp: nowIso, jumlahBebanKw: Number(totalKw.toFixed(2)),
+        voltageAvg: Number(avgV.toFixed(1)), freqAvg: Number(avgF.toFixed(2)), pfAvg: Number(avgPf.toFixed(2)),
+        importMWh: Number(importMWh.toFixed(3)), exportMWh: Number(exportMWh.toFixed(3)),
+        distribusi, trend: pmClientTotalTrend,
+        msb: msb ? { name: msb.name, current: msb.data.current, voltage: msb.data.voltage, frequency: msb.data.frequency } : null,
+        equipment: live.map(dv => ({ name: dv.name, lokasi: dv.lokasi, panel: dv.panel, kw:Number(dv.data.power.P_kW.toFixed(1)), kvar:0, kva:0, pf:Number(dv.data.pf.toFixed(2)), status:'Normal' })),
+      };
+    }
+
+    pmRenderDeviceStatusList(PM_DEVICES);
+    pmPopulateDeviceFilter();
+
+    if (statusEl) {
+      statusEl.style.color = '#f0c060';
+      const ageSec = Math.round((now - pmLastSheetLiveFetch)/1000);
+      statusEl.innerHTML = `🟡 GOOGLE SHEETS (luar rangkaian) — ${live.length} device. Lag lebih kurang 12-25 saat berbanding masa sebenar.`;
+    }
+    return true;
+  } catch (err) {
+    console.error('pmFetchLiveDataFromSheets error:', err);
+    return false;
+  }
 }
 
 async function pmFetchDeviceList(){
@@ -6351,7 +6444,7 @@ function pmRenderDeviceStatusList(devices){
     <div style="display:flex;align-items:center;justify-content:space-between;background:#0a1526;border:1px solid #1c2f48;border-radius:8px;padding:8px 10px">
       <div>
         <div style="font-size:12.5px;font-weight:700;color:#e2e8f0">${dv.name}</div>
-        <div style="font-size:10.5px;color:#7d93ad">${dv.ip} · slave ${dv.slaveId} · ${dv.lokasi}</div>
+        <div style="font-size:10.5px;color:#7d93ad">${dv.ip ? dv.ip + ' · slave ' + dv.slaveId + ' · ' : ''}${dv.lokasi}</div>
       </div>
       <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:${dv.connected?'rgba(74,222,128,.15)':'rgba(224,90,74,.15)'};color:${dv.connected?'#4ade80':'#f0897c'}">
         ${dv.connected ? '● LIVE' : '○ OFFLINE'}
@@ -6600,6 +6693,14 @@ async function pmGenerateEnergyReport(openModal){
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#94a3b8">Sila pilih sekurang-kurangnya satu meter.</td></tr>';
     return;
   }
+  if (!PM_SHEETS_URL && !checkboxEls.length){
+    // Fail index.html ni belum ada URL Google Sheets diisi, DAN belum sempat dapat
+    // senarai device dari backend tempatan (biasanya sebab bukan dalam rangkaian yang
+    // sama). Tanpa salah satu sumber ni, laporan tak boleh dijana — beri sebab yang jelas.
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#dc2626">❌ PM_SHEETS_URL belum diisi dalam fail index.html ini, dan backend tempatan tidak dapat dicapai dari device ini. Isi PM_SHEETS_URL dengan URL Google Apps Script anda, atau buka dashboard ini dari rangkaian yang sama dengan server.</td></tr>';
+    if (statusEl) statusEl.textContent = '';
+    return;
+  }
 
   if (statusEl) statusEl.textContent = 'Memuatkan...';
   try {
@@ -6617,7 +6718,7 @@ async function pmGenerateEnergyReport(openModal){
       coverageMsg = sheetRows.length ? `Data dari Google Sheets (${sheetRows.length} rekod keseluruhan).` : 'Google Sheets masih kosong.';
     } else {
       // ── Sumber: backend tempatan (perlu sama rangkaian/WiFi dgn server) ──
-      const params = new URLSearchParams({ meters: meterIds.join(','), period, from, to });
+      const params = new URLSearchParams({ meters: (meterIds || []).join(','), period, from, to });
       const res = await fetch(PM_API_BASE + '/api/energy-report?' + params.toString(), { cache: 'no-store' });
       const d = await res.json();
       if (!d.ok) throw new Error(d.error || 'Gagal jana laporan');
