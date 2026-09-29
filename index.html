@@ -6090,7 +6090,7 @@ const PM_API_BASE = 'http://localhost:3001';
 // Isi dengan URL Web App Google Apps Script anda selepas deploy (lihat arahan setup).
 // Jika diisi, tab "Energy Consumption" akan baca terus dari Google Sheets (berfungsi
 // dari MANA-MANA device — dalam & luar rangkaian) dan bukan dari PM_API_BASE.
-const PM_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbztfLhjsMN_s3kQusCeiNIAPE3oqCPNgX69H6qB1g286JPACXMteC5CyNPbjUYZHwoE-A/exec';
+const PM_SHEETS_URL = '';
 
 // Fungsi grouping period (day/week/month) — versi client-side, sama logik dgn backend
 function pmMondayOf(dateStr){
@@ -6407,8 +6407,8 @@ function pmRenderLiveView(){
   }
 
   // --- kWh import/export (dipaparkan dalam MWh) ---
-  setTxt('pm-kwh-import', fmt2(importMWh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
-  setTxt('pm-kwh-export', fmt2(exportMWh) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span>');
+  setTxt('pm-kwh-import', fmt2(importMWh*1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
+  setTxt('pm-kwh-export', fmt2(exportMWh*1000) + '<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span>');
 
   // --- Trend chart (ikut device terpilih, atau jumlah semua) ---
   if (pmChartTrend) {
@@ -7097,12 +7097,12 @@ function pmRenderOverview(){
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #1c2f48">
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
-                <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> MWh Import</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt2(PM_STATE.kwh.importMWh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span></div>
+                <div style="font-size:10px;color:#5fa8ff;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-down-circle"></i> kWh Import</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-import">${fmt2(PM_STATE.kwh.importMWh*1000)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
               <div style="background:#0a1526;border:1px solid #1c2f48;border-radius:10px;padding:10px 12px">
-                <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> MWh Export</div>
-                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt2(PM_STATE.kwh.exportMWh)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">MWh</span></div>
+                <div style="font-size:10px;color:#4ade80;font-weight:800;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:5px"><i class="ti ti-arrow-up-circle"></i> kWh Export</div>
+                <div style="font-size:17px;font-weight:800;color:#fff;margin-top:3px" id="pm-kwh-export">${fmt2(PM_STATE.kwh.exportMWh*1000)}<span style="font-size:11px;color:#7d93ad;font-weight:600;margin-left:3px">kWh</span></div>
               </div>
             </div>
           </div>
