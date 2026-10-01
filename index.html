@@ -6266,6 +6266,7 @@ async function pmFetchLiveDataFromSheets(statusEl){
         voltageAvg: Number(avgV.toFixed(1)), freqAvg: Number(avgF.toFixed(2)), pfAvg: Number(avgPf.toFixed(2)),
         importMWh: Number(importMWh.toFixed(3)), exportMWh: Number(exportMWh.toFixed(3)),
         distribusi, trend: pmClientTotalTrend,
+        md: { month:'', mdKw:0, occurredAt:null, runningBlockAvgKw:0 }, // MD blm disokong via Sheets — perlu backend terus
         msb: msb ? { name: msb.name, current: msb.data.current, voltage: msb.data.voltage, frequency: msb.data.frequency } : null,
         equipment: live.map(dv => ({ name: dv.name, lokasi: dv.lokasi, panel: dv.panel, kw:Number(dv.data.power.P_kW.toFixed(1)), kvar:0, kva:0, pf:Number(dv.data.pf.toFixed(2)), status:'Normal' })),
       };
@@ -6420,10 +6421,9 @@ function pmRenderLiveView(){
   const trendTitle = document.getElementById('pm-trend-title');
   if (trendTitle) trendTitle.textContent = 'TREND BEBAN (kW) — ' + statusName;
 
-  // --- Distribusi & Senarai PE/MSB ---
+  // --- Maximum Demand & Senarai PE/MSB ---
   if (PM_LAST_AGGREGATE) {
-    const colors=['#5fa8ff','#4ade80','#f0c060','#e05a4a','#7c3aed','#0891b2'];
-    pmRenderDistribusi(PM_LAST_AGGREGATE.distribusi.map((x,i)=>({...x, color:colors[i%colors.length]})));
+    pmRenderMd(PM_LAST_AGGREGATE.md);
     let eqList = PM_LAST_AGGREGATE.equipment;
     if (selDevice) eqList = eqList.filter(e => e.name === selDevice.name);
     else if (selLokasi) eqList = eqList.filter(e => e.lokasi === selLokasi);
@@ -7054,8 +7054,8 @@ function pmRenderOverview(){
             <div style="position:relative;width:100%;height:230px"><canvas id="pmChartTrend"></canvas></div>
           </div>
           <div class="dpanel">
-            <div class="dpanel-title">DISTRIBUSI BEBAN (kW)</div>
-            <div id="pm-dist-body"></div>
+            <div class="dpanel-title">MAXIMUM DEMAND (MD)</div>
+            <div id="pm-md-body"></div>
           </div>
         </div>
 
@@ -7121,20 +7121,38 @@ function pmRenderOverview(){
   `;
 
   pmRenderCharts();
-  pmRenderDistribusi(PM_STATE.distribusi);
+  pmRenderMd({ month:'', mdKw:0, occurredAt:null, runningBlockAvgKw:0 });
   pmRenderEquipment(PM_STATE.equipment);
 }
 
-function pmRenderDistribusi(list){
-  const el=document.getElementById('pm-dist-body');
-  if(!el) return;
-  const total=list.reduce((s,d)=>s+d.kw,0);
-  el.innerHTML = list.map(d=>`
-    <div class="pm-dist-row">
-      <span><span class="pm-dist-dot" style="background:${d.color}"></span>${d.label}</span>
-      <span>${fmt(d.kw)} (${d.pct.toFixed(1)}%)</span>
-    </div>`).join('') +
-    `<div class="pm-dist-total"><span>Jumlah</span><span>${fmt(total)} (100%)</span></div>`;
+function pmRenderMd(md){
+  const el=document.getElementById('pm-md-body');
+  if(!el || !md) return;
+  const monthLabel = (() => {
+    const [y,m] = String(md.month||'').split('-');
+    const names=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+    return m ? `${names[Number(m)-1]} ${y}` : '—';
+  })();
+  const occurredLabel = md.occurredAt
+    ? new Date(md.occurredAt).toLocaleString('ms-MY', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+    : 'Belum ada rekod bulan ini';
+  const runningPct = md.mdKw > 0 ? Math.min(100, (md.runningBlockAvgKw / md.mdKw) * 100) : 0;
+
+  el.innerHTML = `
+    <div style="text-align:center;padding:6px 0 14px">
+      <div style="font-size:11px;color:#7d93ad;text-transform:uppercase;letter-spacing:.3px">MD Bulan ${monthLabel}</div>
+      <div style="font-size:34px;font-weight:800;color:#f0c060;margin-top:4px">${fmt2(md.mdKw)}<span style="font-size:14px;color:#7d93ad;font-weight:600;margin-left:4px">kW</span></div>
+      <div style="font-size:11px;color:#7d93ad;margin-top:4px">Direkod: ${occurredLabel}</div>
+    </div>
+    <div style="border-top:1px solid #1c2f48;padding-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#7d93ad;margin-bottom:5px">
+        <span>Purata blok 30 min semasa</span><span style="color:#5fa8ff;font-weight:700">${fmt2(md.runningBlockAvgKw)} kW</span>
+      </div>
+      <div style="height:8px;background:#0a1526;border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${runningPct}%;background:${runningPct>=95?'#e05a4a':'#5fa8ff'};transition:width .4s"></div>
+      </div>
+      <div style="font-size:10px;color:#7d93ad;margin-top:5px">% berbanding rekod MD bulan ini — direset setiap 1hb bulan baharu</div>
+    </div>`;
 }
 
 function pmRenderEquipment(list){
