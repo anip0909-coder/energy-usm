@@ -706,6 +706,12 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
   <div class="filter-row" id="main-filter-row">
     <label><i class="ti ti-filter"></i> Tapis:</label>
     <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
+    <div style="position:relative;display:inline-block;vertical-align:middle">
+      <button type="button" id="multiyear-btn" onclick="toggleMultiYearPicker(event)" style="padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#fff;color:#444;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+        <i class="ti ti-calendar-stats"></i> <span id="multiyear-btn-label">Multi-Tahun</span> <i class="ti ti-chevron-down" style="font-size:12px"></i>
+      </button>
+      <div id="multiyear-panel" style="display:none;position:absolute;z-index:40;top:100%;left:0;margin-top:4px;min-width:150px;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #c0cdd8;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);padding:4px 0"></div>
+    </div>
     <select id="sel-bulan" onchange="updateDisplay()"><option>-- Semua Bulan --</option></select>
     <div class="filter-divider"></div>
     <label><i class="ti ti-building"></i> Paparan:</label>
@@ -1044,7 +1050,8 @@ function printPDF(){
   const tStr = tahun.includes('Semua') ? 'Semua Tahun' : tahun;
   const bStr = bulan.includes('Semua') ? 'Semua Bulan' : bulan;
   let scopeStr = '';
-  if(!tahun.includes('Semua') && !bulan.includes('Semua')) scopeStr = `Tempoh: ${bStr} ${tStr}`;
+  if(multiYearSelected.length) scopeStr = `Tahun: ${multiYearSelected.join(', ')}`;
+  else if(!tahun.includes('Semua') && !bulan.includes('Semua')) scopeStr = `Tempoh: ${bStr} ${tStr}`;
   else if(!tahun.includes('Semua')) scopeStr = `Tahun: ${tStr}`;
   else if(!bulan.includes('Semua')) scopeStr = `Bulan: ${bStr} (Semua Tahun)`;
   else scopeStr = 'Tempoh: Semua Data';
@@ -1142,12 +1149,21 @@ function buildRows(lines,headerIdx,colMap){
     const n=k=>{const v=parseFloat((row[colMap[k]]||'').replace(/,/g,''));return isNaN(v)?0:v;};
     const smpRaw=colMap.smp!==undefined?String(row[colMap.smp]||'').trim():'';
     const smpVal=smpRaw===''?null:(isNaN(parseFloat(smpRaw))?null:parseFloat(smpRaw));
+    // SS-A/SS-D kWh = On-Peak + Off-Peak (dikira automatik) bila lajur on/off-peak wujud
+    // dalam CSV. Jika tiada (data lama/CSV tanpa pecahan TOU), kekal guna lajur terus
+    // SS-A/SS-D kWh sedia ada — elak pecahkan data sejarah yang tak ada pecahan on/off-peak.
+    const ssaOnPk=n('ssaOnPeakKwh'), ssaOffPk=n('ssaOffPeakKwh');
+    const ssdOnPk=n('ssdOnPeakKwh'), ssdOffPk=n('ssdOffPeakKwh');
+    const ssaHasTou=colMap.ssaOnPeakKwh!==undefined && colMap.ssaOffPeakKwh!==undefined;
+    const ssdHasTou=colMap.ssdOnPeakKwh!==undefined && colMap.ssdOffPeakKwh!==undefined;
     rows.push({
       bulan:normBulan(bRaw),
       tahun:String(colMap.tahun!==undefined?row[colMap.tahun]:'').trim(),
-      ssaKwh:n('ssaKwh'),ssdKwh:n('ssdKwh'),totalKwh:n('totalKwh'),
-      ssaMdKwh:n('ssaMdKwh'),ssaOnPeakKwh:n('ssaOnPeakKwh'),ssaOffPeakKwh:n('ssaOffPeakKwh'),
-      ssdMdKwh:n('ssdMdKwh'),ssdOnPeakKwh:n('ssdOnPeakKwh'),ssdOffPeakKwh:n('ssdOffPeakKwh'),
+      ssaKwh:ssaHasTou?(ssaOnPk+ssaOffPk):n('ssaKwh'),
+      ssdKwh:ssdHasTou?(ssdOnPk+ssdOffPk):n('ssdKwh'),
+      totalKwh:n('totalKwh'),
+      ssaMdKwh:n('ssaMdKwh'),ssaOnPeakKwh:ssaOnPk,ssaOffPeakKwh:ssaOffPk,
+      ssdMdKwh:n('ssdMdKwh'),ssdOnPeakKwh:ssdOnPk,ssdOffPeakKwh:ssdOffPk,
       ssaRm:n('ssaRm'),ssdRm:n('ssdRm'),totalRm:n('totalRm'),
       solarKwh:n('solarKwh'),eksportKwh:n('eksportKwh'),
       eksportRm:n('eksportRm'),
@@ -1210,6 +1226,17 @@ function buildDropdowns(){
   const selT=document.getElementById('sel-tahun');const pT=selT.value;
   selT.innerHTML='<option>-- Semua Tahun --</option>';
   years.forEach(y=>{const o=document.createElement('option');o.textContent=y;if(y===pT)o.selected=true;selT.appendChild(o);});
+
+  // ── Panel checkbox Multi-Tahun (Energy Overview) — kekalkan tahun yg dah ditick sebelum rebuild ──
+  const myPanel=document.getElementById('multiyear-panel');
+  if(myPanel){
+    multiYearSelected=multiYearSelected.filter(y=>years.includes(y)); // buang tahun yg tak wujud lagi
+    myPanel.innerHTML=years.map(y=>`
+      <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" class="multiyear-cb" value="${y}" ${multiYearSelected.includes(y)?'checked':''} onchange="onMultiYearChange()"> ${y}
+      </label>`).join('');
+    updateMultiYearBtnLabel();
+  }
   const selB=document.getElementById('sel-bulan');const pB=selB.value;
   selB.innerHTML='<option>-- Semua Bulan --</option>';
   BULAN_ORDER.forEach(b=>{const o=document.createElement('option');o.textContent=b;if(b===pB)o.selected=true;selB.appendChild(o);});
@@ -1241,10 +1268,43 @@ function buildDropdowns(){
   }
 }
 
+// ── MULTI-TAHUN (Energy Overview) — checkbox tambahan sebelah dropdown sel-tahun.
+// Kosong = tak aktif (ikut dropdown/getFiltered asal, TAK ubah fungsi sedia ada).
+// Ada tahun ditick = override dropdown, papar gabungan beberapa tahun serentak.
+let multiYearSelected=[];
+
+function toggleMultiYearPicker(e){
+  if(e) e.stopPropagation();
+  const panel=document.getElementById('multiyear-panel');
+  if(!panel) return;
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+}
+document.addEventListener('click', (e)=>{
+  const panel=document.getElementById('multiyear-panel');
+  const btn=document.getElementById('multiyear-btn');
+  if(panel && panel.style.display!=='none' && !panel.contains(e.target) && e.target!==btn && !btn?.contains(e.target)){
+    panel.style.display='none';
+  }
+});
+function onMultiYearChange(){
+  multiYearSelected=[...document.querySelectorAll('.multiyear-cb:checked')].map(cb=>cb.value);
+  updateMultiYearBtnLabel();
+  updateDisplay();
+}
+function updateMultiYearBtnLabel(){
+  const label=document.getElementById('multiyear-btn-label');
+  if(!label) return;
+  label.textContent = multiYearSelected.length ? multiYearSelected.length+' Tahun Dipilih' : 'Multi-Tahun';
+}
+
 function getFiltered(){
   const t=document.getElementById('sel-tahun').value,b=document.getElementById('sel-bulan').value;
   let rows=allRows;
-  if(!t.includes('Semua'))rows=rows.filter(r=>r.tahun===t);
+  if(multiYearSelected.length){
+    rows=rows.filter(r=>multiYearSelected.includes(r.tahun)); // override: beberapa tahun serentak
+  } else if(!t.includes('Semua')){
+    rows=rows.filter(r=>r.tahun===t);
+  }
   if(!b.includes('Semua'))rows=rows.filter(r=>r.bulan===b);
   // Buang rekod bulan+tahun pendua (jika ada) — kekalkan kemunculan TERAKHIR (rekod terkini/
   // pembetulan biasanya ditambah kemudian dalam sheet), supaya Jumlah kWh/RM pada kad metrik
