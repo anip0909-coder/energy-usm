@@ -705,10 +705,10 @@ body.dark .admin-strip input{background:#0f172a;color:#e2e8f0;border-color:#4755
 
   <div class="filter-row" id="main-filter-row">
     <label><i class="ti ti-filter"></i> Tapis:</label>
-    <select id="sel-tahun" onchange="updateDisplay()"><option>-- Semua Tahun --</option></select>
+    <select id="sel-tahun" onchange="updateDisplay()" style="display:none"><option>-- Semua Tahun --</option></select>
     <div style="position:relative;display:inline-block;vertical-align:middle">
-      <button type="button" id="multiyear-btn" onclick="toggleMultiYearPicker(event)" style="padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#fff;color:#444;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
-        <i class="ti ti-calendar-stats"></i> <span id="multiyear-btn-label">Multi-Tahun</span> <i class="ti ti-chevron-down" style="font-size:12px"></i>
+      <button type="button" id="multiyear-btn" onclick="toggleMultiYearPicker(event)" style="padding:6px 10px;border-radius:7px;border:1px solid #c0cdd8;background:#fff;color:#444;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;min-width:150px;justify-content:space-between">
+        <span id="multiyear-btn-label">-- Semua Tahun --</span> <i class="ti ti-chevron-down" style="font-size:12px"></i>
       </button>
       <div id="multiyear-panel" style="display:none;position:absolute;z-index:40;top:100%;left:0;margin-top:4px;min-width:150px;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #c0cdd8;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);padding:4px 0"></div>
     </div>
@@ -1294,7 +1294,9 @@ function onMultiYearChange(){
 function updateMultiYearBtnLabel(){
   const label=document.getElementById('multiyear-btn-label');
   if(!label) return;
-  label.textContent = multiYearSelected.length ? multiYearSelected.length+' Tahun Dipilih' : 'Multi-Tahun';
+  if(!multiYearSelected.length) label.textContent='-- Semua Tahun --';
+  else if(multiYearSelected.length===1) label.textContent=multiYearSelected[0];
+  else label.textContent=multiYearSelected.length+' Tahun Dipilih';
 }
 
 function getFiltered(){
