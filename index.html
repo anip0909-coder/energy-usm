@@ -2146,7 +2146,7 @@ function renderYoY(){
       <hr class="yoy-divider"><div class="yoy-delta ${dExp.cls}">${dExp.arrow} ${dExp.pct}</div>
     </div>
     <div class="yoy-card jimat-card">
-      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> ${yoyPenjimatanLabel()} USM (RM)</div>
+      <div class="yoy-card-label" style="color:#7c3aed"><i class="ti ti-piggy-bank"></i> ${yoyPenjimatanLabel()} ${currY}/${prevY} (RM)</div>
       <div class="yoy-row"><span class="yoy-year-label">${currY}</span><span class="yoy-val" style="color:#7c3aed">${fmtRM2(yoyPenjimatanVal(c))}</span></div>
       <div class="yoy-row"><span class="yoy-year-label">${prevY}</span><span class="yoy-val" style="font-size:12px;color:#aaa">${fmtRM2(yoyPenjimatanVal(p))}</span></div>
       <hr class="yoy-divider"><div class="yoy-delta ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).cls}">${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).arrow} ${delta(yoyPenjimatanVal(c),yoyPenjimatanVal(p)).pct}</div>
@@ -2242,7 +2242,7 @@ function renderYoY(){
       <th>Bulan</th>
       <th class="td-num">${yoyKwhLabel()} ${currY}</th><th class="td-num">${yoyKwhLabel()} ${prevY}</th><th class="td-num">Δ ${yoyKwhLabel()}</th>
       <th class="td-num">${yoyBilLabel()} ${currY}</th><th class="td-num">${yoyBilLabel()} ${prevY}</th><th class="td-num">Δ ${yoyBilLabel()}</th>
-      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">${yoyPenjimatanLabel()} ${currY}</th><th class="td-num">PV Solar ${currY}</th>
+      <th class="td-num">Eksport RM ${currY}</th><th class="td-num">${yoyPenjimatanLabel()} ${currY}/${prevY} (RM)</th><th class="td-num">PV Solar ${currY}</th>
     </tr></thead><tbody>`;
   let sumPenjimatan=0,anyPenjimatanValid=false;
   bulanDlm.forEach((b,i)=>{
