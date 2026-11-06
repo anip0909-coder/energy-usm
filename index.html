@@ -1437,7 +1437,7 @@ function updateDisplay(){
     const totalK=sumKForRows(smpCardRows);
     cardsHtml+=`<div class="card jimat" style="cursor:pointer" onclick="openSmpModal()" title="Klik untuk lihat jadual penuh Penjimatan (SMP)"><div class="card-icon"><i class="ti ti-piggy-bank"></i></div><div class="card-label">Penjimatan USM melalui Tenaga Solar</div><div class="card-value">${totalK===null?'RM —':fmtRM2d(totalK)}</div><div class="card-unit">${totalK===null?'Perlukan nilai SMP':'Kolum K · Jumlah tahun '+(smpCardYear||'semasa')} · <i class="ti ti-table"></i> Klik jadual</div></div>`;
     cardsHtml+=`<div class="card solar-c"><div class="card-icon"><i class="ti ti-bolt"></i></div><div class="card-label">Tenaga Eksport kWh</div><div class="card-value">${fmt(d.eksportKwh)}</div><div class="card-unit">kWh dieksport</div></div>`;
-    cardsHtml+=`<div class="card" style="border-top:3px solid #be185d"><div class="card-icon" style="color:#be185d"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#be185d">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
+    cardsHtml+=`<div class="card" style="border-top:3px solid #24950E"><div class="card-icon" style="color:#24950E"><i class="ti ti-solar-panel-2"></i></div><div class="card-label" style="color:#24950E">Bil PV Hi-Tech Solar</div><div class="card-value" style="color:#be185d">${fmtRM2d(d.bilPvSolar)}</div><div class="card-unit">Ringgit</div></div>`;
   }
   cardsHtml+=`<div class="card total"><div class="card-icon"><i class="ti ti-cash"></i></div><div class="card-label">Jumlah Bil</div><div class="card-value">${fmtRM2d(dispTotalRm)}</div><div class="card-unit">${label}</div></div>`;
 
